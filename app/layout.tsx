@@ -4,6 +4,8 @@ import "./globals.css"
 import { Navbar } from "@/components/shared/Navbar"
 import { NotificationToast } from "@/components/shared/NotificationToast"
 import { ConnectionStatus } from "@/components/shared/ConnectionStatus"
+import { MobileSidebar } from "@/components/shared/MobileSidebar"
+import { Header } from "@/components/shared/Header"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -20,11 +22,15 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={inter.className}>
-        <div className="flex min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50">
+        <div className="relative flex min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50">
           <Navbar />
-          <main className="flex-1 ml-64 p-8 lg:p-12 animate-fade-in">
-            <div className="max-w-7xl mx-auto">
-              {children}
+          <MobileSidebar />
+          <main className="flex-1 lg:ml-64 animate-fade-in">
+            <Header />
+            <div className="p-4 sm:p-8 lg:p-12">
+              <div className="max-w-7xl mx-auto">
+                {children}
+              </div>
             </div>
           </main>
         </div>

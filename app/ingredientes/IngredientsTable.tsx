@@ -19,6 +19,14 @@ import { UpdateStockDialog } from "./UpdateStockDialog"
 import { deleteIngredient, updateIngredientCost } from "@/actions/ingredientActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { Input } from "@/components/ui/input"
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
 
 interface IngredientsTableProps {
   ingredients: any[]
@@ -79,102 +87,158 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
         </Button>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nombre</TableHead>
-            <TableHead>Unidad</TableHead>
-            <TableHead>Costo Unitario</TableHead>
-            <TableHead>Stock</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Ubicación</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {ingredients.map((ingredient) => (
-            <TableRow key={ingredient.id}>
-              <TableCell className="font-medium">{ingredient.name}</TableCell>
-              <TableCell>{ingredient.unit}</TableCell>
-              <TableCell>
-                {editingCostId === ingredient.id ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={newCost}
-                      onChange={(e) => setNewCost(e.target.value)}
-                      className="w-24"
-                      autoFocus
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => handleUpdateCost(ingredient.id)}
-                    >
-                      OK
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setEditingCostId(null)
-                        setNewCost("")
-                      }}
-                    >
-                      X
-                    </Button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setEditingCostId(ingredient.id)
-                      setNewCost(ingredient.cost_per_unit.toString())
-                    }}
-                    className="hover:underline"
-                  >
-                    {formatCurrency(ingredient.cost_per_unit)}
-                  </button>
-                )}
-              </TableCell>
-              <TableCell>
-                {ingredient.inventory ? (
-                  <>
-                    {ingredient.inventory.quantity} {ingredient.inventory.unit}
-                  </>
-                ) : (
-                  "0"
-                )}
-              </TableCell>
-              <TableCell>
-                {ingredient.inventory && getStockBadge(ingredient.inventory.quantity)}
-              </TableCell>
-              <TableCell>
-                {ingredient.inventory?.location || "-"}
-              </TableCell>
-              <TableCell className="text-right space-x-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedIngredient(ingredient)
-                    setShowStockDialog(true)
-                  }}
-                >
-                  <Package className="h-4 w-4 mr-1" />
-                  Stock
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleDelete(ingredient.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
+      {/* Desktop Table */}
+      <div className="hidden lg:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Unidad</TableHead>
+              <TableHead>Costo Unitario</TableHead>
+              <TableHead>Stock</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Ubicación</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {ingredients.map((ingredient) => (
+              <TableRow key={ingredient.id}>
+                <TableCell className="font-medium">{ingredient.name}</TableCell>
+                <TableCell>{ingredient.unit}</TableCell>
+                <TableCell>
+                  {editingCostId === ingredient.id ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={newCost}
+                        onChange={(e) => setNewCost(e.target.value)}
+                        className="w-24"
+                        autoFocus
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => handleUpdateCost(ingredient.id)}
+                      >
+                        OK
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditingCostId(null)
+                          setNewCost("")
+                        }}
+                      >
+                        X
+                      </Button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setEditingCostId(ingredient.id)
+                        setNewCost(ingredient.cost_per_unit.toString())
+                      }}
+                      className="hover:underline"
+                    >
+                      {formatCurrency(ingredient.cost_per_unit)}
+                    </button>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {ingredient.inventory ? (
+                    <>
+                      {ingredient.inventory.quantity} {ingredient.inventory.unit}
+                    </>
+                  ) : (
+                    "0"
+                  )}
+                </TableCell>
+                <TableCell>
+                  {ingredient.inventory && getStockBadge(ingredient.inventory.quantity)}
+                </TableCell>
+                <TableCell>
+                  {ingredient.inventory?.location || "-"}
+                </TableCell>
+                <TableCell className="text-right space-x-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedIngredient(ingredient)
+                      setShowStockDialog(true)
+                    }}
+                  >
+                    <Package className="h-4 w-4 mr-1" />
+                    Stock
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDelete(ingredient.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
+        {ingredients.map((ingredient) => (
+          <Card key={ingredient.id} className="flex flex-col">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>{ingredient.name}</CardTitle>
+                  <CardDescription>
+                    {formatCurrency(ingredient.cost_per_unit)} / {ingredient.unit}
+                  </CardDescription>
+                </div>
+                {ingredient.inventory && getStockBadge(ingredient.inventory.quantity)}
+              </div>
+            </CardHeader>
+            <CardContent className="flex-grow">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="font-semibold text-gray-600">Stock:</span>
+                  <span>
+                    {ingredient.inventory ? `${ingredient.inventory.quantity} ${ingredient.inventory.unit}` : "0"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold text-gray-600">Ubicación:</span>
+                  <span>{ingredient.inventory?.location || "-"}</span>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setSelectedIngredient(ingredient)
+                  setShowStockDialog(true)
+                }}
+              >
+                <Package className="h-4 w-4 mr-1" />
+                Stock
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleDelete(ingredient.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
 
       <CreateIngredientDialog
         open={showCreateDialog}

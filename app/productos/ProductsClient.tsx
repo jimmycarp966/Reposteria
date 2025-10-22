@@ -1,12 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Package, RefreshCw } from "lucide-react"
-import { EmptyState } from "@/components/shared/EmptyState"
-import { formatCurrency } from "@/lib/utils"
+import { Product, Recipe } from "@/lib/supabase"
 import {
   Table,
   TableBody,
@@ -15,129 +10,155 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
 import { CreateProductDialog } from "./CreateProductDialog"
 import { EditPriceDialog } from "./EditPriceDialog"
-import { refreshAllProductCosts } from "@/actions/productActions"
+import { deleteProduct } from "@/actions/productActions"
 import { useNotificationStore } from "@/store/notificationStore"
+import { formatCurrency } from "@/lib/utils"
+import { Plus, Trash2, Edit, Package } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
+import { EmptyState } from "@/components/shared/EmptyState"
 
 interface ProductsClientProps {
   products: any[]
-  recipes: any[]
+  recipes: Recipe[]
 }
 
 export function ProductsClient({ products, recipes }: ProductsClientProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showEditPriceDialog, setShowEditPriceDialog] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
-  const [refreshing, setRefreshing] = useState(false)
   const addNotification = useNotificationStore((state) => state.addNotification)
 
-  const handleRefreshAll = async () => {
-    if (!confirm("¿Recalcular costos de todos los productos? Esto puede tardar un momento.")) return
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Estás seguro de eliminar este producto?")) return
 
-    setRefreshing(true)
-    const result = await refreshAllProductCosts()
-    setRefreshing(false)
-
+    const result = await deleteProduct(id)
     if (result.success) {
-      addNotification({ type: "success", message: result.message! })
+      addNotification({ type: "success", message: "Producto eliminado" })
     } else {
       addNotification({ type: "error", message: result.message! })
     }
   }
 
+  if (products.length === 0) {
+    return (
+      <EmptyState
+        icon={Package}
+        title="No hay productos"
+        description="Crea productos desde tus recetas o manualmente"
+        action={{
+          label: "Crear Producto",
+          onClick: () => setShowCreateDialog(true),
+        }}
+      />
+    )
+  }
+
   return (
     <>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Productos</h1>
-            <p className="text-muted-foreground">
-              Gestiona tus productos y precios de venta
-            </p>
-          </div>
-          <div className="flex gap-2">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold">Productos</h1>
+        <Button onClick={() => setShowCreateDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nuevo Producto
+        </Button>
+      </div>
+
+      {/* Desktop Table */}
+      <div className="hidden lg:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Receta Base</TableHead>
+              <TableHead>Costo Base</TableHead>
+              <TableHead>Precio Sugerido</TableHead>
+              <TableHead>Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {products.map((product) => (
+              <TableRow key={product.id}>
+                <TableCell className="font-medium">{product.name}</TableCell>
+                <TableCell>{product.recipe?.name || "N/A"}</TableCell>
+                <TableCell>{formatCurrency(product.base_cost_cache)}</TableCell>
+                <TableCell>
+                  <button
+                    onClick={() => {
+                      setSelectedProduct(product)
+                      setShowEditPriceDialog(true)
+                    }}
+                    className="hover:underline"
+                  >
+                    {formatCurrency(product.suggested_price_cache)}
+                  </button>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDelete(product.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
+        {products.map((product) => (
+          <Card key={product.id}>
+            <CardHeader>
+              <CardTitle>{product.name}</CardTitle>
+              <CardDescription>{product.recipe?.name || "Sin receta base"}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="font-semibold text-gray-600">Costo Base:</span>
+                  <span>{formatCurrency(product.base_cost_cache)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold text-gray-600">Precio Sugerido:</span>
+                  <span>{formatCurrency(product.suggested_price_cache)}</span>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
             <Button
-              variant="outline"
-              onClick={handleRefreshAll}
-              disabled={refreshing}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-              Recalcular Costos
-            </Button>
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Producto
-            </Button>
-          </div>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Lista de Productos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {products.length === 0 ? (
-              <EmptyState
-                icon={Package}
-                title="No hay productos"
-                description="Crea productos desde tus recetas o manualmente"
-                action={{
-                  label: "Crear Producto",
-                  onClick: () => setShowCreateDialog(true),
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setSelectedProduct(product)
+                  setShowEditPriceDialog(true)
                 }}
-              />
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Costo Base</TableHead>
-                    <TableHead>Precio Sugerido</TableHead>
-                    <TableHead>Margen</TableHead>
-                    <TableHead>Receta</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {products.map((product: any) => {
-                    const margin = product.base_cost_cache > 0
-                      ? ((product.suggested_price_cache - product.base_cost_cache) / product.base_cost_cache) * 100
-                      : 0
-
-                    return (
-                      <TableRow key={product.id}>
-                        <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>{product.sku || "-"}</TableCell>
-                        <TableCell>{formatCurrency(product.base_cost_cache)}</TableCell>
-                        <TableCell className="font-bold">
-                          {formatCurrency(product.suggested_price_cache)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={margin > 50 ? "default" : "secondary"}>
-                            {margin.toFixed(0)}%
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {product.recipe ? product.recipe.name : "-"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setSelectedProduct(product)}
-                          >
-                            Editar Precio
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Precio
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleDelete(product.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
       </div>
 
       <CreateProductDialog
@@ -148,8 +169,11 @@ export function ProductsClient({ products, recipes }: ProductsClientProps) {
 
       {selectedProduct && (
         <EditPriceDialog
-          open={!!selectedProduct}
-          onClose={() => setSelectedProduct(null)}
+          open={showEditPriceDialog}
+          onClose={() => {
+            setShowEditPriceDialog(false)
+            setSelectedProduct(null)
+          }}
           product={selectedProduct}
         />
       )}
