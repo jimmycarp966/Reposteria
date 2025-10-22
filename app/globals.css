@@ -42,6 +42,43 @@
   }
 }
 
+@layer components {
+  /* Gradientes temáticos */
+  .gradient-chocolate {
+    background: var(--gradient-chocolate);
+  }
+
+  .gradient-strawberry {
+    background: var(--gradient-strawberry);
+  }
+
+  .gradient-mint {
+    background: var(--gradient-mint);
+  }
+
+  /* Tarjetas con efectos modernos */
+  .card-modern {
+    @apply transition-all duration-300 ease-in-out;
+    @apply hover:shadow-lg hover:-translate-y-1;
+    background: linear-gradient(145deg, hsl(var(--card)) 0%, hsl(45 85% 97%) 100%);
+  }
+
+  /* Botones con gradientes */
+  .btn-gradient-chocolate {
+    background: var(--gradient-chocolate);
+    @apply text-white font-medium px-4 py-2 rounded-lg;
+    @apply transition-all duration-200 ease-in-out;
+    @apply hover:shadow-lg hover:scale-105 active:scale-95;
+  }
+
+  .btn-gradient-strawberry {
+    background: var(--gradient-strawberry);
+    @apply text-white font-medium px-4 py-2 rounded-lg;
+    @apply transition-all duration-200 ease-in-out;
+    @apply hover:shadow-lg hover:scale-105 active:scale-95;
+  }
+}
+
 /* Custom Gradients */
 .gradient-chocolate {
   background-image: linear-gradient(to right, #4a2c2a, #7b3f3b);
