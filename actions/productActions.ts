@@ -5,33 +5,58 @@ import { productSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getCachedData, CACHE_KEYS, cache } from "@/lib/cache"
+import { logger } from "@/lib/logger"
+import type { ProductsQueryParams, PaginatedResponse, ProductWithRecipe } from "@/lib/types"
 
-export async function getProducts() {
+export async function getProducts(params: ProductsQueryParams = {}): Promise<PaginatedResponse<ProductWithRecipe>> {
+  const {
+    page = 1,
+    pageSize = 20,
+    search = ''
+  } = params
+
   try {
-    const data = await getCachedData(
-      CACHE_KEYS.PRODUCTS,
-      async () => {
-        const { data, error } = await supabase
-          .from("products")
-          .select(`
-            *,
-            recipe:recipes (
-              id,
-              name,
-              servings
-            )
-          `)
-          .order("created_at", { ascending: false })
+    logger.debug('Fetching products', params, 'productActions.getProducts')
 
-        if (error) throw error
-        return data
-      },
-      2 * 60 * 1000 // 2 minutos de caché
-    )
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
 
-    return { success: true, data }
+    let query = supabase
+      .from("products")
+      .select(`
+        *,
+        recipe:recipes (
+          id,
+          name,
+          servings
+        )
+      `, { count: 'exact' })
+      .range(from, to)
+      .order("created_at", { ascending: false })
+
+    // Búsqueda por nombre
+    if (search) {
+      query = query.ilike('name', `%${search}%`)
+    }
+
+    const { data, error, count } = await query
+
+    if (error) throw error
+
+    logger.info(`Fetched ${data?.length || 0} products`, { count, search }, 'productActions.getProducts')
+
+    return {
+      success: true,
+      data: data as ProductWithRecipe[],
+      pagination: {
+        page,
+        pageSize,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / pageSize)
+      }
+    }
   } catch (error: any) {
-    console.error("Error fetching products:", error)
+    logger.error("Error fetching products", error, 'productActions.getProducts')
     return { success: false, message: error.message || "Error al obtener productos" }
   }
 }
@@ -64,7 +89,7 @@ export async function getProductById(id: string) {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error("Error fetching product:", error)
+    logger.error("Error fetching product", error, 'productActions.getProductById')
     return { success: false, message: error.message || "Error al obtener producto" }
   }
 }
@@ -85,7 +110,7 @@ export async function createProduct(formData: z.infer<typeof productSchema>) {
     revalidatePath("/productos")
     return { success: true, data, message: "Producto creado exitosamente" }
   } catch (error: any) {
-    console.error("Error creating product:", error)
+    logger.error("Error creating product", error, 'productActions.createProduct')
     return { success: false, message: error.message || "Error al crear producto" }
   }
 }
@@ -138,7 +163,7 @@ export async function createProductFromRecipe(recipeId: string, markupPercent: n
     revalidatePath("/productos")
     return { success: true, data: product, message: "Producto creado desde receta exitosamente" }
   } catch (error: any) {
-    console.error("Error creating product from recipe:", error)
+    logger.error("Error creating product from recipe", error, 'productActions.createProductFromRecipe')
     return { success: false, message: error.message || "Error al crear producto desde receta" }
   }
 }
@@ -160,7 +185,7 @@ export async function updateProduct(id: string, formData: z.infer<typeof product
     revalidatePath("/productos")
     return { success: true, data, message: "Producto actualizado exitosamente" }
   } catch (error: any) {
-    console.error("Error updating product:", error)
+    logger.error("Error updating product", error, 'productActions.updateProduct')
     return { success: false, message: error.message || "Error al actualizar producto" }
   }
 }
@@ -189,7 +214,7 @@ export async function updateProductPrice(id: string, markupPercent: number) {
     revalidatePath("/productos")
     return { success: true, message: "Precio actualizado exitosamente" }
   } catch (error: any) {
-    console.error("Error updating product price:", error)
+    logger.error("Error updating product price", error, 'productActions.updateProductPrice')
     return { success: false, message: error.message || "Error al actualizar precio" }
   }
 }
@@ -249,7 +274,7 @@ export async function refreshProductCost(id: string) {
     revalidatePath("/productos")
     return { success: true, message: "Costo recalculado exitosamente" }
   } catch (error: any) {
-    console.error("Error refreshing product cost:", error)
+    logger.error("Error refreshing product cost", error, 'productActions.refreshProductCost')
     return { success: false, message: error.message || "Error al recalcular costo" }
   }
 }
@@ -282,7 +307,7 @@ export async function refreshAllProductCosts() {
       message: `Recalculados: ${successCount} exitosos, ${failCount} fallidos`
     }
   } catch (error: any) {
-    console.error("Error refreshing all product costs:", error)
+    logger.error("Error refreshing all product costs", error, 'productActions.refreshAllProductCosts')
     return { success: false, message: error.message || "Error al recalcular costos" }
   }
 }
@@ -300,7 +325,7 @@ export async function deleteProduct(id: string) {
     revalidatePath("/productos")
     return { success: true, message: "Producto eliminado exitosamente" }
   } catch (error: any) {
-    console.error("Error deleting product:", error)
+    logger.error("Error deleting product", error, 'productActions.deleteProduct')
     return { success: false, message: error.message || "Error al eliminar producto" }
   }
 }

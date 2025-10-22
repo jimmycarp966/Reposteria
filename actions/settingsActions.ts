@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase"
 import { settingSchema, eventSchema, priceRuleSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import { logger } from "@/lib/logger"
 
 // Settings
 export async function getSetting(key: string) {
@@ -18,7 +19,7 @@ export async function getSetting(key: string) {
 
     return { success: true, data: data.value }
   } catch (error: any) {
-    console.error("Error fetching setting:", error)
+    logger.error("Error fetching setting", error, 'settingsActions.getSetting')
     return { success: false, message: error.message || "Error al obtener configuración" }
   }
 }
@@ -34,7 +35,7 @@ export async function getAllSettings() {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error("Error fetching settings:", error)
+    logger.error("Error fetching settings", error, 'settingsActions.getSettings')
     return { success: false, message: error.message || "Error al obtener configuraciones" }
   }
 }
@@ -52,7 +53,7 @@ export async function updateSetting(key: string, value: string) {
     revalidatePath("/configuracion")
     return { success: true, message: "Configuración actualizada exitosamente" }
   } catch (error: any) {
-    console.error("Error updating setting:", error)
+    logger.error("Error updating setting", error, 'settingsActions.updateSetting')
     return { success: false, message: error.message || "Error al actualizar configuración" }
   }
 }
@@ -69,7 +70,7 @@ export async function getEvents() {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error("Error fetching events:", error)
+    logger.error("Error fetching events", error, 'settingsActions.getEvents')
     return { success: false, message: error.message || "Error al obtener eventos" }
   }
 }
@@ -86,7 +87,7 @@ export async function getEventById(id: string) {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error("Error fetching event:", error)
+    logger.error("Error fetching event", error, 'settingsActions.getEventById')
     return { success: false, message: error.message || "Error al obtener evento" }
   }
 }
@@ -107,7 +108,7 @@ export async function createEvent(formData: z.infer<typeof eventSchema>) {
     revalidatePath("/calendario")
     return { success: true, data, message: "Evento creado exitosamente" }
   } catch (error: any) {
-    console.error("Error creating event:", error)
+    logger.error("Error creating event", error, 'settingsActions.createEvent')
     return { success: false, message: error.message || "Error al crear evento" }
   }
 }
@@ -129,7 +130,7 @@ export async function updateEvent(id: string, formData: z.infer<typeof eventSche
     revalidatePath("/calendario")
     return { success: true, data, message: "Evento actualizado exitosamente" }
   } catch (error: any) {
-    console.error("Error updating event:", error)
+    logger.error("Error updating event", error, 'settingsActions.updateEvent')
     return { success: false, message: error.message || "Error al actualizar evento" }
   }
 }
@@ -147,7 +148,7 @@ export async function deleteEvent(id: string) {
     revalidatePath("/calendario")
     return { success: true, message: "Evento eliminado exitosamente" }
   } catch (error: any) {
-    console.error("Error deleting event:", error)
+    logger.error("Error deleting event", error, 'settingsActions.deleteEvent')
     return { success: false, message: error.message || "Error al eliminar evento" }
   }
 }
@@ -171,7 +172,7 @@ export async function getPriceRules() {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error("Error fetching price rules:", error)
+    logger.error("Error fetching price rules", error, 'settingsActions.getPriceRules')
     return { success: false, message: error.message || "Error al obtener reglas de precio" }
   }
 }
@@ -191,7 +192,7 @@ export async function createPriceRule(formData: z.infer<typeof priceRuleSchema>)
     revalidatePath("/configuracion")
     return { success: true, data, message: "Regla de precio creada exitosamente" }
   } catch (error: any) {
-    console.error("Error creating price rule:", error)
+    logger.error("Error creating price rule", error, 'settingsActions.createPriceRule')
     return { success: false, message: error.message || "Error al crear regla de precio" }
   }
 }
@@ -212,7 +213,7 @@ export async function updatePriceRule(id: string, formData: z.infer<typeof price
     revalidatePath("/configuracion")
     return { success: true, data, message: "Regla de precio actualizada exitosamente" }
   } catch (error: any) {
-    console.error("Error updating price rule:", error)
+    logger.error("Error updating price rule", error, 'settingsActions.updatePriceRule')
     return { success: false, message: error.message || "Error al actualizar regla de precio" }
   }
 }
@@ -229,7 +230,7 @@ export async function deletePriceRule(id: string) {
     revalidatePath("/configuracion")
     return { success: true, message: "Regla de precio eliminada exitosamente" }
   } catch (error: any) {
-    console.error("Error deleting price rule:", error)
+    logger.error("Error deleting price rule", error, 'settingsActions.deletePriceRule')
     return { success: false, message: error.message || "Error al eliminar regla de precio" }
   }
 }

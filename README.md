@@ -13,15 +13,31 @@ Sistema web completo para gestionar un emprendimiento de repostería, con cálcu
 
 ## 🚀 Características
 
-- ✅ **Gestión de Ingredientes**: Control de stock, costos y proveedores
-- ✅ **Recetas**: Crea y gestiona recetas con cálculo automático de costos
-- ✅ **Productos**: Productos con precios sugeridos y márgenes configurables
-- ✅ **Pedidos**: Gestión de pedidos diarios y por efemérides
-- ✅ **Calendario**: Vista de entregas y eventos programados
-- ✅ **Producción**: Planificación automática de tiempos de producción
-- ✅ **Reportes**: Análisis de ventas, márgenes y rendimiento
-- ✅ **Configuración**: Efemérides, reglas de precio y settings globales
-- ✅ **Diseño Moderno**: Interfaz colorida y expresiva para repostería
+### Módulos Completos
+- ✅ **Dashboard**: Vista general con KPIs, ventas del mes, margen promedio y alertas de stock
+- ✅ **Recetas**: Crea y gestiona recetas con cálculo automático de costos por porción
+- ✅ **Ingredientes**: Control completo de ingredientes con stock, costos y proveedores
+- ✅ **Productos**: Productos derivados de recetas con precios sugeridos y márgenes configurables
+- ✅ **Pedidos**: Gestión integral de pedidos diarios y por efemérides con confirmación de stock
+- ✅ **Calendario**: Vista de entregas programadas y gestión de efemérides
+- ✅ **Producción**: Planificación y seguimiento de tareas de producción por pedido
+- ✅ **Reportes**: Análisis detallado de ventas, márgenes, productos más vendidos y tendencias
+- ✅ **Configuración**: Settings globales, efemérides y reglas de precio especiales
+
+### Características Técnicas
+- ✅ **Diseño Moderno**: Interfaz colorida y expresiva con gradientes temáticos para repostería
+- ✅ **Sistema de Caché**: Caché inteligente con TTL para mejorar rendimiento
+- ✅ **Validaciones**: Todas las operaciones validadas con Zod + React Hook Form
+- ✅ **Transacciones Atómicas**: Operaciones críticas usan funciones RPC de PostgreSQL
+- ✅ **Modo Fallback**: Datos mock para desarrollo sin conexión a Supabase
+- ✅ **Scripts de Utilidad**: 11 scripts para testing, debugging y mantenimiento
+- ✅ **Optimizado**: Next.js 15 con Server Components y Server Actions
+- ✅ **Testing Automatizado**: 85 tests con Vitest + Testing Library
+- ✅ **TypeScript Estricto**: Tipos completos, sin `any`
+- ✅ **Logging Estructurado**: Sistema profesional de logs
+- ✅ **Paginación Universal**: Todas las listas con paginación
+- ✅ **Búsqueda Avanzada**: Búsqueda instantánea con debounce
+- ✅ **i18n Preparado**: 200+ strings organizados para internacionalización
 
 ## 🛠️ Stack Tecnológico
 
@@ -97,36 +113,58 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ```
 /
-├── app/                      # Páginas de Next.js 15 (App Router)
-│   ├── page.tsx             # Dashboard
-│   ├── ingredientes/        # Gestión de ingredientes
-│   ├── recetas/             # Gestión de recetas
-│   ├── productos/           # Gestión de productos
-│   ├── pedidos/             # Gestión de pedidos
-│   ├── calendario/          # Vista de calendario
-│   ├── produccion/          # Planificación de producción
-│   ├── reportes/            # Reportes y análisis
-│   └── configuracion/       # Configuración del sistema
-├── actions/                 # Server Actions de Next.js
-│   ├── ingredientActions.ts
-│   ├── recipeActions.ts
-│   ├── productActions.ts
-│   ├── orderActions.ts
-│   ├── inventoryActions.ts
-│   ├── reportActions.ts
-│   └── settingsActions.ts
+├── app/                        # Páginas de Next.js 15 (App Router)
+│   ├── page.tsx               # Dashboard con KPIs
+│   ├── recetas/               # Gestión de recetas
+│   ├── ingredientes/          # Gestión de ingredientes
+│   ├── productos/             # Gestión de productos
+│   ├── pedidos/               # Gestión de pedidos
+│   ├── calendario/            # Vista de calendario y efemérides
+│   ├── produccion/            # Planificación de producción
+│   ├── reportes/              # Reportes y análisis
+│   └── configuracion/         # Configuración del sistema
+├── actions/                   # Server Actions de Next.js (54 funciones)
+│   ├── recipeActions.ts       # 7 funciones de recetas
+│   ├── ingredientActions.ts   # 6 funciones de ingredientes
+│   ├── inventoryActions.ts    # 5 funciones de inventario
+│   ├── productActions.ts      # 9 funciones de productos
+│   ├── orderActions.ts        # 8 funciones de pedidos
+│   ├── productionActions.ts   # 3 funciones de producción
+│   ├── reportActions.ts       # 4 funciones de reportes
+│   └── settingsActions.ts     # 12 funciones de configuración
 ├── components/
-│   ├── ui/                  # Componentes de shadcn/ui
-│   └── shared/              # Componentes compartidos
+│   ├── ui/                    # Componentes de shadcn/ui (personalizados)
+│   └── shared/                # Componentes compartidos
+│       ├── Navbar.tsx         # Navegación principal
+│       ├── NotificationToast.tsx
+│       ├── LoadingSpinner.tsx
+│       ├── EmptyState.tsx
+│       └── ImageUpload.tsx    # Upload a Supabase Storage
 ├── lib/
-│   ├── supabase.ts          # Cliente de Supabase
-│   ├── utils.ts             # Funciones helper
-│   └── validations.ts       # Esquemas de validación Zod
-├── store/
-│   └── notificationStore.ts # Store de Zustand
+│   ├── supabase.ts            # Cliente de Supabase
+│   ├── utils.ts               # Funciones helper
+│   ├── validations.ts         # Esquemas de validación Zod
+│   ├── routes.ts              # Definición de rutas del sistema
+│   ├── cache.ts               # Sistema de caché con TTL
+│   ├── cache-utils.ts         # Utilidades de limpieza de caché
+│   └── supabase-fallback.ts   # Datos mock para desarrollo
+├── store/                     # Zustand stores
+│   ├── notificationStore.ts   # Notificaciones toast
+│   └── sidebarStore.ts        # Estado del sidebar móvil
+├── scripts/                   # Scripts de utilidad (11 scripts)
+│   ├── test-supabase.js       # Verificar conexión
+│   ├── test-cache.js          # Probar sistema de caché
+│   ├── check-ingredients.js   # Debugging de ingredientes
+│   ├── check-recipes.js       # Debugging de recetas
+│   ├── create-product-from-recipe.js
+│   ├── update-ingredients.js  # Actualización batch
+│   ├── clear-cache.js         # Limpieza manual de caché
+│   ├── optimize-dev.js        # Aplicar optimizaciones
+│   └── setup-env.js           # Configuración inicial
 └── supabase/
-    ├── migrations/          # Migraciones SQL
-    └── seeds.sql            # Datos de ejemplo
+    ├── migrations/            # Migraciones SQL
+    │   └── 001_initial_schema.sql
+    └── seeds.sql              # Datos de ejemplo
 ```
 
 ## 🎯 Uso Básico
@@ -194,6 +232,79 @@ Ya configurado en los pasos anteriores.
 
 Ver `architecture.md` para el diagrama completo de tablas, relaciones y flujos del sistema.
 
+## 🛠️ Scripts Disponibles
+
+El sistema incluye varios scripts de utilidad para desarrollo y mantenimiento:
+
+### Testing y Verificación
+```bash
+# Verificar conexión a Supabase
+node scripts/test-supabase.js
+
+# Probar sistema de caché
+node scripts/test-cache.js
+
+# Ver ingredientes y stock
+node scripts/check-ingredients.js
+
+# Ver recetas y costos
+node scripts/check-recipes.js
+```
+
+### Mantenimiento
+```bash
+# Limpiar caché manualmente
+npm run cache:clear
+
+# Aplicar optimizaciones de desarrollo
+npm run optimize
+
+# Desarrollo con más memoria
+npm run dev:optimized
+```
+
+### Utilidades de Datos
+```bash
+# Actualizar ingredientes en batch
+node scripts/update-ingredients.js
+
+# Crear producto desde receta
+node scripts/create-product-from-recipe.js
+
+# Corregir nombres de productos
+node scripts/fix-product-name.js
+
+# Configuración inicial del proyecto
+node scripts/setup-env.js
+```
+
+**Nota**: Todos los scripts incluyen documentación interna. Ver `architecture.md` para detalles completos de cada script.
+
+## 🧪 Testing
+
+El sistema incluye **85 tests automatizados** con Vitest:
+
+```bash
+# Ejecutar tests en modo watch
+npm test
+
+# Interface visual de testing
+npm run test:ui
+
+# Una ejecución (para CI/CD)
+npm run test:run
+
+# Con cobertura de código
+npm run test:coverage
+```
+
+**Tests incluidos**:
+- 55 tests unitarios (utils, cache, logger, validaciones, hooks)
+- 10 tests de integración (cálculos de costos y tiempos)
+- 20 tests de componentes UI (SearchFilter, ErrorAlert, EmptyState)
+
+Ver `__tests__/README.md` para más detalles sobre testing.
+
 ## 🔧 Solución de Problemas Comunes
 
 ### Error: "Supabase no está configurado"
@@ -223,6 +334,20 @@ Ver `architecture.md` para el diagrama completo de tablas, relaciones y flujos d
 1. Ejecuta `npm run build -- --no-lint` para ignorar errores de linting
 2. Verifica que todas las dependencias estén instaladas: `npm install`
 
+### Dashboard lento / Datos desactualizados
+**Síntomas:** El dashboard tarda en cargar o muestra datos viejos
+**Solución:**
+1. Limpia el caché: `npm run cache:clear`
+2. Refresca la página con Ctrl+F5 (o Cmd+Shift+R en Mac)
+3. El sistema usa caché de 1-2 minutos para mejorar rendimiento
+
+### Modo de desarrollo sin Supabase
+**¿No tienes Supabase configurado pero quieres ver la interfaz?**
+- El sistema incluye datos mock automáticos (`lib/supabase-fallback.ts`)
+- Podrás navegar por todas las páginas y ver la interfaz
+- Los datos no se guardarán, pero podrás probar la UX completa
+- Para activar conexión real, configura las variables en `.env.local`
+
 ## 🧪 Testing Manual Recomendado
 
 1. **Crear receta "Torta de Chocolate"** con 3 ingredientes → verificar cálculo de costo
@@ -247,11 +372,29 @@ Ver `architecture.md` para el diagrama completo de tablas, relaciones y flujos d
 - Verifica que haya stock suficiente de todos los ingredientes
 - Revisa que las funciones RPC estén creadas correctamente en Supabase
 
-## 📝 Notas
+## 📝 Notas Importantes
 
+### General
 - Los costos están en pesos argentinos (ARS) por defecto
 - El sistema usa la fecha del sistema para todas las operaciones
 - Las notificaciones son visuales únicamente (no se envían emails)
+- Diseñado para un solo usuario (sin autenticación compleja)
+
+### Performance
+- **Sistema de caché**: El dashboard y reportes usan caché temporal (1-2 min)
+- **Limpieza automática**: El caché se limpia cada 10 minutos automáticamente
+- **Limpieza manual**: Usa `npm run cache:clear` si los datos no se actualizan
+
+### Desarrollo
+- **54 Server Actions** distribuidas en 8 archivos
+- **11 scripts de utilidad** para testing y mantenimiento
+- **Modo fallback**: Datos mock disponibles sin necesidad de Supabase
+- **Optimización**: Usa `npm run dev:optimized` para mejor rendimiento
+
+### Documentación
+- `architecture.md`: Documentación técnica completa del sistema
+- `PERFORMANCE_OPTIMIZATIONS.md`: Detalles de optimizaciones y caché
+- Cada script incluye comentarios sobre su uso
 
 ## 🤝 Contribuir
 
@@ -268,5 +411,6 @@ Uso privado. Ver `architecture.md` para documentación técnica completa.
 
 
 
-#   R e p o s t e r i a  
+#   R e p o s t e r i a 
+ 
  

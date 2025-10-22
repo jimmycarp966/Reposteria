@@ -5,6 +5,7 @@ import { inventoryUpdateSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { checkSupabaseConnection, getMockLowStockIngredients } from "@/lib/supabase-fallback"
+import { logger } from "@/lib/logger"
 
 export async function getInventory() {
   try {
@@ -25,7 +26,7 @@ export async function getInventory() {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error("Error fetching inventory:", error)
+    logger.error("Error fetching inventory", error, 'inventoryActions.getInventory')
     return { success: false, message: error.message || "Error al obtener inventario" }
   }
 }
@@ -36,7 +37,7 @@ export async function getLowStockIngredients(threshold: number = 10) {
     const hasConnection = await checkSupabaseConnection()
     
     if (!hasConnection) {
-      console.log("📡 Sin conexión a Supabase, usando datos de ejemplo")
+      logger.info("Sin conexión a Supabase, usando datos de ejemplo", null, 'inventoryActions.getLowStockIngredients')
       return {
         success: true,
         data: getMockLowStockIngredients()
@@ -66,7 +67,7 @@ export async function getLowStockIngredients(threshold: number = 10) {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error("Error fetching low stock ingredients:", error)
+    logger.error("Error fetching low stock ingredients", error, 'inventoryActions.getLowStockIngredients')
     // En caso de error, usar datos de ejemplo
     return {
       success: true,
@@ -126,7 +127,7 @@ export async function updateStock(formData: z.infer<typeof inventoryUpdateSchema
     revalidatePath("/inventario")
     return { success: true, message: "Stock actualizado exitosamente" }
   } catch (error: any) {
-    console.error("Error updating stock:", error)
+    logger.error("Error updating stock", error, 'inventoryActions.updateStock')
     return { success: false, message: error.message || "Error al actualizar stock" }
   }
 }
@@ -160,7 +161,7 @@ export async function getStockMovements(ingredientId?: string, limit: number = 5
 
     return { success: true, data }
   } catch (error: any) {
-    console.error("Error fetching stock movements:", error)
+    logger.error("Error fetching stock movements", error, 'inventoryActions.getStockMovements')
     return { success: false, message: error.message || "Error al obtener movimientos" }
   }
 }
@@ -177,7 +178,7 @@ export async function setInventoryLocation(ingredientId: string, location: strin
     revalidatePath("/ingredientes")
     return { success: true, message: "Ubicación actualizada exitosamente" }
   } catch (error: any) {
-    console.error("Error updating location:", error)
+    logger.error("Error updating location", error, 'inventoryActions.setInventoryLocation')
     return { success: false, message: error.message || "Error al actualizar ubicación" }
   }
 }

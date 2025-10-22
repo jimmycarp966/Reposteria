@@ -5,33 +5,68 @@ import { ingredientSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getCachedData, CACHE_KEYS, cache } from "@/lib/cache"
+import { logger } from "@/lib/logger"
+import type { IngredientsQueryParams, PaginatedResponse, IngredientWithInventory } from "@/lib/types"
 
-export async function getIngredients() {
+export async function getIngredients(params: IngredientsQueryParams = {}): Promise<PaginatedResponse<IngredientWithInventory>> {
+  const {
+    page = 1,
+    pageSize = 20,
+    search = '',
+    lowStockOnly = false
+  } = params
+
   try {
-    const data = await getCachedData(
-      CACHE_KEYS.INGREDIENTS,
-      async () => {
-        const { data, error } = await supabase
-          .from("ingredients")
-          .select(`
-            *,
-            inventory (
-              quantity,
-              unit,
-              location
-            )
-          `)
-          .order("name")
+    logger.debug('Fetching ingredients', params, 'ingredientActions.getIngredients')
 
-        if (error) throw error
-        return data
-      },
-      2 * 60 * 1000 // 2 minutos de caché
-    )
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
 
-    return { success: true, data }
+    let query = supabase
+      .from("ingredients")
+      .select(`
+        *,
+        inventory (
+          quantity,
+          unit,
+          location
+        )
+      `, { count: 'exact' })
+      .range(from, to)
+      .order("name")
+
+    // Búsqueda por nombre
+    if (search) {
+      query = query.ilike('name', `%${search}%`)
+    }
+
+    const { data, error, count } = await query
+
+    if (error) throw error
+
+    let filteredData = data || []
+
+    // Filtrar stock bajo (hacer en cliente ya que es relación)
+    if (lowStockOnly) {
+      filteredData = filteredData.filter((ing: any) => 
+        ing.inventory && ing.inventory.quantity < 10
+      )
+    }
+
+    logger.info(`Fetched ${filteredData.length} ingredients`, { count, search }, 'ingredientActions.getIngredients')
+
+    return {
+      success: true,
+      data: filteredData as IngredientWithInventory[],
+      pagination: {
+        page,
+        pageSize,
+        total: lowStockOnly ? filteredData.length : (count || 0),
+        totalPages: Math.ceil((lowStockOnly ? filteredData.length : (count || 0)) / pageSize)
+      }
+    }
   } catch (error: any) {
-    console.error("Error fetching ingredients:", error)
+    logger.error("Error fetching ingredients", error, 'ingredientActions.getIngredients')
     return { success: false, message: error.message || "Error al obtener ingredientes" }
   }
 }
@@ -55,7 +90,7 @@ export async function getIngredientById(id: string) {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error("Error fetching ingredient:", error)
+    logger.error("Error fetching ingredient", error, 'ingredientActions.getIngredientById')
     return { success: false, message: error.message || "Error al obtener ingrediente" }
   }
 }
@@ -85,7 +120,7 @@ export async function createIngredient(formData: z.infer<typeof ingredientSchema
     revalidatePath("/ingredientes")
     return { success: true, data, message: "Ingrediente creado exitosamente" }
   } catch (error: any) {
-    console.error("Error creating ingredient:", error)
+    logger.error("Error creating ingredient", error, 'ingredientActions.createIngredient')
     return { success: false, message: error.message || "Error al crear ingrediente" }
   }
 }
@@ -109,7 +144,7 @@ export async function updateIngredient(id: string, formData: z.infer<typeof ingr
     revalidatePath("/productos")
     return { success: true, data, message: "Ingrediente actualizado exitosamente" }
   } catch (error: any) {
-    console.error("Error updating ingredient:", error)
+    logger.error("Error updating ingredient", error, 'ingredientActions.updateIngredient')
     return { success: false, message: error.message || "Error al actualizar ingrediente" }
   }
 }
@@ -127,7 +162,7 @@ export async function deleteIngredient(id: string) {
     revalidatePath("/ingredientes")
     return { success: true, message: "Ingrediente eliminado exitosamente" }
   } catch (error: any) {
-    console.error("Error deleting ingredient:", error)
+    logger.error("Error deleting ingredient", error, 'ingredientActions.deleteIngredient')
     return { success: false, message: error.message || "Error al eliminar ingrediente" }
   }
 }
@@ -157,7 +192,7 @@ export async function updateIngredientCost(id: string, newCost: number) {
 
     return { success: true, message: "Costo actualizado. Recalcula los productos afectados." }
   } catch (error: any) {
-    console.error("Error updating ingredient cost:", error)
+    logger.error("Error updating ingredient cost", error, 'ingredientActions.updateIngredientCost')
     return { success: false, message: error.message || "Error al actualizar costo" }
   }
 }

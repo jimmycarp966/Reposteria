@@ -37,15 +37,20 @@
 **Problema**: No había caché para consultas frecuentes.
 
 **Solución**:
-- ✅ Implementado sistema de caché simple con TTL
+- ✅ Implementado sistema de caché simple con TTL (`lib/cache.ts`)
 - ✅ Caché automático para dashboard (1-2 minutos)
 - ✅ Limpieza automática de caché cada 10 minutos
-- ✅ Limpieza selectiva de caché por tipo de operación
+- ✅ Limpieza selectiva de caché por tipo de operación (`lib/cache-utils.ts`)
+- ✅ Funciones helper para invalidar caché específico después de operaciones
 
 ## 🎯 Mejoras Implementadas
 
 ### Sistema de Caché
+
+#### Uso Básico (`lib/cache.ts`)
 ```typescript
+import { getCachedData, CACHE_KEYS } from '@/lib/cache'
+
 // Caché automático para consultas frecuentes
 const monthlyStats = await getCachedData(
   CACHE_KEYS.MONTHLY_STATS,
@@ -53,6 +58,37 @@ const monthlyStats = await getCachedData(
   2 * 60 * 1000 // 2 minutos
 )
 ```
+
+#### Limpieza Selectiva (`lib/cache-utils.ts`)
+```typescript
+import { 
+  clearOrdersCache, 
+  clearInventoryCache, 
+  clearProductsCache,
+  clearRelevantCache 
+} from '@/lib/cache-utils'
+
+// Después de operaciones que modifican datos
+clearOrdersCache()      // Limpia: orders, upcoming_orders, monthly_stats
+clearInventoryCache()   // Limpia: inventory, low_stock
+clearProductsCache()    // Limpia: products, ingredients
+
+// O usar la función inteligente
+clearRelevantCache('order')      // Limpia caché de pedidos
+clearRelevantCache('inventory')  // Limpia caché de inventario
+clearRelevantCache('product')    // Limpia caché de productos
+clearRelevantCache('ingredient') // Limpia productos + inventario
+```
+
+**Claves de caché disponibles**:
+- `MONTHLY_STATS` - Estadísticas del mes
+- `UPCOMING_ORDERS` - Próximos pedidos
+- `LOW_STOCK` - Ingredientes con stock bajo
+- `INVENTORY` - Inventario completo
+- `ORDERS` - Lista de pedidos
+- `PRODUCTS` - Lista de productos
+- `RECIPES` - Lista de recetas
+- `INGREDIENTS` - Lista de ingredientes
 
 ### Consultas Optimizadas
 ```typescript
@@ -163,12 +199,51 @@ console.timeEnd('dashboard-load')
 - [ ] **Query Optimization**: Consultas más eficientes
 - [ ] **Asset Optimization**: Minificación y compresión
 
+## 🛠️ Herramientas de Desarrollo
+
+### Sistema de Fallback (`lib/supabase-fallback.ts`)
+Para desarrollo sin conexión a Supabase:
+
+```typescript
+import { 
+  checkSupabaseConnection, 
+  getFallbackData, 
+  MOCK_DATA 
+} from '@/lib/supabase-fallback'
+
+// Verificar si hay conexión
+const isConnected = await checkSupabaseConnection()
+
+// Usar datos mock si no hay conexión
+if (!isConnected) {
+  const ingredients = getFallbackData('ingredients')
+  const recipes = getFallbackData('recipes')
+  const products = getFallbackData('products')
+}
+```
+
+**Datos mock disponibles**:
+- Ingredientes de ejemplo (3 items)
+- Recetas de ejemplo (2 items)
+- Productos de ejemplo (2 items)
+- Pedidos de ejemplo (1 item)
+- Inventario de ejemplo (3 items)
+- Estadísticas mock
+- Próximos pedidos mock
+
+**Útil para**:
+- Desarrollo offline
+- Testing de UI sin base de datos
+- Demos y presentaciones
+- Desarrollo inicial antes de configurar Supabase
+
 ## 🚨 Notas Importantes
 
 ### Caché y Datos
 - El caché se limpia automáticamente cada 10 minutos
-- Los datos se invalidan al crear/editar/eliminar registros
+- Los datos se invalidan al crear/editar/eliminar registros usando `clearRelevantCache()`
 - El caché es solo para desarrollo (no persistente)
+- Para limpiar manualmente: `npm run cache:clear`
 
 ### Compatibilidad
 - ✅ Next.js 15+

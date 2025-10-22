@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase"
 import { get_current_date } from "@/lib/utils"
 import { checkSupabaseConnection, getMockMonthlyStats } from "@/lib/supabase-fallback"
+import { logger } from "@/lib/logger"
 
 export async function getSalesReport(dateFrom: string, dateTo: string) {
   try {
@@ -74,7 +75,7 @@ export async function getSalesReport(dateFrom: string, dateTo: string) {
       },
     }
   } catch (error: any) {
-    console.error("Error fetching sales report:", error)
+    logger.error("Error fetching sales report", error, 'reportActions.getSalesReport')
     return { success: false, message: error.message || "Error al generar reporte de ventas" }
   }
 }
@@ -85,7 +86,7 @@ export async function getMonthlyStats() {
     const hasConnection = await checkSupabaseConnection()
     
     if (!hasConnection) {
-      console.log("📡 Sin conexión a Supabase, usando datos de ejemplo")
+      logger.info("Sin conexión a Supabase, usando datos de ejemplo", null, 'reportActions.getMonthlyStats')
       return {
         success: true,
         data: getMockMonthlyStats()
@@ -128,7 +129,7 @@ export async function getMonthlyStats() {
       },
     }
   } catch (error: any) {
-    console.error("Error fetching monthly stats:", error)
+    logger.error("Error fetching monthly stats", error, 'reportActions.getMonthlyStats')
     // En caso de error, usar datos de ejemplo
     return {
       success: true,
@@ -189,7 +190,7 @@ export async function getProductionReport(dateFrom: string, dateTo: string) {
       },
     }
   } catch (error: any) {
-    console.error("Error fetching production report:", error)
+    logger.error("Error fetching production report", error, 'reportActions.getProductionReport')
     return { success: false, message: error.message || "Error al generar reporte de producción" }
   }
 }
@@ -223,7 +224,7 @@ export async function exportSalesReportCSV(dateFrom: string, dateTo: string) {
 
     return { success: true, data: csv }
   } catch (error: any) {
-    console.error("Error exporting CSV:", error)
+    logger.error("Error exporting CSV", error, 'reportActions.exportCSV')
     return { success: false, message: error.message || "Error al exportar CSV" }
   }
 }

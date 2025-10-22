@@ -5,65 +5,82 @@ import { createRecipeSchema, recipeSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getCachedData, CACHE_KEYS, cache } from "@/lib/cache"
+import { logger } from "@/lib/logger"
+import type { RecipesQueryParams, PaginatedResponse, RecipeWithIngredients } from "@/lib/types"
 
-export async function getRecipes() {
+export async function getRecipes(params: RecipesQueryParams = {}): Promise<PaginatedResponse<RecipeWithIngredients>> {
+  const {
+    page = 1,
+    pageSize = 20,
+    search = '',
+    activeOnly = true
+  } = params
+
   try {
-    console.log("🔍 Intentando obtener recetas...")
+    logger.debug('Fetching recipes', params, 'recipeActions.getRecipes')
 
     // Verificar si Supabase está configurado correctamente
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder') || supabaseKey.includes('placeholder')) {
-      console.log("⚠️ Supabase no está configurado correctamente")
+      logger.warn("Supabase not configured", null, 'recipeActions.getRecipes')
       return {
         success: false,
         message: "Supabase no está configurado. Crea un archivo .env.local con las credenciales correctas.",
-        needsSetup: true
       }
     }
 
-    const data = await getCachedData(
-      CACHE_KEYS.RECIPES,
-      async () => {
-        console.log("📡 Consultando Supabase...")
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
 
-        const { data, error } = await supabase
-          .from("recipes")
-          .select(`
-            *,
-            recipe_ingredients (
-              id,
-              quantity,
-              unit,
-              ingredient:ingredients (
-                id,
-                name,
-                cost_per_unit
-              )
-            )
-          `)
-          .eq("active", true)
-          .order("created_at", { ascending: false })
+    let query = supabase
+      .from("recipes")
+      .select(`
+        *,
+        recipe_ingredients (
+          id,
+          quantity,
+          unit,
+          ingredient:ingredients (
+            id,
+            name,
+            cost_per_unit
+          )
+        )
+      `, { count: 'exact' })
+      .range(from, to)
+      .order("created_at", { ascending: false })
 
-        if (error) {
-          console.error("❌ Error de Supabase:", error)
-          throw new Error(`Supabase error: ${error.message} (${error.code || 'sin código'})`)
-        }
+    if (activeOnly) {
+      query = query.eq("active", true)
+    }
 
-        console.log("✅ Datos obtenidos:", data?.length || 0, "recetas")
-        return data || []
-      },
-      2 * 60 * 1000 // 2 minutos de caché
-    )
+    if (search) {
+      query = query.ilike('name', `%${search}%`)
+    }
 
-    console.log("🎯 Retornando datos exitosamente")
-    return { success: true, data }
+    const { data, error, count } = await query
+
+    if (error) {
+      logger.error("Supabase error in getRecipes", error, 'recipeActions.getRecipes')
+      throw new Error(`Supabase error: ${error.message} (${error.code || 'sin código'})`)
+    }
+
+    logger.info(`Fetched ${data?.length || 0} recipes`, { count, search }, 'recipeActions.getRecipes')
+
+    return {
+      success: true,
+      data: data as RecipeWithIngredients[] || [],
+      pagination: {
+        page,
+        pageSize,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / pageSize)
+      }
+    }
   } catch (error: any) {
-    console.error("💥 Error completo en getRecipes:", error)
-    console.error("Tipo de error:", typeof error)
-    console.error("Propiedades del error:", Object.keys(error))
-    console.error("Mensaje del error:", error.message)
+    logger.error("Error in getRecipes", error, 'recipeActions.getRecipes')
 
     let errorMessage = "Error desconocido al obtener recetas"
 
@@ -109,7 +126,7 @@ export async function getRecipeById(id: string) {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error("Error fetching recipe:", error)
+    logger.error("Error fetching recipe", error, 'recipeActions.getRecipeById')
     return { success: false, message: error.message || "Error al obtener receta" }
   }
 }
@@ -150,7 +167,7 @@ export async function createRecipe(formData: z.infer<typeof createRecipeSchema>)
     revalidatePath("/recetas")
     return { success: true, data: recipe, message: "Receta creada exitosamente" }
   } catch (error: any) {
-    console.error("Error creating recipe:", error)
+    logger.error("Error creating recipe", error, 'recipeActions.createRecipe')
     return { success: false, message: error.message || "Error al crear receta" }
   }
 }
@@ -197,7 +214,7 @@ export async function updateRecipe(id: string, formData: z.infer<typeof createRe
     revalidatePath(`/recetas/${id}`)
     return { success: true, message: "Receta actualizada exitosamente" }
   } catch (error: any) {
-    console.error("Error updating recipe:", error)
+    logger.error("Error updating recipe", error, 'recipeActions.updateRecipe')
     return { success: false, message: error.message || "Error al actualizar receta" }
   }
 }
@@ -216,7 +233,7 @@ export async function deleteRecipe(id: string) {
     revalidatePath("/recetas")
     return { success: true, message: "Receta eliminada exitosamente" }
   } catch (error: any) {
-    console.error("Error deleting recipe:", error)
+    logger.error("Error deleting recipe", error, 'recipeActions.deleteRecipe')
     return { success: false, message: error.message || "Error al eliminar receta" }
   }
 }
@@ -272,7 +289,7 @@ export async function duplicateRecipe(id: string) {
     revalidatePath("/recetas")
     return { success: true, data: newRecipe, message: "Receta duplicada exitosamente" }
   } catch (error: any) {
-    console.error("Error duplicating recipe:", error)
+    logger.error("Error duplicating recipe", error, 'recipeActions.duplicateRecipe')
     return { success: false, message: error.message || "Error al duplicar receta" }
   }
 }
@@ -286,7 +303,7 @@ export async function calculateRecipeCost(id: string) {
 
     return { success: true, data, message: "Costo calculado exitosamente" }
   } catch (error: any) {
-    console.error("Error calculating recipe cost:", error)
+    logger.error("Error calculating recipe cost", error, 'recipeActions.calculateRecipeCost')
     return { success: false, message: error.message || "Error al calcular costo" }
   }
 }

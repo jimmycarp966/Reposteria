@@ -228,6 +228,90 @@ Settings globales del sistema.
 - `production_buffer_minutes`: 120
 - `low_stock_threshold`: 10
 
+## 🎯 Módulos del Sistema
+
+El sistema está organizado en 9 módulos principales, cada uno con su propia interfaz y funcionalidad:
+
+### 1. **Dashboard** (`/`)
+Vista general con KPIs y métricas del negocio:
+- Ventas del mes actual
+- Margen de ganancia promedio
+- Próximos pedidos (7 días)
+- Ingredientes con stock bajo
+- Caché: 1-2 minutos para optimizar rendimiento
+
+### 2. **Recetas** (`/recetas`)
+Gestión completa de recetas:
+- Crear/editar recetas con múltiples ingredientes
+- Cálculo automático de costo por porción
+- Duplicar recetas para variaciones
+- Versiones de recetas
+- Imágenes de recetas
+- **Server Actions**: `recipeActions.ts` (7 funciones)
+
+### 3. **Ingredientes** (`/ingredientes`)
+Control de ingredientes y stock:
+- CRUD de ingredientes con costos unitarios
+- Actualización de stock (entrada/salida)
+- Gestión de proveedores y tiempos de entrega
+- Alertas de stock bajo
+- Imágenes de ingredientes
+- **Server Actions**: `ingredientActions.ts` + `inventoryActions.ts` (11 funciones)
+
+### 4. **Productos** (`/productos`)
+Productos derivados de recetas:
+- Crear productos desde recetas existentes
+- Definir markup (margen de ganancia) individual
+- Precio sugerido calculado automáticamente
+- SKU y gestión de catálogo
+- Recalcular costos cuando cambien ingredientes
+- **Server Actions**: `productActions.ts` (9 funciones)
+
+### 5. **Pedidos** (`/pedidos`)
+Gestión integral de pedidos:
+- Crear pedidos diarios o por efemérides
+- Cálculo automático de inicio de producción
+- Confirmar pedidos (descuenta stock atómicamente)
+- Estados: PENDING, CONFIRMED, IN_PRODUCTION, COMPLETED, CANCELLED
+- Verificación de stock antes de confirmar
+- Historial de pedidos
+- **Server Actions**: `orderActions.ts` (8 funciones)
+
+### 6. **Calendario** (`/calendario`)
+Vista temporal de entregas y eventos:
+- Calendario visual de entregas
+- Gestión de efemérides (Día de la Madre, Navidad, etc.)
+- Recordatorios personalizados
+- Asociación de eventos con reglas de precio especiales
+- Filtros por tipo de evento
+
+### 7. **Producción** (`/produccion`)
+Planificación y seguimiento de tareas:
+- Lista de tareas de producción por pedido
+- Estados: PENDING, IN_PROGRESS, COMPLETED
+- Tiempos estimados y reales
+- Vista por fecha de inicio de producción
+- Actualización de duración de tareas
+- **Server Actions**: `productionActions.ts` (3 funciones)
+
+### 8. **Reportes** (`/reportes`)
+Análisis y métricas del negocio:
+- Estadísticas mensuales (ventas, costos, margen)
+- Productos más vendidos
+- Análisis de rentabilidad
+- Tendencias temporales
+- Exportación de datos
+- **Server Actions**: `reportActions.ts` (4 funciones)
+
+### 9. **Configuración** (`/configuracion`)
+Settings globales del sistema:
+- Margen de ganancia por defecto
+- Buffer de producción (minutos)
+- Umbral de stock bajo
+- Gestión de efemérides
+- Reglas de precio especiales
+- **Server Actions**: `settingsActions.ts` (12 funciones)
+
 ## 🔄 Flujo de Datos Principal
 
 ### 1. Crear Receta → Calcular Costo → Crear Producto
@@ -417,7 +501,10 @@ components/
 
 ### Store de Zustand
 
-Solo se usa para **notificaciones visuales** (no para datos de negocio).
+El sistema usa Zustand para estado global mínimo (no para datos de negocio).
+
+#### 1. **Notification Store** (`store/notificationStore.ts`)
+Gestión de notificaciones toast:
 
 ```typescript
 useNotificationStore.addNotification({
@@ -426,6 +513,16 @@ useNotificationStore.addNotification({
   duration: 5000 // ms
 })
 ```
+
+#### 2. **Sidebar Store** (`store/sidebarStore.ts`)
+Control del sidebar móvil:
+
+```typescript
+useSidebarStore.toggleSidebar()  // Abrir/cerrar sidebar
+useSidebarStore.isOpen           // Estado actual
+```
+
+**Nota importante**: Los datos de negocio (productos, pedidos, etc.) se obtienen mediante Server Actions y se refrescan con `revalidatePath()`, **no se almacenan en Zustand**.
 
 ## 📈 Cálculos de Negocio
 
@@ -596,6 +693,142 @@ ORDER BY im.created_at DESC
 LIMIT 20;
 ```
 
+## 🛠️ Scripts de Utilidad
+
+El sistema incluye varios scripts Node.js en la carpeta `/scripts` para tareas de desarrollo y mantenimiento:
+
+### Scripts de Testing
+
+#### `test-supabase.js`
+Verifica la conexión a Supabase y muestra información de configuración.
+
+```bash
+node scripts/test-supabase.js
+```
+
+**Uso**: Ejecutar cuando hay problemas de conexión o después de configurar variables de entorno.
+
+#### `test-cache.js`
+Prueba el sistema de caché y muestra su funcionamiento.
+
+```bash
+node scripts/test-cache.js
+```
+
+**Uso**: Verificar que el sistema de caché funciona correctamente.
+
+### Scripts de Datos
+
+#### `check-ingredients.js`
+Verifica ingredientes en la base de datos y muestra su información.
+
+```bash
+node scripts/check-ingredients.js
+```
+
+**Uso**: Debugging de ingredientes, ver stock actual.
+
+#### `check-recipes.js`
+Verifica recetas y muestra sus ingredientes.
+
+```bash
+node scripts/check-recipes.js
+```
+
+**Uso**: Debugging de recetas, verificar costos calculados.
+
+#### `update-ingredients.js`
+Script para actualizar ingredientes en batch.
+
+```bash
+node scripts/update-ingredients.js
+```
+
+**Uso**: Actualizar costos de múltiples ingredientes.
+
+### Scripts de Creación
+
+#### `create-product-from-recipe.js`
+Crea un producto desde una receta existente.
+
+```bash
+node scripts/create-product-from-recipe.js
+```
+
+**Uso**: Creación rápida de productos desde línea de comandos.
+
+#### `create-tarta-recipe.js`
+Ejemplo de script para crear una receta de tarta completa.
+
+```bash
+node scripts/create-tarta-recipe.js
+```
+
+**Uso**: Template para crear recetas por script.
+
+### Scripts de Mantenimiento
+
+#### `fix-product-name.js`
+Corrige nombres de productos con formato incorrecto.
+
+```bash
+node scripts/fix-product-name.js
+```
+
+**Uso**: Limpieza de datos, corrección de nombres.
+
+#### `clear-cache.js`
+Limpia el caché del sistema manualmente.
+
+```bash
+npm run cache:clear
+# o directamente:
+node scripts/clear-cache.js
+```
+
+**Uso**: Cuando el caché causa problemas o después de cambios grandes en datos.
+
+#### `optimize-dev.js`
+Aplica optimizaciones al entorno de desarrollo.
+
+```bash
+npm run optimize
+# o directamente:
+node scripts/optimize-dev.js
+```
+
+**Uso**: Mejorar rendimiento en desarrollo.
+
+#### `setup-env.js`
+Script de configuración inicial del proyecto.
+
+```bash
+node scripts/setup-env.js
+```
+
+**Uso**: Primer setup del proyecto, crear archivo `.env.local`.
+
+### Comandos NPM Disponibles
+
+```bash
+# Desarrollo normal
+npm run dev
+
+# Desarrollo optimizado (más memoria)
+npm run dev:optimized
+
+# Build para producción (sin linting)
+npm run build
+
+# Linting
+npm run lint
+
+# Scripts de utilidad
+npm run optimize       # Aplicar optimizaciones
+npm run cache:clear    # Limpiar caché
+npm run test:cache     # Probar sistema de caché
+```
+
 ## 📊 Performance
 
 ### Optimizaciones Implementadas
@@ -604,6 +837,87 @@ LIMIT 20;
 2. **Índices en DB**: Índices en columnas frecuentemente consultadas
 3. **revalidatePath()**: Solo revalida las rutas afectadas
 4. **Server Components**: La mayoría de las páginas son Server Components (no envían JS al cliente)
+5. **Sistema de caché en memoria**: Caché temporal para consultas frecuentes (dashboard, reportes)
+
+### Sistema de Caché
+
+El sistema implementa un caché en memoria simple pero efectivo:
+
+#### `lib/cache.ts`
+Caché principal con TTL (Time To Live):
+
+```typescript
+import { getCachedData, CACHE_KEYS } from '@/lib/cache'
+
+// Obtener datos con caché automático
+const data = await getCachedData(
+  CACHE_KEYS.MONTHLY_STATS,
+  () => fetchDataFromSupabase(),
+  2 * 60 * 1000  // TTL: 2 minutos
+)
+```
+
+**Características**:
+- TTL configurable por dato
+- Limpieza automática cada 10 minutos
+- Claves predefinidas: `MONTHLY_STATS`, `UPCOMING_ORDERS`, `LOW_STOCK`, `INVENTORY`, `ORDERS`, `PRODUCTS`, `RECIPES`, `INGREDIENTS`
+
+#### `lib/cache-utils.ts`
+Utilidades para limpieza selectiva de caché:
+
+```typescript
+import { clearOrdersCache, clearInventoryCache, clearProductsCache } from '@/lib/cache-utils'
+
+// Después de crear un pedido
+clearOrdersCache()  // Limpia: orders, upcoming_orders, monthly_stats
+
+// Después de actualizar stock
+clearInventoryCache()  // Limpia: inventory, low_stock
+
+// Después de crear/editar producto
+clearProductsCache()  // Limpia: products, ingredients
+```
+
+**Funciones disponibles**:
+- `clearCacheByType(type)` - Limpia un tipo específico
+- `clearOrdersCache()` - Limpia caché relacionado con pedidos
+- `clearInventoryCache()` - Limpia caché de inventario
+- `clearProductsCache()` - Limpia caché de productos
+- `clearAllCache()` - Limpia todo el caché
+- `clearRelevantCache(operation)` - Limpia según la operación realizada
+
+### Sistema de Fallback (Desarrollo)
+
+#### `lib/supabase-fallback.ts`
+Datos mock para desarrollo sin Supabase configurado:
+
+```typescript
+import { MOCK_DATA, checkSupabaseConnection, getFallbackData } from '@/lib/supabase-fallback'
+
+// Verificar conexión
+const isConnected = await checkSupabaseConnection()
+
+// Obtener datos mock si no hay conexión
+if (!isConnected) {
+  const mockIngredients = getFallbackData('ingredients')
+  const mockRecipes = getFallbackData('recipes')
+}
+```
+
+**Incluye datos mock para**:
+- Ingredientes
+- Recetas
+- Productos
+- Pedidos
+- Inventario
+- Estadísticas mensuales
+- Próximos pedidos
+- Stock bajo
+
+**Útil para**:
+- Desarrollo sin conexión a Supabase
+- Testing de interfaz
+- Demos sin base de datos
 
 ### Consideraciones Futuras
 

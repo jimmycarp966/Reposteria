@@ -8,9 +8,24 @@ import { get_current_date } from "@/lib/utils"
 import { addMinutes, parseISO } from "date-fns"
 import { clearRelevantCache } from "@/lib/cache-utils"
 import { checkSupabaseConnection, getMockUpcomingOrders } from "@/lib/supabase-fallback"
+import { logger } from "@/lib/logger"
+import type { OrdersQueryParams, PaginatedResponse, OrderWithItems } from "@/lib/types"
 
-export async function getOrders(status?: string) {
+export async function getOrders(params: OrdersQueryParams = {}): Promise<PaginatedResponse<OrderWithItems>> {
+  const {
+    status,
+    page = 1,
+    pageSize = 20,
+    sortBy = 'delivery_date',
+    sortOrder = 'asc'
+  } = params
+
   try {
+    logger.debug('Fetching orders', params, 'orderActions.getOrders')
+
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+
     let query = supabase
       .from("orders")
       .select(`
@@ -23,26 +38,40 @@ export async function getOrders(status?: string) {
             image_url
           )
         )
-      `)
-      .order("delivery_date", { ascending: true })
+      `, { count: 'exact' })
+      .range(from, to)
+      .order(sortBy, { ascending: sortOrder === 'asc' })
 
     if (status) {
       query = query.eq("status", status)
     }
 
-    const { data, error } = await query
+    const { data, error, count } = await query
 
     if (error) throw error
 
-    return { success: true, data }
+    logger.info(`Fetched ${data?.length || 0} orders`, { count }, 'orderActions.getOrders')
+
+    return {
+      success: true,
+      data: data as OrderWithItems[],
+      pagination: {
+        page,
+        pageSize,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / pageSize)
+      }
+    }
   } catch (error: any) {
-    console.error("Error fetching orders:", error)
+    logger.error("Error fetching orders", error, 'orderActions.getOrders')
     return { success: false, message: error.message || "Error al obtener pedidos" }
   }
 }
 
 export async function getOrderById(id: string) {
   try {
+    logger.debug('Fetching order by ID', { id }, 'orderActions.getOrderById')
+
     const { data, error } = await supabase
       .from("orders")
       .select(`
@@ -62,9 +91,10 @@ export async function getOrderById(id: string) {
 
     if (error) throw error
 
+    logger.info('Order fetched successfully', { orderId: id }, 'orderActions.getOrderById')
     return { success: true, data }
   } catch (error: any) {
-    console.error("Error fetching order:", error)
+    logger.error("Error fetching order", error, 'orderActions.getOrderById')
     return { success: false, message: error.message || "Error al obtener pedido" }
   }
 }
@@ -139,7 +169,7 @@ export async function createOrder(formData: z.infer<typeof orderSchema>) {
     clearRelevantCache('order') // Limpiar caché relacionado con pedidos
     return { success: true, data: order, message: "Pedido creado exitosamente" }
   } catch (error: any) {
-    console.error("Error creating order:", error)
+    logger.error("Error creating order", error, 'orderActions.createOrder')
     return { success: false, message: error.message || "Error al crear pedido" }
   }
 }
@@ -169,7 +199,7 @@ export async function confirmOrder(id: string) {
     clearRelevantCache('inventory') // Limpiar caché de inventario
     return { success: true, message: result.message }
   } catch (error: any) {
-    console.error("Error confirming order:", error)
+    logger.error("Error confirming order", error, 'orderActions.confirmOrder')
     return { success: false, message: error.message || "Error al confirmar pedido" }
   }
 }
@@ -193,7 +223,7 @@ export async function updateOrderStatus(id: string, status: string) {
     revalidatePath("/produccion")
     return { success: true, message: "Estado actualizado exitosamente" }
   } catch (error: any) {
-    console.error("Error updating order status:", error)
+    logger.error("Error updating order status", error, 'orderActions.updateOrderStatus')
     return { success: false, message: error.message || "Error al actualizar estado" }
   }
 }
@@ -210,7 +240,7 @@ export async function cancelOrder(id: string) {
     revalidatePath("/pedidos")
     return { success: true, message: "Pedido cancelado exitosamente" }
   } catch (error: any) {
-    console.error("Error cancelling order:", error)
+    logger.error("Error cancelling order", error, 'orderActions.cancelOrder')
     return { success: false, message: error.message || "Error al cancelar pedido" }
   }
 }
@@ -224,7 +254,7 @@ export async function checkStockAvailability(orderId: string) {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error("Error checking stock availability:", error)
+    logger.error("Error checking stock availability", error, 'orderActions.checkStockAvailability')
     return { success: false, message: error.message || "Error al verificar stock" }
   }
 }
@@ -277,7 +307,7 @@ export async function getUpcomingOrders(days: number = 7) {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error("Error fetching upcoming orders:", error)
+    logger.error("Error fetching upcoming orders", error, 'orderActions.getUpcomingOrders')
     // En caso de error, usar datos de ejemplo
     return {
       success: true,
