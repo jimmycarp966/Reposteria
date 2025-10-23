@@ -25,7 +25,7 @@ import { createRecipe } from "@/actions/recipeActions"
 import { getIngredients } from "@/actions/ingredientActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { ImageUpload } from "@/components/shared/ImageUpload"
-import { UnitSelector } from "@/components/shared/UnitSelector"
+import { UnitSelector, convertUnits, areUnitsCompatible } from "@/components/shared/UnitSelector"
 import { Plus, Trash2 } from "lucide-react"
 
 interface CreateRecipeDialogProps {
@@ -72,6 +72,32 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
     if (result.success) {
       setIngredients(result.data || [])
     }
+  }
+
+  // Función para calcular el costo de un ingrediente con conversión de unidades
+  const calculateIngredientCost = (ingredientId: string, quantity: number, unit: string) => {
+    const ingredient = ingredients.find(i => i.id === ingredientId)
+    if (!ingredient) return 0
+
+    // Si las unidades son compatibles, convertir
+    if (areUnitsCompatible(ingredient.unit, unit)) {
+      const convertedQuantity = convertUnits(quantity, unit, ingredient.unit)
+      return convertedQuantity * ingredient.cost_per_unit
+    }
+
+    // Si no son compatibles, usar el costo directo (asumiendo que el usuario sabe lo que hace)
+    return quantity * ingredient.cost_per_unit
+  }
+
+  // Función para obtener el costo total de todos los ingredientes
+  const getTotalCost = () => {
+    const ingredientsData = watch('ingredients') || []
+    return ingredientsData.reduce((total, ingredient) => {
+      if (ingredient.ingredient_id && ingredient.quantity && ingredient.unit) {
+        return total + calculateIngredientCost(ingredient.ingredient_id, ingredient.quantity, ingredient.unit)
+      }
+      return total
+    }, 0)
   }
 
   const onSubmit = async (data: FormData) => {
@@ -147,6 +173,15 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
               </Button>
             </div>
 
+            {/* Headers de la tabla */}
+            <div className="hidden lg:flex gap-2 items-center text-sm font-medium text-muted-foreground mb-2 px-2">
+              <div className="flex-1">Ingrediente</div>
+              <div className="w-28">Cantidad</div>
+              <div className="w-32">Unidad</div>
+              <div className="w-24">Costo</div>
+              <div className="w-10"></div>
+            </div>
+
             <div className="space-y-3">
               {fields.map((field, index) => (
                 <div key={field.id} className="flex gap-2 items-start">
@@ -198,11 +233,34 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
 
                   <div className="w-32">
                     <UnitSelector
-                      value={field.unit}
+                      value={watch(`ingredients.${index}.unit`) || ""}
                       onChange={(value) => setValue(`ingredients.${index}.unit`, value)}
                       placeholder="Unidad"
                       categories={['weight', 'volume', 'count']}
                     />
+                  </div>
+
+                  <div className="w-24 text-sm text-muted-foreground flex items-center">
+                    {(() => {
+                      const ingredientId = watch(`ingredients.${index}.ingredient_id`)
+                      const quantity = watch(`ingredients.${index}.quantity`)
+                      const unit = watch(`ingredients.${index}.unit`)
+                      
+                      if (ingredientId && quantity && unit) {
+                        const ingredient = ingredients.find(i => i.id === ingredientId)
+                        if (ingredient && areUnitsCompatible(ingredient.unit, unit)) {
+                          const convertedQuantity = convertUnits(quantity, unit, ingredient.unit)
+                          const cost = calculateIngredientCost(ingredientId, quantity, unit)
+                          return (
+                            <div className="text-xs">
+                              <div>≈ {convertedQuantity.toFixed(2)} {ingredient.unit}</div>
+                              <div className="font-semibold text-green-600">${cost.toFixed(2)}</div>
+                            </div>
+                          )
+                        }
+                      }
+                      return null
+                    })()}
                   </div>
 
                   <Button
@@ -222,6 +280,19 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
                 {errors.ingredients.message}
               </p>
             )}
+
+            {/* Costo total */}
+            <div className="bg-muted/50 p-4 rounded-lg border">
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-semibold">Costo Total de Ingredientes:</span>
+                <span className="text-2xl font-bold text-green-600">
+                  ${getTotalCost().toFixed(2)}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Costo calculado automáticamente con conversión de unidades
+              </p>
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
