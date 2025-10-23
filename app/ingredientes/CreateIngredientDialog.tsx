@@ -138,11 +138,27 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
 
             <div>
               <Label htmlFor="lead_time_days">Días de Entrega</Label>
-              <Input
-                id="lead_time_days"
-                type="number"
-                {...register("lead_time_days", { valueAsNumber: true })}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="lead_time_days"
+                  type="number"
+                  placeholder="Ej: 3"
+                  {...register("lead_time_days", { valueAsNumber: true })}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setValue("lead_time_days", null)}
+                  className="whitespace-nowrap"
+                >
+                  No aplica
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Días que tarda el proveedor en entregar. Usar "No aplica" para ingredientes del supermercado.
+              </p>
             </div>
           </div>
 
