@@ -308,7 +308,12 @@ export async function updateRecipe(id: string, data: any) {
       if (ingredientsError) throw ingredientsError
     }
 
+    // Revalidate multiple paths to ensure data updates
     revalidatePath(CACHE_KEYS.RECIPES)
+    revalidatePath("/recetas")
+    revalidatePath(`/recetas/${id}`)
+    cache.delete(CACHE_KEYS.RECIPES) // Clear cache explicitly
+    
     logger.info(`Recipe with ID: ${id} updated successfully`, {}, 'recipeActions.updateRecipe')
     return { success: true, message: "Receta actualizada exitosamente" }
   } catch (error: any) {
