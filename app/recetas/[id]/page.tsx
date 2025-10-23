@@ -1,4 +1,5 @@
 import { getRecipeById, calculateRecipeCost, deleteRecipe } from "@/actions/recipeActions"
+import { getIngredients } from "@/actions/ingredientActions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,13 +25,17 @@ export default async function RecipeDetailPage({
   params: Promise<{ id: string }> 
 }) {
   const { id } = await params
-  const result = await getRecipeById(id)
+  const [recipeResult, ingredientsResult] = await Promise.all([
+    getRecipeById(id),
+    getIngredients()
+  ])
   
-  if (!result.success || !result.data) {
+  if (!recipeResult.success || !recipeResult.data) {
     notFound()
   }
 
-  const recipe = result.data
+  const recipe = recipeResult.data
+  const ingredients = ingredientsResult.success ? (ingredientsResult.data || []) : []
 
   return (
     <div className="space-y-6">
@@ -102,7 +107,11 @@ export default async function RecipeDetailPage({
                 Crear Producto desde esta Receta
               </Button>
             </Link>
-            <RecipeActions recipeId={recipe.id} />
+            <RecipeActions 
+              recipeId={recipe.id} 
+              recipe={recipe} 
+              ingredients={ingredients} 
+            />
           </CardContent>
         </Card>
       </div>

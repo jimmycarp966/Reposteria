@@ -1,7 +1,7 @@
 "use server"
 
 import { supabase } from "@/lib/supabase"
-import { createRecipeSchema, recipeSchema } from "@/lib/validations"
+import { createRecipeSchema, recipeSchema, editRecipeSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getCachedData, CACHE_KEYS, cache } from "@/lib/cache"
@@ -172,52 +172,6 @@ export async function createRecipe(formData: z.infer<typeof createRecipeSchema>)
   }
 }
 
-export async function updateRecipe(id: string, formData: z.infer<typeof createRecipeSchema>) {
-  try {
-    const validated = createRecipeSchema.parse(formData)
-
-    // Update recipe
-    const { error: recipeError } = await supabase
-      .from("recipes")
-      .update({
-        name: validated.name,
-        description: validated.description,
-        servings: validated.servings,
-        image_url: validated.image_url,
-      })
-      .eq("id", id)
-
-    if (recipeError) throw recipeError
-
-    // Delete existing ingredients
-    await supabase
-      .from("recipe_ingredients")
-      .delete()
-      .eq("recipe_id", id)
-
-    // Insert new ingredients
-    const ingredientsToInsert = validated.ingredients.map(ing => ({
-      recipe_id: id,
-      ingredient_id: ing.ingredient_id,
-      quantity: ing.quantity,
-      unit: ing.unit,
-    }))
-
-    const { error: ingredientsError } = await supabase
-      .from("recipe_ingredients")
-      .insert(ingredientsToInsert)
-
-    if (ingredientsError) throw ingredientsError
-
-    cache.delete(CACHE_KEYS.RECIPES) // Limpiar caché de recetas
-    revalidatePath("/recetas")
-    revalidatePath(`/recetas/${id}`)
-    return { success: true, message: "Receta actualizada exitosamente" }
-  } catch (error: any) {
-    logger.error("Error updating recipe", error, 'recipeActions.updateRecipe')
-    return { success: false, message: error.message || "Error al actualizar receta" }
-  }
-}
 
 export async function deleteRecipe(id: string) {
   try {
@@ -305,6 +259,61 @@ export async function calculateRecipeCost(id: string) {
   } catch (error: any) {
     logger.error("Error calculating recipe cost", error, 'recipeActions.calculateRecipeCost')
     return { success: false, message: error.message || "Error al calcular costo" }
+  }
+}
+
+export async function updateRecipe(id: string, data: any) {
+  try {
+    logger.debug(`Updating recipe with ID: ${id}`, data, 'recipeActions.updateRecipe')
+    
+    // Validate the data
+    const validated = editRecipeSchema.parse(data)
+    
+    // Start a transaction to update recipe and ingredients
+    const { data: updatedRecipe, error: recipeError } = await supabase
+      .from('recipes')
+      .update({
+        name: validated.name,
+        description: validated.description,
+        servings: validated.servings,
+        image_url: validated.image_url,
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (recipeError) throw recipeError
+
+    // Delete existing recipe ingredients
+    const { error: deleteError } = await supabase
+      .from('recipe_ingredients')
+      .delete()
+      .eq('recipe_id', id)
+
+    if (deleteError) throw deleteError
+
+    // Insert new recipe ingredients
+    if (validated.ingredients && validated.ingredients.length > 0) {
+      const ingredientsToInsert = validated.ingredients.map(ingredient => ({
+        recipe_id: id,
+        ingredient_id: ingredient.ingredient_id,
+        quantity: ingredient.quantity,
+        unit: ingredient.unit,
+      }))
+
+      const { error: ingredientsError } = await supabase
+        .from('recipe_ingredients')
+        .insert(ingredientsToInsert)
+
+      if (ingredientsError) throw ingredientsError
+    }
+
+    revalidatePath(CACHE_KEYS.RECIPES)
+    logger.info(`Recipe with ID: ${id} updated successfully`, {}, 'recipeActions.updateRecipe')
+    return { success: true, message: "Receta actualizada exitosamente" }
+  } catch (error: any) {
+    logger.error("Error updating recipe", error, 'recipeActions.updateRecipe')
+    return { success: false, message: error.message || "Error al actualizar la receta" }
   }
 }
 

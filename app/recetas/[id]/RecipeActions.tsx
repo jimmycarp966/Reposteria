@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button"
 import { deleteRecipe } from "@/actions/recipeActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { Copy, Edit, Trash2 } from "lucide-react"
+import { EditRecipeDialog } from "../EditRecipeDialog"
 
 interface RecipeActionsProps {
   recipeId: string
+  recipe: any
+  ingredients: any[]
 }
 
-export function RecipeActions({ recipeId }: RecipeActionsProps) {
+export function RecipeActions({ recipeId, recipe, ingredients }: RecipeActionsProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
   const addNotification = useNotificationStore((state) => state.addNotification)
@@ -25,11 +28,7 @@ export function RecipeActions({ recipeId }: RecipeActionsProps) {
   }
 
   const handleEdit = () => {
-    // TODO: Implementar editar receta
-    addNotification({ 
-      type: "info", 
-      message: "Función de editar receta próximamente" 
-    })
+    // Edit functionality is now handled by EditRecipeDialog
   }
 
   const handleDelete = async () => {
@@ -74,14 +73,10 @@ export function RecipeActions({ recipeId }: RecipeActionsProps) {
         Duplicar Receta
       </Button>
       
-      <Button 
-        className="w-full" 
-        variant="outline"
-        onClick={handleEdit}
-      >
-        <Edit className="h-4 w-4 mr-2" />
-        Editar Receta
-      </Button>
+            <EditRecipeDialog 
+              recipe={recipe} 
+              ingredients={ingredients} 
+            />
       
       <Button 
         className="w-full" 

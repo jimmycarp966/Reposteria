@@ -28,6 +28,12 @@ export const createRecipeSchema = recipeSchema.extend({
   ingredients: z.array(recipeIngredientSchema).min(1, "Debe tener al menos un ingrediente"),
 })
 
+export const editRecipeSchema = recipeSchema.extend({
+  ingredients: z.array(recipeIngredientSchema.extend({
+    id: z.string().uuid("ID inválido").optional(),
+  })).min(1, "Debe tener al menos un ingrediente"),
+})
+
 // Product validations
 export const productSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
