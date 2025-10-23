@@ -14,31 +14,31 @@ export interface UnitOption {
 export const UNIT_OPTIONS: UnitOption[] = [
   // Peso (base: gramos)
   { value: 'g', label: 'Gramos (g)', category: 'weight', baseUnit: 'g', conversionFactor: 1 },
-  { value: 'kg', label: 'Kilogramos (kg)', category: 'weight', baseUnit: 'g', conversionFactor: 0.001 },
-  { value: 'lb', label: 'Libras (lb)', category: 'weight', baseUnit: 'g', conversionFactor: 0.00220462 },
-  { value: 'oz', label: 'Onzas (oz)', category: 'weight', baseUnit: 'g', conversionFactor: 0.035274 },
+  { value: 'kg', label: 'Kilogramos (kg)', category: 'weight', baseUnit: 'g', conversionFactor: 1000 },
+  { value: 'lb', label: 'Libras (lb)', category: 'weight', baseUnit: 'g', conversionFactor: 453.592 },
+  { value: 'oz', label: 'Onzas (oz)', category: 'weight', baseUnit: 'g', conversionFactor: 28.3495 },
   
   // Volumen (base: mililitros)
   { value: 'ml', label: 'Mililitros (ml)', category: 'volume', baseUnit: 'ml', conversionFactor: 1 },
-  { value: 'l', label: 'Litros (l)', category: 'volume', baseUnit: 'ml', conversionFactor: 0.001 },
-  { value: 'cup', label: 'Tazas (cup)', category: 'volume', baseUnit: 'ml', conversionFactor: 0.00416667 },
-  { value: 'tbsp', label: 'Cucharadas (tbsp)', category: 'volume', baseUnit: 'ml', conversionFactor: 0.0666667 },
-  { value: 'tsp', label: 'Cucharaditas (tsp)', category: 'volume', baseUnit: 'ml', conversionFactor: 0.2 },
-  { value: 'fl_oz', label: 'Onzas fluidas (fl oz)', category: 'volume', baseUnit: 'ml', conversionFactor: 0.033814 },
+  { value: 'l', label: 'Litros (l)', category: 'volume', baseUnit: 'ml', conversionFactor: 1000 },
+  { value: 'cup', label: 'Tazas (cup)', category: 'volume', baseUnit: 'ml', conversionFactor: 240 },
+  { value: 'tbsp', label: 'Cucharadas (tbsp)', category: 'volume', baseUnit: 'ml', conversionFactor: 15 },
+  { value: 'tsp', label: 'Cucharaditas (tsp)', category: 'volume', baseUnit: 'ml', conversionFactor: 5 },
+  { value: 'fl_oz', label: 'Onzas fluidas (fl oz)', category: 'volume', baseUnit: 'ml', conversionFactor: 29.5735 },
   
   // Cantidad
   { value: 'pcs', label: 'Piezas (pcs)', category: 'count', baseUnit: 'pcs', conversionFactor: 1 },
   { value: 'units', label: 'Unidades', category: 'count', baseUnit: 'pcs', conversionFactor: 1 },
-  { value: 'dozen', label: 'Docenas', category: 'count', baseUnit: 'pcs', conversionFactor: 0.0833333 },
+  { value: 'dozen', label: 'Docenas', category: 'count', baseUnit: 'pcs', conversionFactor: 12 },
   
   // Longitud
   { value: 'cm', label: 'Centímetros (cm)', category: 'length', baseUnit: 'cm', conversionFactor: 1 },
-  { value: 'm', label: 'Metros (m)', category: 'length', baseUnit: 'cm', conversionFactor: 0.01 },
-  { value: 'in', label: 'Pulgadas (in)', category: 'length', baseUnit: 'cm', conversionFactor: 0.393701 },
+  { value: 'm', label: 'Metros (m)', category: 'length', baseUnit: 'cm', conversionFactor: 100 },
+  { value: 'in', label: 'Pulgadas (in)', category: 'length', baseUnit: 'cm', conversionFactor: 2.54 },
   
   // Área
   { value: 'cm2', label: 'Centímetros cuadrados (cm²)', category: 'area', baseUnit: 'cm2', conversionFactor: 1 },
-  { value: 'm2', label: 'Metros cuadrados (m²)', category: 'area', baseUnit: 'cm2', conversionFactor: 0.0001 },
+  { value: 'm2', label: 'Metros cuadrados (m²)', category: 'area', baseUnit: 'cm2', conversionFactor: 10000 },
 ]
 
 interface UnitSelectorProps {
