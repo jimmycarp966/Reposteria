@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { registerOrderPayment } from "@/actions/orderActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { formatCurrency } from "@/lib/utils"
@@ -27,6 +28,7 @@ export function RegisterPaymentDialog({
 }: RegisterPaymentDialogProps) {
   const [open, setOpen] = useState(false)
   const [amount, setAmount] = useState("")
+  const [paymentMethod, setPaymentMethod] = useState("efectivo")
   const [loading, setLoading] = useState(false)
   const addNotification = useNotificationStore((state) => state.addNotification)
 
@@ -134,6 +136,21 @@ export function RegisterPaymentDialog({
                 </div>
               </div>
             )}
+
+            {/* Payment Method */}
+            <div className="space-y-2">
+              <Label htmlFor="paymentMethod">Método de pago</Label>
+              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona método de pago" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="efectivo">Efectivo</SelectItem>
+                  <SelectItem value="transferencia">Transferencia</SelectItem>
+                  <SelectItem value="tarjeta">Tarjeta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Amount Input */}
             <div className="space-y-2">

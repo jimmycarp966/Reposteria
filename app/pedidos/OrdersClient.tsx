@@ -2,15 +2,16 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Plus, ClipboardList, Check, X as XIcon, CreditCard } from "lucide-react"
+import { Plus, ClipboardList, Check, X as XIcon, CreditCard, CheckCircle, Cog } from "lucide-react"
 import { CreateOrderDialog } from "./CreateOrderDialog"
 import { StockShortagesDialog } from "./StockShortagesDialog"
 import { RegisterPaymentDialog } from "./RegisterPaymentDialog"
+import { CompleteOrderDialog } from "./CompleteOrderDialog"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { confirmOrder, cancelOrder } from "@/actions/orderActions"
+import { confirmOrder, cancelOrder, completeOrderWithSale, moveOrderToProduction } from "@/actions/orderActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { useMutation } from "@/hooks/useMutation"
 import { useTranslation } from "@/lib/i18n"
@@ -28,12 +29,15 @@ interface OrdersClientProps {
   orders: OrderWithItems[]
 }
 
-const OrderCard = ({ order, onConfirm, onCancel, isConfirming, isCancelling }: { 
+const OrderCard = ({ order, onConfirm, onCancel, onComplete, onMoveToProduction, isConfirming, isCancelling, isMovingToProduction }: { 
   order: OrderWithItems
-  onConfirm: (id: string) => void
+  onConfirm: (id: string, forceConfirm?: boolean) => void
   onCancel: (id: string) => void
+  onComplete: (id: string, total: number) => void
+  onMoveToProduction: (id: string) => void
   isConfirming: boolean
   isCancelling: boolean
+  isMovingToProduction: boolean
 }) => {
   const { t } = useTranslation()
 
@@ -172,6 +176,37 @@ const OrderCard = ({ order, onConfirm, onCancel, isConfirming, isCancelling }: {
               </Button>
             </>
           )}
+          
+          {order.status === "CONFIRMED" && (
+            <Button
+              size="sm"
+              variant="default"
+              className="btn-gradient-orange"
+              onClick={() => onMoveToProduction(order.id)}
+              disabled={isMovingToProduction}
+            >
+              {isMovingToProduction ? (
+                <>Pasando...</>
+              ) : (
+                <>
+                  <Cog className="h-4 w-4 mr-1" />
+                  Pasar a Producción
+                </>
+              )}
+            </Button>
+          )}
+          
+          {order.status === "IN_PRODUCTION" && (
+            <Button
+              size="sm"
+              variant="default"
+              className="btn-gradient-blue"
+              onClick={() => onComplete(order.id, order.total_price)}
+            >
+              <CheckCircle className="h-4 w-4 mr-1" />
+              Completar
+            </Button>
+          )}
         </div>
       </CardFooter>
     </Card>
@@ -181,64 +216,136 @@ const OrderCard = ({ order, onConfirm, onCancel, isConfirming, isCancelling }: {
 export function OrdersClient({ orders }: OrdersClientProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showShortagesDialog, setShowShortagesDialog] = useState(false)
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false)
   const [stockShortages, setStockShortages] = useState<StockShortage[]>([])
+  const [shortageOrderId, setShortageOrderId] = useState<string | null>(null)
   const [confirmingOrderId, setConfirmingOrderId] = useState<string | null>(null)
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null)
+  const [completingOrderId, setCompletingOrderId] = useState<string | null>(null)
+  const [completingOrderTotal, setCompletingOrderTotal] = useState<number>(0)
+  const [movingToProductionId, setMovingToProductionId] = useState<string | null>(null)
+  
   
   const addNotification = useNotificationStore((state) => state.addNotification)
   const { t } = useTranslation()
 
-  // Mutation para confirmar pedido
-  const confirmMutation = useMutation(confirmOrder, {
-    onSuccess: () => {
-      addNotification({ type: "success", message: t('orders.orderConfirmed') })
-      setConfirmingOrderId(null)
-    },
-    onError: (error) => {
-      addNotification({ type: "error", message: error })
-      setConfirmingOrderId(null)
-    }
-  })
-
-  // Mutation para cancelar pedido
-  const cancelMutation = useMutation(cancelOrder, {
-    onSuccess: () => {
-      addNotification({ type: "success", message: t('orders.orderCancelled') })
-      setCancellingOrderId(null)
-    },
-    onError: (error) => {
-      addNotification({ type: "error", message: error })
-      setCancellingOrderId(null)
-    }
-  })
-
-  const handleConfirmOrder = async (id: string) => {
-    if (!confirm('¿Confirmar este pedido? Se descontará el stock de ingredientes.')) return
-
-    setConfirmingOrderId(id)
-    const result = await confirmOrder(id)
-
-    if (!result.success) {
-      // Si hay shortages, mostrar diálogo
-      if (result.shortages && result.shortages.length > 0) {
-        setStockShortages(result.shortages)
-        setShowShortagesDialog(true)
-      } else {
-        addNotification({ type: "error", message: result.message || 'Error al confirmar' })
-      }
-      setConfirmingOrderId(null)
+  const handleConfirmOrder = async (id: string, forceConfirm: boolean = false) => {
+    // Si no es confirmación forzada, mostrar confirmación
+    if (!forceConfirm && !confirm('¿Confirmar este pedido? Se descontará el stock de ingredientes.')) {
       return
     }
 
-    addNotification({ type: "success", message: t('orders.orderConfirmed') })
-    setConfirmingOrderId(null)
+    try {
+      setConfirmingOrderId(id)
+      const result = await confirmOrder(id, forceConfirm)
+
+      if (!result.success) {
+        // Si hay shortages y no estamos forzando la confirmación, mostrar diálogo
+        if (result.shortages && result.shortages.length > 0 && !forceConfirm) {
+          setStockShortages(result.shortages)
+          setShortageOrderId(id) // Guardar el ID del pedido
+          setShowShortagesDialog(true)
+          return
+        } else {
+          addNotification({ type: "error", message: result.message || 'Error al confirmar' })
+          return
+        }
+      }
+
+      // Si se confirmó con faltantes, mostrar notificación especial
+      if (result.has_shortages) {
+        addNotification({ 
+          type: "warning", 
+          message: "Pedido confirmado, pero hay ingredientes faltantes. Actualiza el stock pronto." 
+        })
+      } else {
+        addNotification({ type: "success", message: t('orders.orderConfirmed') })
+      }
+      
+      // Recargar la página para actualizar la lista de pedidos
+      window.location.reload()
+    } catch (error) {
+      addNotification({ 
+        type: "error", 
+        message: "Error al confirmar el pedido" 
+      })
+    } finally {
+      setConfirmingOrderId(null)
+      // No resetear showShortagesDialog aquí, se maneja en el diálogo
+    }
   }
 
   const handleCancelOrder = async (id: string) => {
     if (!confirm('¿Cancelar este pedido?')) return
 
     setCancellingOrderId(id)
-    await cancelMutation.mutate(id)
+    const result = await cancelOrder(id)
+    
+    if (result.success) {
+      addNotification({ type: "success", message: t('orders.orderCancelled') })
+    } else {
+      addNotification({ type: "error", message: result.message || 'Error al cancelar' })
+    }
+    
+    setCancellingOrderId(null)
+  }
+
+  const handleCompleteOrder = (id: string, total: number) => {
+    setCompletingOrderId(id)
+    setCompletingOrderTotal(total)
+    setShowCompleteDialog(true)
+  }
+
+  const handleCompleteOrderConfirm = async (paymentStatus: 'pagado' | 'pendiente') => {
+    if (!completingOrderId) return
+
+    try {
+      const result = await completeOrderWithSale(completingOrderId, paymentStatus)
+      
+      if (result.success) {
+        addNotification({ 
+          type: "success", 
+          message: `Pedido completado y venta creada. ${result.message}` 
+        })
+        // Recargar la página para actualizar la lista
+        window.location.reload()
+      } else {
+        addNotification({ type: "error", message: result.message || 'Error al completar pedido' })
+      }
+    } catch (error) {
+      addNotification({ type: "error", message: "Error al completar el pedido" })
+    } finally {
+      setCompletingOrderId(null)
+      setShowCompleteDialog(false)
+    }
+  }
+
+  const handleMoveToProduction = async (id: string) => {
+    if (!confirm('¿Pasar este pedido a producción? Esto significa que empezarás a elaborarlo.')) return
+
+    try {
+      setMovingToProductionId(id)
+      const result = await moveOrderToProduction(id)
+      
+      if (result.success) {
+        addNotification({ 
+          type: "success", 
+          message: result.message || "Pedido pasado a producción exitosamente" 
+        })
+      } else {
+        addNotification({ 
+          type: "error", 
+          message: result.message || "Error al pasar el pedido a producción" 
+        })
+      }
+    } catch (error: any) {
+      addNotification({ 
+        type: "error", 
+        message: error.message || "Error al pasar el pedido a producción" 
+      })
+    } finally {
+      setMovingToProductionId(null)
+    }
   }
 
   const pending = orders.filter((o) => o.status === "PENDING")
@@ -281,10 +388,13 @@ export function OrdersClient({ orders }: OrdersClientProps) {
           <OrderCard
             key={order.id}
             order={order}
-            onConfirm={handleConfirmOrder}
+            onConfirm={(id, forceConfirm) => handleConfirmOrder(id, forceConfirm)}
             onCancel={handleCancelOrder}
+            onComplete={handleCompleteOrder}
+            onMoveToProduction={handleMoveToProduction}
             isConfirming={confirmingOrderId === order.id}
             isCancelling={cancellingOrderId === order.id}
+            isMovingToProduction={movingToProductionId === order.id}
           />
         ))}
       </div>
@@ -347,8 +457,32 @@ export function OrdersClient({ orders }: OrdersClientProps) {
 
       <StockShortagesDialog
         open={showShortagesDialog}
-        onClose={() => setShowShortagesDialog(false)}
+        onClose={() => {
+          setShowShortagesDialog(false)
+          setShortageOrderId(null) // Limpiar el estado
+        }}
+        onConfirmAnyway={() => {
+          console.log('🔧 onConfirmAnyway called, shortageOrderId:', shortageOrderId)
+          // Cerrar el diálogo primero
+          setShowShortagesDialog(false)
+          // Llamar a handleConfirmOrder con forceConfirm=true usando el ID guardado
+          if (shortageOrderId) {
+            console.log('🚀 Calling handleConfirmOrder with forceConfirm=true')
+            handleConfirmOrder(shortageOrderId, true)
+            setShortageOrderId(null) // Limpiar el estado
+          } else {
+            console.log('❌ No shortageOrderId available')
+          }
+        }}
         shortages={stockShortages}
+      />
+
+      <CompleteOrderDialog
+        open={showCompleteDialog}
+        onClose={() => setShowCompleteDialog(false)}
+        onComplete={handleCompleteOrderConfirm}
+        orderId={completingOrderId || ""}
+        orderTotal={completingOrderTotal}
       />
     </>
   )

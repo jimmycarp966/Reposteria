@@ -1,109 +1,315 @@
-/**
- * Tipos TypeScript centralizados para el sistema de repostería
- * Derivados de las tablas de Supabase con tipos compuestos para relaciones
- */
+// Tipos para pedidos
+export type OrderStatus = "PENDING" | "CONFIRMED" | "IN_PRODUCTION" | "COMPLETED" | "CANCELLED"
+export type OrderType = "DAILY" | "EFEMERIDE"
+export type PaymentStatus = "pendiente" | "parcial" | "pagado"
 
-import { 
-  Ingredient, 
-  Recipe, 
-  RecipeIngredient, 
-  Product, 
-  Inventory, 
-  InventoryMovement,
-  Order,
-  OrderItem,
-  ProductionTask,
-  EventCalendar,
-  PriceRule,
-  Setting
-} from './supabase'
-
-// ==================== Nuevos Tipos para Ventas y Efemérides ====================
-
-export interface Customer {
+export interface Order {
   id: string
-  name: string
-  email?: string | null
-  phone?: string | null
-  address?: string | null
+  type: OrderType
+  status: OrderStatus
+  delivery_date: string
+  delivery_time?: string
+  total_cost: number
+  total_price: number
+  payment_status: PaymentStatus
+  amount_paid: number
+  amount_pending: number
+  production_start: string
+  production_end?: string
+  notes?: string
+  has_stock_shortage?: boolean
   created_at: string
 }
 
-// ==================== Tipos de Pago ====================
-
-export type PaymentStatus = 'pendiente' | 'parcial' | 'pagado'
-
-export interface AccountsReceivable {
+export interface OrderItem {
   id: string
-  type: 'pedido' | 'venta'
-  customer_name: string
-  total_amount: number
-  amount_paid: number
-  amount_pending: number
-  payment_status: PaymentStatus
-  created_date: string
-  due_date: string
+  order_id: string
+  product_id: string
+  quantity: number
+  unit_price: number
+  cost_at_sale: number
+  production_time_estimate_minutes: number
+  product?: Product
 }
 
-// ==================== Tipos de Plan Semanal ====================
+export interface OrderWithItems extends Order {
+  order_items: (OrderItem & {
+    product: Product
+  })[]
+}
 
-export type TaskStatus = 'pendiente' | 'en_progreso' | 'completada'
+// Tipos para productos
+export interface Product {
+  id: string
+  name: string
+  recipe_id?: string
+  base_cost_cache: number
+  suggested_price_cache: number
+  sku?: string
+  image_url?: string
+  created_at: string
+}
 
-export interface WeeklyProductionPlan {
+export interface ProductWithRecipe extends Product {
+  recipe?: Pick<Recipe, 'id' | 'name' | 'servings'>
+}
+
+// Tipos para recetas
+export interface Recipe {
+  id: string
+  name: string
+  description?: string
+  servings: number
+  version: number
+  active: boolean
+  image_url?: string
+  created_at: string
+  recipe_ingredients?: RecipeIngredient[]
+}
+
+export interface RecipeWithIngredients extends Recipe {
+  recipe_ingredients: RecipeIngredient[]
+}
+
+export interface RecipeIngredient {
+  id: string
+  recipe_id: string
+  ingredient_id: string
+  quantity: number
+  unit: string
+  ingredient: Ingredient
+}
+
+// Tipos para ingredientes
+export interface Ingredient {
+  id: string
+  name: string
+  unit: string
+  cost_per_unit: number
+  supplier?: string
+  lead_time_days?: number
+  image_url?: string
+  created_at: string
+}
+
+export interface IngredientWithInventory extends Ingredient {
+  inventory: InventoryItem
+}
+
+// Tipos para inventario
+export interface InventoryItem {
+  id: string
+  ingredient_id: string
+  quantity: number
+  unit: string
+  location?: string
+  last_updated: string
+  ingredient: Ingredient
+}
+
+export interface InventoryMovement {
+  id: string
+  ingredient_id: string
+  quantity: number
+  type: "IN" | "OUT"
+  order_id?: string
+  notes?: string
+  created_at: string
+}
+
+// Tipos para faltantes de stock
+export interface StockShortage {
+  ingredient_id: string
+  ingredient_name: string
+  required_quantity: number
+  available_quantity: number
+  shortage: number
+}
+
+// Tipos para parámetros de consulta
+export interface OrdersQueryParams {
+  status?: OrderStatus
+  page?: number
+  pageSize?: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+}
+
+export interface ProductsQueryParams {
+  page?: number
+  pageSize?: number
+  search?: string
+}
+
+export interface CustomersQueryParams {
+  page?: number
+  pageSize?: number
+  search?: string
+}
+
+export interface IngredientsQueryParams {
+  page?: number
+  pageSize?: number
+  search?: string
+  lowStockOnly?: boolean
+}
+
+export interface RecipesQueryParams {
+  page?: number
+  pageSize?: number
+  search?: string
+  activeOnly?: boolean
+}
+
+export interface SalesQueryParams {
+  dateFrom?: string
+  dateTo?: string
+  customerId?: string
+  paymentMethod?: string
+}
+
+// Tipos para respuestas paginadas
+export interface PaginatedResponse<T> {
+  success: boolean
+  message?: string
+  data?: T[]
+  needsSetup?: boolean
+  pagination?: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+  }
+}
+
+// Tipos para eventos y efemérides
+export interface Event {
+  id: string
+  name: string
+  date: string
+  description?: string
+  type: "EFEMERIDE" | "REMINDER"
+}
+
+export interface EventProduct {
+  id: string
+  event_id: string
+  product_id: string
+  special_price?: number
+  created_at: string
+}
+
+export interface EventProductWithDetails extends EventProduct {
+  product: Product
+}
+
+export interface EventWithProducts extends Event {
+  event_products: EventProductWithDetails[]
+}
+
+export interface EventSalesStats {
+  event_date: string
+  total_sales: number
+  total_items_sold: number
+  total_customers: number
+  average_ticket: number
+}
+
+// Tipos para plan semanal
+export interface WeeklyPlan {
   id: string
   week_start_date: string
   week_end_date: string
-  notes?: string | null
+  notes?: string
   created_at: string
+}
+
+export interface WeeklyTask {
+  id: string
+  plan_id: string
+  day_of_week: number
+  task_description: string
+  recipe_id?: string
+  estimated_time_minutes?: number
+  status: "pendiente" | "en_progreso" | "completada"
+  completed_at?: string
+  order_position: number
+  created_at: string
+}
+
+export interface WeeklyPlanWithTasks extends WeeklyPlan {
+  tasks: WeeklyTask[]
 }
 
 export interface WeeklyProductionTask {
   id: string
   plan_id: string
-  day_of_week: number // 1=Lunes, 7=Domingo
+  day_of_week: number
   task_description: string
-  recipe_id?: string | null
-  estimated_time_minutes?: number | null
-  status: TaskStatus
-  completed_at?: string | null
+  recipe_id?: string
+  estimated_time_minutes?: number
+  status: "pendiente" | "en_progreso" | "completada"
+  completed_at?: string
   order_position: number
   created_at: string
 }
 
 export interface WeeklyProductionTaskWithRecipe extends WeeklyProductionTask {
-  recipe?: Pick<Recipe, 'id' | 'name' | 'image_url'> | null
-}
-
-export interface WeeklyPlanWithTasks extends WeeklyProductionPlan {
-  tasks: WeeklyProductionTaskWithRecipe[]
+  recipe?: Recipe
+  category?: TaskCategory
+  category_id?: string
 }
 
 export interface WeeklyPlanStats {
   total_tasks: number
   completed_tasks: number
+  pending_tasks: number
+  in_progress_tasks: number
   completion_percentage: number
-  total_time_minutes: number
-  completed_time_minutes: number
-  time_completion_percentage: number
-  tasks_by_day: {
-    day_of_week: number
-    total_tasks: number
-    completed_tasks: number
-    total_time_minutes: number
-    completed_time_minutes: number
-  }[]
 }
 
+export interface TaskCategory {
+  id: string
+  name: string
+  description?: string
+  color?: string
+  created_at: string
+}
+
+export interface Column<T = any> {
+  key: string
+  header: string
+  cell?: (item: T) => React.ReactNode
+  sortable?: boolean
+  className?: string
+}
+
+// Tipos para clientes
+export interface Customer {
+  id: string
+  name: string
+  email?: string
+  phone?: string
+  address?: string
+  created_at: string
+}
+
+export interface CustomerWithSales extends Customer {
+  sales_count: number
+  total_spent: number
+}
+
+// Tipos para ventas
 export interface Sale {
   id: string
   sale_date: string
-  customer_id?: string | null
+  customer_id?: string
   total_amount: number
-  payment_method: 'efectivo' | 'tarjeta' | 'transferencia'
+  payment_method: "efectivo" | "tarjeta" | "transferencia"
   payment_status: PaymentStatus
   amount_paid: number
   amount_pending: number
-  notes?: string | null
+  notes?: string
   created_at: string
 }
 
@@ -116,150 +322,11 @@ export interface SaleItem {
   subtotal: number
 }
 
-export interface EventProduct {
-  id: string
-  event_id: string
-  product_id: string
-  special_price?: number | null
-  created_at: string
-}
-
-// ==================== Tipos Compuestos para Relaciones ====================
-
-export type IngredientWithInventory = Ingredient & {
-  inventory?: Pick<Inventory, 'quantity' | 'unit' | 'location'> | null
-}
-
-export type RecipeIngredientWithDetails = RecipeIngredient & {
-  ingredient: Pick<Ingredient, 'id' | 'name' | 'cost_per_unit' | 'unit'>
-}
-
-export type RecipeWithIngredients = Recipe & {
-  recipe_ingredients: RecipeIngredientWithDetails[]
-}
-
-export type ProductWithRecipe = Product & {
-  recipe?: Pick<Recipe, 'id' | 'name' | 'servings'> | null
-}
-
-export type OrderItemWithProduct = OrderItem & {
-  product: Pick<Product, 'id' | 'name' | 'image_url'>
-}
-
-export type OrderWithItems = Order & {
-  order_items: OrderItemWithProduct[]
-}
-
-export type ProductionTaskWithDetails = ProductionTask & {
-  order_item: OrderItem & {
-    order: Pick<Order, 'id' | 'delivery_date' | 'delivery_time' | 'status'>
-    product: Pick<Product, 'id' | 'name'>
-  }
-}
-
-export type InventoryWithIngredient = Inventory & {
-  ingredient: Pick<Ingredient, 'id' | 'name' | 'unit'>
-}
-
-export type InventoryMovementWithIngredient = InventoryMovement & {
-  ingredient: Pick<Ingredient, 'id' | 'name'>
-}
-
-export type SaleItemWithProduct = SaleItem & {
-  product: Pick<Product, 'id' | 'name' | 'image_url' | 'sku'>
-}
-
-export type SaleWithItems = Sale & {
-  sale_items: SaleItemWithProduct[]
-  customer?: Pick<Customer, 'id' | 'name'> | null
-}
-
-export type EventProductWithDetails = EventProduct & {
-  product: Pick<Product, 'id' | 'name' | 'image_url' | 'suggested_price_cache' | 'sku'>
-}
-
-export type EventWithProducts = EventCalendar & {
-  event_products: EventProductWithDetails[]
-}
-
-export type CustomerWithSales = Customer & {
-  sales_count?: number
-  total_spent?: number
-}
-
-// ==================== Tipos para Server Actions ====================
-
-export interface PaginationParams {
-  page?: number
-  pageSize?: number
-}
-
-export interface SortParams {
-  sortBy?: string
-  sortOrder?: 'asc' | 'desc'
-}
-
-export interface SearchParams {
-  search?: string
-}
-
-export interface OrdersQueryParams extends PaginationParams, SortParams {
-  status?: Order['status']
-}
-
-export interface ProductsQueryParams extends PaginationParams, SearchParams {}
-
-export interface IngredientsQueryParams extends PaginationParams, SearchParams {
-  lowStockOnly?: boolean
-}
-
-export interface RecipesQueryParams extends PaginationParams, SearchParams {
-  activeOnly?: boolean
-}
-
-export interface SalesQueryParams extends PaginationParams, SortParams {
-  dateFrom?: string
-  dateTo?: string
-  customerId?: string
-  paymentMethod?: Sale['payment_method']
-}
-
-export interface CustomersQueryParams extends PaginationParams, SearchParams {}
-
-export interface PaginatedResponse<T> {
-  success: boolean
-  data?: T[]
-  message?: string
-  needsSetup?: boolean
-  pagination?: {
-    page: number
-    pageSize: number
-    total: number
-    totalPages: number
-  }
-}
-
-export interface ActionResponse<T = any> {
-  success: boolean
-  data?: T
-  message?: string
-  shortages?: StockShortage[]
-}
-
-export interface StockShortage {
-  ingredient_id: string
-  ingredient_name: string
-  required_quantity: number
-  available_quantity: number
-  shortage: number
-}
-
-export interface EventSalesStats {
-  event_date: string
-  total_sales: number
-  total_items_sold: number
-  total_customers: number
-  average_ticket: number
+export interface SaleWithItems extends Sale {
+  customer?: Customer
+  sale_items: (SaleItem & {
+    product: Product
+  })[]
 }
 
 export interface DailySalesStats {
@@ -271,125 +338,21 @@ export interface DailySalesStats {
   average_ticket: number
 }
 
-// ==================== Tipos para Componentes UI ====================
+export interface AccountsReceivable {
+  id: string
+  type: 'order' | 'sale'
+  total_amount: number
+  amount_paid: number
+  amount_pending: number
+  payment_status: PaymentStatus
+  created_at: string
+  customer_name?: string
+  due_date?: string
+}
 
-export interface Column<T> {
+// Tipos para configuración
+export interface Setting {
+  id: string
   key: string
-  header: string
-  cell: (row: T) => React.ReactNode
-  sortable?: boolean
-  className?: string
+  value: string
 }
-
-export interface DataTableProps<T> {
-  data: T[]
-  columns: Column<T>[]
-  onRowClick?: (row: T) => void
-  emptyState?: React.ReactNode
-  mobileCardRender?: (row: T) => React.ReactNode
-  pagination?: {
-    page: number
-    pageSize: number
-    total: number
-    onPageChange: (page: number) => void
-  }
-}
-
-export interface SearchFilterConfig {
-  label: string
-  key: string
-  options: { value: string; label: string }[]
-}
-
-// ==================== Tipos para Validaciones ====================
-
-export interface RecipeCostCalculation {
-  totalCost: number
-  costPerServing: number
-  ingredients: {
-    name: string
-    quantity: number
-    unit: string
-    cost: number
-  }[]
-}
-
-export interface ProductPriceCalculation {
-  baseCost: number
-  markupPercent: number
-  suggestedPrice: number
-  profitMargin: number
-}
-
-// ==================== Tipos para i18n ====================
-
-export type LocaleKey = 'es' | 'en'
-
-export interface TranslationMessages {
-  common: {
-    save: string
-    cancel: string
-    delete: string
-    edit: string
-    create: string
-    search: string
-    filter: string
-    actions: string
-    loading: string
-    error: string
-    success: string
-    confirm: string
-    back: string
-    next: string
-  }
-  orders: {
-    title: string
-    create: string
-    confirm: string
-    cancel: string
-    pending: string
-    confirmed: string
-    inProduction: string
-    completed: string
-    cancelled: string
-  }
-  products: {
-    title: string
-    create: string
-    baseCost: string
-    suggestedPrice: string
-    recipe: string
-  }
-  ingredients: {
-    title: string
-    create: string
-    stock: string
-    unit: string
-    cost: string
-    lowStock: string
-  }
-  recipes: {
-    title: string
-    create: string
-    servings: string
-    cost: string
-    duplicate: string
-  }
-}
-
-// Re-exportar tipos base para conveniencia
-export type {
-  Ingredient,
-  Recipe,
-  RecipeIngredient,
-  Product,
-  Inventory,
-  InventoryMovement,
-  Order,
-  OrderItem,
-  ProductionTask,
-  EventCalendar,
-  PriceRule,
-  Setting
-}
-

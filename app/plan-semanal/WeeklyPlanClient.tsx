@@ -1,36 +1,52 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { 
+  DndContext, 
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+} from '@dnd-kit/sortable';
 import { 
   ChevronLeft, 
   ChevronRight, 
-  Plus, 
-  Check, 
   Clock, 
-  Edit, 
-  Trash2,
   Calendar
 } from "lucide-react"
 import { 
   getWeeklyPlan, 
-  createWeeklyPlan, 
+  getAllWeeklyPlans,
   addTaskToPlan, 
   updateTaskStatus, 
-  deleteTask
+  deleteTask,
+  reorderTasks
 } from "@/actions/weeklyPlanActions"
 import { 
   getPreviousWeekStart, 
   getNextWeekStart, 
-  getWeekDateRange 
+  getWeekDateRange,
+  isMonday,
+  getMondayOfWeek,
+  formatDate
 } from "@/lib/utils"
 import { useNotificationStore } from "@/store/notificationStore"
-import { formatDate } from "@/lib/utils"
 import type { WeeklyPlanWithTasks, WeeklyProductionTaskWithRecipe } from "@/lib/types"
 import { AddTaskDialog } from "./AddTaskDialog"
 import { EditTaskDialog } from "./EditTaskDialog"
+import { CreatePlanDialog } from "./CreatePlanDialog"
+import { DuplicatePlanDialog } from "./DuplicatePlanDialog"
+import { CheckStockDialog } from "./CheckStockDialog"
+import { TaskSuggestions } from "./TaskSuggestions"
+import { DroppableDay } from './DroppableDay';
+import { DraggableTask } from './DraggableTask';
 
 interface WeeklyPlanClientProps {
   initialPlan: WeeklyPlanWithTasks | null
@@ -55,46 +71,90 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
   const [editTaskDialogOpen, setEditTaskDialogOpen] = useState(false)
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [selectedTask, setSelectedTask] = useState<WeeklyProductionTaskWithRecipe | null>(null)
+  const [activeTask, setActiveTask] = useState<WeeklyProductionTaskWithRecipe | null>(null);
+  const [availableWeeks, setAvailableWeeks] = useState<string[]>([])
   const addNotification = useNotificationStore((state) => state.addNotification)
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  const tasksByDay = useMemo(() => {
+    const groupedTasks: { [key: number]: WeeklyProductionTaskWithRecipe[] } = {};
+    DAYS_OF_WEEK.forEach(day => {
+      groupedTasks[day.day] = [];
+    });
+    if (plan?.tasks) {
+      plan.tasks.forEach(task => {
+        if (groupedTasks[task.day_of_week]) {
+          groupedTasks[task.day_of_week].push(task);
+        }
+      });
+    }
+    return groupedTasks;
+  }, [plan]);
+
+
   // Wrapper function for onUpdate callbacks
-  const handleUpdate = () => {
-    loadPlan(currentWeek)
+  const handleUpdate = (weekStartDate?: string) => {
+    if (weekStartDate) {
+      setCurrentWeek(weekStartDate)
+      loadPlan(weekStartDate)
+    } else {
+      loadPlan(currentWeek)
+    }
+    // Recargar semanas disponibles después de crear/actualizar
+    loadAvailableWeeks()
+  }
+
+  const handlePlanDuplicated = (newWeekStartDate: string) => {
+    setCurrentWeek(newWeekStartDate)
+    loadPlan(newWeekStartDate)
+    loadAvailableWeeks()
   }
 
   const weekRange = getWeekDateRange(currentWeek)
+
+  // Load available weeks
+  const loadAvailableWeeks = async () => {
+    try {
+      const result = await getAllWeeklyPlans()
+      if (result.success && result.data) {
+        const weeks = result.data.map((plan: any) => plan.week_start_date)
+        setAvailableWeeks(weeks)
+        console.log('Available weeks:', weeks)
+      }
+    } catch (error) {
+      console.error('Error loading available weeks:', error)
+    }
+  }
 
   // Load plan for current week
   const loadPlan = async (weekStart: string) => {
     setLoading(true)
     try {
+      console.log('Loading plan for week:', weekStart)
       const result = await getWeeklyPlan(weekStart)
+      console.log('Plan load result:', result)
       if (result.success) {
         setPlan(result.data ?? null)
+        console.log('Plan set to:', result.data)
       } else {
         setPlan(null)
+        console.log('No plan found for week:', weekStart)
       }
     } catch (error) {
+      console.error('Error loading plan:', error)
       addNotification({ type: "error", message: "Error al cargar plan semanal" })
     } finally {
       setLoading(false)
     }
   }
 
-  // Create new plan for current week
-  const createPlan = async () => {
-    try {
-      const result = await createWeeklyPlan(currentWeek, "")
-      if (result.success) {
-        setPlan(result.data)
-        addNotification({ type: "success", message: "Plan semanal creado exitosamente" })
-      } else {
-        addNotification({ type: "error", message: result.message! })
-      }
-    } catch (error) {
-      addNotification({ type: "error", message: "Error al crear plan semanal" })
-    }
-  }
 
   // Navigate weeks
   const goToPreviousWeek = () => {
@@ -109,6 +169,20 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
     loadPlan(nextWeek)
   }
 
+  // Asegurar que siempre estemos en un lunes
+  useEffect(() => {
+    if (!isMonday(currentWeek)) {
+      const mondayWeek = getMondayOfWeek(currentWeek)
+      setCurrentWeek(mondayWeek)
+      loadPlan(mondayWeek)
+    }
+  }, [currentWeek])
+
+  // Cargar semanas disponibles al inicio
+  useEffect(() => {
+    loadAvailableWeeks()
+  }, [])
+
   // Add task
   const handleAddTask = async (dayOfWeek: number, taskData: any) => {
     if (!plan) return
@@ -119,7 +193,8 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
         dayOfWeek,
         taskData.task_description,
         taskData.recipe_id,
-        taskData.estimated_time_minutes
+        taskData.estimated_time_minutes,
+        taskData.category_id
       )
       
       if (result.success) {
@@ -130,6 +205,162 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
       }
     } catch (error) {
       addNotification({ type: "error", message: "Error al agregar tarea" })
+    }
+  }
+
+  const handleOpenAddTaskDialog = (day: number) => {
+    setSelectedDay(day);
+    setAddTaskDialogOpen(true);
+  };
+
+  const handleOpenEditTaskDialog = (task: WeeklyProductionTaskWithRecipe) => {
+    setSelectedTask(task);
+    setEditTaskDialogOpen(true);
+  };
+
+
+  // Wrapper for suggestions
+  const handleAddTaskFromSuggestion = (taskData: { task_description: string; recipe_id: string }, dayOfWeek: number) => {
+    handleAddTask(dayOfWeek, taskData)
+  }
+
+  // Drag and Drop handlers
+  function handleDragStart(event: any) {
+    const { active } = event;
+    const task = plan?.tasks.find(t => t.id === active.id);
+    if (task) {
+      setActiveTask(task);
+    }
+  }
+
+  function handleDragOver(event: any) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+  
+    const activeDay = active.data.current.sortable.containerId;
+    const overDay = over.id.toString().startsWith('day-') ? over.id : over.data.current?.sortable.containerId;
+  
+    if (!overDay || activeDay === overDay) {
+      return;
+    }
+  
+    setPlan((prevPlan) => {
+      if (!prevPlan) return null;
+  
+      const activeTaskIndex = prevPlan.tasks.findIndex(t => t.id === active.id);
+      if (activeTaskIndex === -1) return prevPlan;
+  
+      const updatedTasks = [...prevPlan.tasks];
+      const [movedTask] = updatedTasks.splice(activeTaskIndex, 1);
+      
+      const newDay = parseInt(overDay.replace('day-', ''), 10);
+      movedTask.day_of_week = newDay;
+  
+      // Find where to insert in the tasks list
+      const overTaskIndex = updatedTasks.findIndex(t => t.id === over.id);
+      if (overTaskIndex !== -1) {
+        updatedTasks.splice(overTaskIndex, 0, movedTask);
+      } else {
+        // If dropping on the container, add to the end of that day's tasks
+        const tasksInNewDay = updatedTasks.filter(t => t.day_of_week === newDay);
+        const lastTaskIndex = updatedTasks.findLastIndex(t => t.day_of_week === newDay);
+        updatedTasks.splice(lastTaskIndex + 1, 0, movedTask);
+      }
+  
+      return { ...prevPlan, tasks: updatedTasks };
+    });
+  }
+  
+  async function handleDragEnd(event: any) {
+    const { active, over } = event;
+    setActiveTask(null);
+  
+    if (!over || active.id === over.id) {
+      return;
+    }
+    
+    const overDay = over.id.toString().startsWith('day-') ? over.id : over.data.current?.sortable.containerId;
+    if (!overDay) return;
+  
+    let finalTasks: WeeklyProductionTaskWithRecipe[] = [];
+  
+    setPlan((prevPlan) => {
+      if (!prevPlan) return null;
+  
+      const oldIndex = prevPlan.tasks.findIndex(t => t.id === active.id);
+      let newIndex = prevPlan.tasks.findIndex(t => t.id === over.id);
+  
+      const activeDay = active.data.current.sortable.containerId;
+      
+      let reorderedTasks;
+  
+      if (activeDay === overDay) {
+        // Reordering within the same day
+        reorderedTasks = arrayMove(prevPlan.tasks, oldIndex, newIndex);
+      } else {
+        // Moving to a different day
+        const movedTask = { ...prevPlan.tasks[oldIndex] };
+        movedTask.day_of_week = parseInt(overDay.replace('day-', ''), 10);
+        
+        const remainingTasks = prevPlan.tasks.filter(t => t.id !== active.id);
+        
+        const overContainerTasks = prevPlan.tasks.filter(t => t.day_of_week === movedTask.day_of_week);
+        if (overContainerTasks.some(t => t.id === over.id)) {
+           // Dropped on a task in the new container
+           newIndex = remainingTasks.findIndex(t => t.id === over.id);
+           remainingTasks.splice(newIndex, 0, movedTask);
+        } else {
+           // Dropped on the container itself
+           const lastIndexOfDay = remainingTasks.findLastIndex(t => t.day_of_week === movedTask.day_of_week);
+           remainingTasks.splice(lastIndexOfDay + 1, 0, movedTask);
+        }
+        reorderedTasks = remainingTasks;
+      }
+      
+      finalTasks = reorderedTasks.map((task, index) => ({
+        ...task,
+        order_position: index // This is a temporary position; server should re-calculate based on day
+      }));
+      
+      return { ...prevPlan, tasks: reorderedTasks };
+    });
+  
+    // Server update
+    const tasksToUpdate = finalTasks.map((task, index) => ({
+      id: task.id,
+      day_of_week: task.day_of_week,
+      order_position: tasksByDay[task.day_of_week].findIndex(t => t.id === task.id),
+    })).filter(t => t.order_position !== -1);
+  
+    // Recalculate positions for all tasks in affected days
+    const allTasksToUpdate = new Map<string, { id: string; day_of_week: number; order_position: number }>();
+  
+    const updatePositionsForDay = (day: number, tasks: WeeklyProductionTaskWithRecipe[]) => {
+      tasks.forEach((task, index) => {
+        allTasksToUpdate.set(task.id, { id: task.id, day_of_week: day, order_position: index });
+      });
+    };
+  
+    const daysToUpdate = new Set<number>();
+    if (plan?.tasks) {
+      const movedTask = plan.tasks.find(t => t.id === active.id);
+      if (movedTask) {
+        daysToUpdate.add(movedTask.day_of_week);
+        const newDay = parseInt(overDay.replace('day-', ''), 10);
+        daysToUpdate.add(newDay);
+      }
+    }
+  
+    daysToUpdate.forEach(dayNumber => {
+      updatePositionsForDay(dayNumber, finalTasks.filter(t => t.day_of_week === dayNumber));
+    });
+  
+    const result = await reorderTasks(Array.from(allTasksToUpdate.values()));
+    if (!result.success) {
+      addNotification({ type: "error", message: "Error al reordenar tareas. Recargando..." });
+      loadPlan(currentWeek); // Revert optimistic update on failure
+    } else {
+      addNotification({ type: "success", message: "Orden de tareas actualizado." });
     }
   }
 
@@ -178,14 +409,14 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
     }
   }
 
-  const getTasksForDay = (dayOfWeek: number) => {
-    if (!plan || !plan.tasks) return []
-    return plan.tasks.filter(task => task.day_of_week === dayOfWeek)
+  const getTotalTimeForDay = (dayOfWeek: number) => {
+    const tasks = tasksByDay[dayOfWeek] || [];
+    return tasks.reduce((total, task) => total + (task.estimated_time_minutes || 0), 0)
   }
 
-  const getTotalTimeForDay = (dayOfWeek: number) => {
-    const tasks = getTasksForDay(dayOfWeek)
-    return tasks.reduce((total, task) => total + (task.estimated_time_minutes || 0), 0)
+  const getTotalTimeForWeek = () => {
+    if (!plan || !plan.tasks) return 0
+    return plan.tasks.reduce((total, task) => total + (task.estimated_time_minutes || 0), 0)
   }
 
   return (
@@ -200,6 +431,27 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
           <p className="text-muted-foreground">
             {weekRange.start} - {weekRange.end}
           </p>
+          <div className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            <span>
+              Carga horaria total de la semana: <strong>{Math.floor(getTotalTimeForWeek() / 60)}h {getTotalTimeForWeek() % 60}m</strong>
+            </span>
+          </div>
+          {!isMonday(currentWeek) && (
+            <p className="text-amber-600 text-sm mt-1">
+              ⚠️ Esta semana no comienza en lunes. Los planes semanales siempre comienzan los lunes.
+            </p>
+          )}
+          {plan && (
+            <p className="text-green-600 text-sm mt-1">
+              ✅ Plan semanal disponible
+            </p>
+          )}
+          {availableWeeks.length > 0 && (
+            <p className="text-blue-600 text-sm mt-1">
+              📅 Planes disponibles: {availableWeeks.length} semana{availableWeeks.length !== 1 ? 's' : ''}
+            </p>
+          )}
         </div>
         
         <div className="flex items-center gap-4">
@@ -212,14 +464,33 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
             </Button>
           </div>
           
+          {plan && (
+            <DuplicatePlanDialog 
+              sourceWeekStart={currentWeek}
+              onPlanDuplicated={handlePlanDuplicated}
+            />
+          )}
+
+          {plan && (
+            <CheckStockDialog 
+              planId={plan.id}
+              planWeek={`${weekRange.start} - ${weekRange.end}`}
+            />
+          )}
+
           {!plan && (
-            <Button onClick={createPlan} className="btn-gradient-green">
-              <Plus className="h-4 w-4 mr-2" />
-              Crear Plan
-            </Button>
+            <CreatePlanDialog onPlanCreated={handleUpdate} />
           )}
         </div>
       </div>
+
+      {plan && (
+        <TaskSuggestions 
+          weekStartDate={weekRange.startRaw}
+          weekEndDate={weekRange.endRaw}
+          onAddTask={handleAddTaskFromSuggestion}
+        />
+      )}
 
       {loading ? (
         <div className="text-center py-8">
@@ -233,133 +504,51 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
             <p className="text-muted-foreground mb-4">
               Crea un plan semanal para organizar tu producción
             </p>
-            <Button onClick={createPlan} className="btn-gradient-green">
-              <Plus className="h-4 w-4 mr-2" />
-              Crear Plan
-            </Button>
+            <CreatePlanDialog onPlanCreated={handleUpdate} />
           </CardContent>
         </Card>
       ) : (
         /* Weekly Grid */
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-          {DAYS_OF_WEEK.map(({ day, name, short }) => {
-            const tasks = getTasksForDay(day)
-            const totalTime = getTotalTimeForDay(day)
-            
-            return (
-              <Card key={day} className="min-h-[400px]">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center justify-between">
-                    <div>
-                      <div className="text-sm text-muted-foreground">{short}</div>
-                      <div>{name}</div>
-                    </div>
-                    {totalTime > 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {totalTime}min
-                      </Badge>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                
-                <CardContent className="space-y-3">
-                  {/* Add Task Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      setSelectedDay(day)
-                      setAddTaskDialogOpen(true)
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar Tarea
-                  </Button>
-
-                  {/* Tasks List */}
-                  <div className="space-y-2">
-                    {tasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className={`p-3 border rounded-lg space-y-2 ${
-                          task.status === 'completada' ? 'bg-green-50 border-green-200' : 
-                          task.status === 'en_progreso' ? 'bg-blue-50 border-blue-200' : 
-                          'bg-white'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium line-clamp-2">
-                              {task.task_description}
-                            </p>
-                            {task.recipe && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Receta: {task.recipe.name}
-                              </p>
-                            )}
-                            {task.estimated_time_minutes && (
-                              <p className="text-xs text-muted-foreground">
-                                <Clock className="h-3 w-3 inline mr-1" />
-                                {task.estimated_time_minutes} min
-                              </p>
-                            )}
-                          </div>
-                          
-                          <div className="flex flex-col gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={() => {
-                                setSelectedTask(task)
-                                setEditTaskDialogOpen(true)
-                              }}
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                              onClick={() => handleDeleteTask(task.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          {getTaskStatusBadge(task.status)}
-                          
-                          <div className="flex gap-1">
-                            {task.status !== 'completada' && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0"
-                                onClick={() => handleUpdateTaskStatus(task.id, 'completada')}
-                              >
-                                <Check className="h-3 w-3 text-green-600" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {tasks.length === 0 && (
-                    <div className="text-center py-4 text-muted-foreground text-sm">
-                      No hay tareas programadas
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+        <DndContext 
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+            {DAYS_OF_WEEK.map(({ day, name, short }) => {
+              const tasks = tasksByDay[day] || [];
+              const totalTime = getTotalTimeForDay(day)
+              
+              return (
+                <DroppableDay
+                  key={day}
+                  id={`day-${day}`}
+                  day={{ day, name, short }}
+                  tasks={tasks}
+                  totalTime={totalTime}
+                  onAddTask={handleOpenAddTaskDialog}
+                  onEditTask={handleOpenEditTaskDialog}
+                  onDeleteTask={handleDeleteTask}
+                  onUpdateStatus={handleUpdateTaskStatus}
+                  getTaskStatusBadge={getTaskStatusBadge}
+                />
+              )
+            })}
+          </div>
+          <DragOverlay>
+            {activeTask ? (
+              <DraggableTask 
+                task={activeTask}
+                getTaskStatusBadge={getTaskStatusBadge}
+                onEditTask={() => {}}
+                onDeleteTask={() => {}}
+                onUpdateStatus={() => {}}
+              />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       )}
 
       {/* Dialogs */}

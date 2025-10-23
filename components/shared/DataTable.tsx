@@ -115,7 +115,7 @@ export function DataTable<T extends { id: string }>({
               >
                 {columns.map((column) => (
                   <TableCell key={column.key} className={column.className}>
-                    {column.cell(row)}
+                    {column.cell?.(row)}
                   </TableCell>
                 ))}
               </TableRow>
@@ -141,7 +141,7 @@ export function DataTable<T extends { id: string }>({
                   <span className="text-sm text-muted-foreground">
                     {column.header}:
                   </span>{' '}
-                  <span className="text-sm font-medium">{column.cell(row)}</span>
+                  <span className="text-sm font-medium">{column.cell?.(row)}</span>
                 </div>
               ))}
             </div>

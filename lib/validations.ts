@@ -148,20 +148,18 @@ export const paymentRegistrationSchema = z.object({
 
 // Weekly Production Plan validations
 export const weeklyProductionPlanSchema = z.object({
-  week_start_date: z.string().refine((date) => {
-    const d = new Date(date)
-    return !isNaN(d.getTime()) && d.getDay() === 1 // Monday
-  }, "La fecha debe ser un lunes"),
+  week_start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido"),
   notes: z.string().optional(),
 })
 
 export const weeklyProductionTaskSchema = z.object({
-  plan_id: z.string().uuid("ID de plan inválido"),
-  day_of_week: z.number().int().min(1).max(7, "El día debe estar entre 1 (Lunes) y 7 (Domingo)"),
-  task_description: z.string().min(1, "La descripción de la tarea es requerida"),
-  recipe_id: z.string().uuid("ID de receta inválido").optional(),
-  estimated_time_minutes: z.number().int().min(0).optional(),
-  order_position: z.number().int().min(0).default(0),
+  plan_id: z.string().uuid(),
+  day_of_week: z.number().min(1).max(7),
+  task_description: z.string().min(1, "La descripción es requerida"),
+  recipe_id: z.string().uuid().optional().nullable(),
+  estimated_time_minutes: z.number().int().positive().optional().nullable(),
+  order_position: z.number().int().min(0),
+  category_id: z.string().uuid().optional().nullable(),
 })
 
 export const updateTaskStatusSchema = z.object({

@@ -108,9 +108,12 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
   }, { totalCost: 0, totalPrice: 0, totalTime: 0 })
 
   const onSubmit = async (data: FormData) => {
+    console.log('🚀 CreateOrder onSubmit called with data:', data)
     try {
       setSubmitting(true)
+      console.log('🔄 Calling createOrder...')
       const result = await createOrder(data)
+      console.log('📋 createOrder result:', result)
 
       if (result.success) {
         addNotification({ type: "success", message: result.message! })
@@ -119,6 +122,9 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
       } else {
         addNotification({ type: "error", message: result.message! })
       }
+    } catch (error) {
+      console.log('💥 Error in onSubmit:', error)
+      addNotification({ type: "error", message: "Error inesperado al crear pedido" })
     } finally {
       setSubmitting(false)
     }
@@ -327,7 +333,11 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button 
+              type="submit" 
+              disabled={submitting}
+              onClick={() => console.log('🔘 CreateOrder button clicked!')}
+            >
               {submitting ? "Creando..." : "Crear Pedido"}
             </Button>
           </div>

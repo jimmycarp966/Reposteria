@@ -169,7 +169,7 @@ export async function createOrder(formData: z.infer<typeof orderSchema>) {
 
     revalidatePath("/pedidos")
     revalidatePath("/calendario")
-    clearRelevantCache('order') // Limpiar caché relacionado con pedidos
+    clearRelevantCache('order')
     return { success: true, data: order, message: "Pedido creado exitosamente" }
   } catch (error: any) {
     logger.error("Error creating order", error, 'orderActions.createOrder')
@@ -177,15 +177,23 @@ export async function createOrder(formData: z.infer<typeof orderSchema>) {
   }
 }
 
-export async function confirmOrder(id: string) {
+export async function confirmOrder(id: string, forceConfirm: boolean = false) {
   try {
     // Call RPC function to confirm order and update stock
     const { data, error } = await supabase
-      .rpc("confirm_order_and_update_stock", { order_id_param: id })
+      .rpc("confirm_order_and_update_stock", { 
+        order_id_param: id,
+        force_confirm_param: forceConfirm
+      })
 
     if (error) throw error
 
-    const result = data as { success: boolean; message: string; shortages?: any[] }
+    const result = data as { 
+      success: boolean; 
+      message: string; 
+      shortages?: any[];
+      has_shortages?: boolean;
+    }
 
     if (!result.success) {
       return { 
@@ -198,9 +206,14 @@ export async function confirmOrder(id: string) {
     revalidatePath("/pedidos")
     revalidatePath("/inventario")
     revalidatePath("/produccion")
-    clearRelevantCache('order') // Limpiar caché relacionado con pedidos
-    clearRelevantCache('inventory') // Limpiar caché de inventario
-    return { success: true, message: result.message }
+    clearRelevantCache('order')
+    clearRelevantCache('inventory')
+    
+    return { 
+      success: true, 
+      message: result.message,
+      has_shortages: result.has_shortages || false
+    }
   } catch (error: any) {
     logger.error("Error confirming order", error, 'orderActions.confirmOrder')
     return { success: false, message: error.message || "Error al confirmar pedido" }
@@ -371,5 +384,89 @@ export async function getOrdersWithPendingPayment() {
   }
 }
 
+// Complete order and create sale automatically
+export async function completeOrderWithSale(orderId: string, paymentStatus: 'pagado' | 'pendiente') {
+  try {
+    logger.debug('Completing order and creating sale', { orderId, paymentStatus }, 'orderActions.completeOrderWithSale')
 
+    const { data, error } = await supabase
+      .rpc("complete_order_and_create_sale", {
+        order_id_param: orderId,
+        payment_status_param: paymentStatus
+      })
 
+    if (error) throw error
+
+    const result = data as {
+      success: boolean;
+      message: string;
+      sale_id?: string;
+      total_amount?: number;
+    }
+
+    if (!result.success) {
+      return { success: false, message: result.message }
+    }
+
+    // Revalidate relevant paths
+    revalidatePath("/pedidos")
+    revalidatePath("/ventas")
+    revalidatePath("/reportes")
+    clearRelevantCache('order')
+
+    logger.info('Order completed and sale created', { 
+      orderId, 
+      saleId: result.sale_id,
+      totalAmount: result.total_amount 
+    }, 'orderActions.completeOrderWithSale')
+
+    return {
+      success: true,
+      message: result.message,
+      saleId: result.sale_id,
+      totalAmount: result.total_amount
+    }
+  } catch (error: any) {
+    logger.error("Error completing order and creating sale", error, 'orderActions.completeOrderWithSale')
+    return { success: false, message: error.message || "Error al completar pedido" }
+  }
+}
+
+// Move order to production
+export async function moveOrderToProduction(orderId: string) {
+  try {
+    logger.info('Moving order to production', { orderId })
+    
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ status: 'IN_PRODUCTION' })
+      .eq('id', orderId)
+      .eq('status', 'CONFIRMED') // Solo permitir si está confirmado
+      .select()
+
+    if (error) {
+      logger.error('Error moving order to production', { error: error.message })
+      throw new Error(error.message)
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error('Pedido no encontrado o no se puede pasar a producción')
+    }
+
+    // Limpiar caché relevante
+    await clearRelevantCache('order')
+    
+    // Revalidar páginas
+    revalidatePath('/pedidos')
+    
+    logger.info('Order moved to production successfully', { orderId })
+
+    return {
+      success: true,
+      message: 'Pedido pasado a producción exitosamente'
+    }
+  } catch (error: any) {
+    logger.error('Error in moveOrderToProduction', { error: error.message })
+    throw new Error(error.message || 'Error al pasar el pedido a producción')
+  }
+}

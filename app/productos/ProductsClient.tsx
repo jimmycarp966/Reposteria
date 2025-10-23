@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { CreateProductDialog } from "./CreateProductDialog"
 import { EditPriceDialog } from "./EditPriceDialog"
-import { deleteProduct } from "@/actions/productActions"
+import { deleteProduct, getProducts } from "@/actions/productActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { formatCurrency } from "@/lib/utils"
 import { Plus, Trash2, Edit, Package } from "lucide-react"
@@ -53,14 +53,12 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
     const result = await deleteProduct(id)
     if (result.success) {
       addNotification({ type: "success", message: "Producto eliminado" })
-      // Filtrar el producto eliminado de la lista local
       setProducts(prev => prev.filter(p => p.id !== id))
     } else {
       addNotification({ type: "error", message: result.message! })
     }
   }
 
-  // Definir columnas para DataTable
   const columns: Column<ProductWithRecipe>[] = [
     {
       key: 'name',
@@ -81,22 +79,42 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
       key: 'base_cost',
       header: 'Costo Base',
       cell: (product) => (
-        <span className="text-sm">{formatCurrency(product.base_cost_cache)}</span>
+        <div className="space-y-1">
+          <div className="text-sm">
+            <span className="text-muted-foreground">Por porción: </span>
+            <span className="font-medium">{formatCurrency(product.base_cost_cache)}</span>
+          </div>
+          <div className="text-sm">
+            <span className="text-muted-foreground">Receta completa: </span>
+            <span className="font-medium">{formatCurrency(product.base_cost_cache * (product.recipe?.servings || 1))}</span>
+          </div>
+        </div>
       )
     },
     {
       key: 'suggested_price',
       header: 'Precio Sugerido',
       cell: (product) => (
-        <button
-          onClick={() => {
-            setSelectedProduct(product)
-            setShowEditPriceDialog(true)
-          }}
-          className="hover:underline text-blue-600 font-medium"
-        >
-          {formatCurrency(product.suggested_price_cache)}
-        </button>
+        <div className="space-y-1">
+          <div className="text-sm">
+            <span className="text-muted-foreground">Por porción: </span>
+            <button
+              onClick={() => {
+                setSelectedProduct(product)
+                setShowEditPriceDialog(true)
+              }}
+              className="hover:underline text-blue-600 font-medium"
+            >
+              {formatCurrency(product.suggested_price_cache)}
+            </button>
+          </div>
+          <div className="text-sm">
+            <span className="text-muted-foreground">Receta completa: </span>
+            <span className="font-medium text-blue-600">
+              {formatCurrency(product.suggested_price_cache * (product.recipe?.servings || 1))}
+            </span>
+          </div>
+        </div>
       )
     },
     {
@@ -144,7 +162,6 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
     }
   ]
 
-  // Renderizar card para móvil
   const renderMobileCard = (product: ProductWithRecipe) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
@@ -153,15 +170,37 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
       </CardHeader>
       <CardContent>
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="font-semibold text-gray-600">Costo Base:</span>
-            <span>{formatCurrency(product.base_cost_cache)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-semibold text-gray-600">Precio Sugerido:</span>
-            <span className="font-bold text-blue-600">
-              {formatCurrency(product.suggested_price_cache)}
-            </span>
+          <div className="space-y-2">
+            <div>
+              <span className="font-semibold text-gray-600">Costo Base:</span>
+              <div className="pl-4 space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Por porción:</span>
+                  <span>{formatCurrency(product.base_cost_cache)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Receta completa:</span>
+                  <span>{formatCurrency(product.base_cost_cache * (product.recipe?.servings || 1))}</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <span className="font-semibold text-gray-600">Precio Sugerido:</span>
+              <div className="pl-4 space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Por porción:</span>
+                  <span className="font-bold text-blue-600">
+                    {formatCurrency(product.suggested_price_cache)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Receta completa:</span>
+                  <span className="font-bold text-blue-600">
+                    {formatCurrency(product.suggested_price_cache * (product.recipe?.servings || 1))}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="flex justify-between">
             <span className="font-semibold text-gray-600">Margen:</span>
@@ -194,7 +233,6 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
     </Card>
   )
 
-  // Filtrar productos localmente (en producción, esto se haría en el servidor)
   const filteredProducts = debouncedSearch
     ? products.filter(p => 
         p.name.toLowerCase().includes(debouncedSearch.toLowerCase())
@@ -203,22 +241,28 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
 
   if (initialProducts.length === 0 && !debouncedSearch) {
     return (
-      <EmptyState
-        icon={Package}
-        title="No hay productos"
-        description="Crea productos desde tus recetas o manualmente"
-        action={{
-          label: "Crear Producto",
-          onClick: () => setShowCreateDialog(true),
-        }}
-      />
+      <>
+        <EmptyState
+          icon={Package}
+          title="No hay productos"
+          description="Crea productos desde tus recetas o manualmente"
+          action={{
+            label: "Crear Producto",
+            onClick: () => setShowCreateDialog(true),
+          }}
+        />
+        <CreateProductDialog
+          open={showCreateDialog}
+          onClose={() => setShowCreateDialog(false)}
+          recipes={recipes}
+        />
+      </>
     )
   }
 
   return (
     <>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -228,13 +272,15 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
               Gestiona tu catálogo de productos
             </p>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)} className="btn-gradient-purple">
+          <Button 
+            onClick={() => setShowCreateDialog(true)} 
+            className="btn-gradient-purple"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Nuevo Producto
           </Button>
         </div>
 
-        {/* Búsqueda */}
         <SearchFilter
           searchValue={search}
           onSearchChange={setSearch}
@@ -243,7 +289,6 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
           isSearching={isSearching}
         />
 
-        {/* DataTable con paginación */}
         <DataTable
           data={filteredProducts}
           columns={columns}
@@ -268,6 +313,13 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
         recipes={recipes}
+        onProductCreated={async () => {
+          // Recargar la lista de productos
+          const result = await getProducts({ page: currentPage, pageSize: initialPagination?.pageSize || 20 })
+          if (result.success && result.data) {
+            setProducts(result.data)
+          }
+        }}
       />
 
       {selectedProduct && (

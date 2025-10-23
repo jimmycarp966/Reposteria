@@ -7,6 +7,7 @@ import { z } from "zod"
 import { getCachedData, CACHE_KEYS, cache } from "@/lib/cache"
 import { logger } from "@/lib/logger"
 import type { ProductsQueryParams, PaginatedResponse, ProductWithRecipe } from "@/lib/types"
+import { convertUnitsServer, areUnitsCompatibleServer } from "@/lib/unit-conversions"
 
 export async function getProducts(params: ProductsQueryParams = {}): Promise<PaginatedResponse<ProductWithRecipe>> {
   const {
@@ -77,7 +78,8 @@ export async function getProductById(id: string) {
             ingredient:ingredients (
               id,
               name,
-              cost_per_unit
+              cost_per_unit,
+              unit
             )
           )
         )
@@ -106,7 +108,7 @@ export async function createProduct(formData: z.infer<typeof productSchema>) {
 
     if (error) throw error
 
-    cache.delete(CACHE_KEYS.PRODUCTS) // Limpiar caché de productos
+    cache.delete(CACHE_KEYS.PRODUCTS)
     revalidatePath("/productos")
     return { success: true, data, message: "Producto creado exitosamente" }
   } catch (error: any) {
@@ -117,7 +119,7 @@ export async function createProduct(formData: z.infer<typeof productSchema>) {
 
 export async function createProductFromRecipe(recipeId: string, markupPercent: number = 60) {
   try {
-    // Get recipe details
+    // Get recipe details with ingredient units
     const { data: recipe, error: recipeError } = await supabase
       .from("recipes")
       .select(`
@@ -126,7 +128,8 @@ export async function createProductFromRecipe(recipeId: string, markupPercent: n
           quantity,
           unit,
           ingredient:ingredients (
-            cost_per_unit
+            cost_per_unit,
+            unit
           )
         )
       `)
@@ -135,14 +138,50 @@ export async function createProductFromRecipe(recipeId: string, markupPercent: n
 
     if (recipeError) throw recipeError
 
-    // Calculate base cost
+    // Calculate base cost with unit conversion
     let totalCost = 0
     for (const ri of recipe.recipe_ingredients) {
-      totalCost += ri.quantity * ri.ingredient.cost_per_unit
+      let itemCost = 0
+      
+      // Check if ingredient has unit and if units are compatible for conversion
+      if (ri.ingredient.unit && areUnitsCompatibleServer(ri.unit, ri.ingredient.unit)) {
+        // Convert quantity to ingredient's unit
+        const convertedQuantity = convertUnitsServer(ri.quantity, ri.unit, ri.ingredient.unit)
+        itemCost = convertedQuantity * ri.ingredient.cost_per_unit
+        
+        logger.debug('Converted units for ingredient', {
+          ingredient: ri.ingredient.name,
+          fromQuantity: ri.quantity,
+          fromUnit: ri.unit,
+          toUnit: ri.ingredient.unit,
+          convertedQuantity,
+          itemCost
+        }, 'productActions.createProductFromRecipe')
+      } else {
+        // If units are not compatible or ingredient unit is missing, use direct calculation
+        itemCost = ri.quantity * ri.ingredient.cost_per_unit
+        
+        logger.debug('Direct calculation for ingredient', {
+          ingredient: ri.ingredient.name,
+          quantity: ri.quantity,
+          costPerUnit: ri.ingredient.cost_per_unit,
+          itemCost
+        }, 'productActions.createProductFromRecipe')
+      }
+      
+      totalCost += itemCost
     }
 
     const baseCostPerServing = totalCost / recipe.servings
     const suggestedPrice = baseCostPerServing * (1 + markupPercent / 100)
+
+    logger.debug('Cost calculation', {
+      totalCost,
+      servings: recipe.servings,
+      baseCostPerServing,
+      markupPercent,
+      suggestedPrice
+    }, 'productActions.createProductFromRecipe')
 
     // Create product
     const { data: product, error: productError } = await supabase
@@ -159,7 +198,7 @@ export async function createProductFromRecipe(recipeId: string, markupPercent: n
 
     if (productError) throw productError
 
-    cache.delete(CACHE_KEYS.PRODUCTS) // Limpiar caché de productos
+    cache.delete(CACHE_KEYS.PRODUCTS)
     revalidatePath("/productos")
     return { success: true, data: product, message: "Producto creado desde receta exitosamente" }
   } catch (error: any) {
@@ -181,7 +220,7 @@ export async function updateProduct(id: string, formData: z.infer<typeof product
 
     if (error) throw error
 
-    cache.delete(CACHE_KEYS.PRODUCTS) // Limpiar caché de productos
+    cache.delete(CACHE_KEYS.PRODUCTS)
     revalidatePath("/productos")
     return { success: true, data, message: "Producto actualizado exitosamente" }
   } catch (error: any) {
@@ -210,7 +249,7 @@ export async function updateProductPrice(id: string, markupPercent: number) {
 
     if (error) throw error
 
-    cache.delete(CACHE_KEYS.PRODUCTS) // Limpiar caché de productos
+    cache.delete(CACHE_KEYS.PRODUCTS)
     revalidatePath("/productos")
     return { success: true, message: "Precio actualizado exitosamente" }
   } catch (error: any) {
@@ -233,7 +272,8 @@ export async function refreshProductCost(id: string) {
             quantity,
             unit,
             ingredient:ingredients (
-              cost_per_unit
+              cost_per_unit,
+              unit
             )
           )
         )
@@ -247,10 +287,22 @@ export async function refreshProductCost(id: string) {
       return { success: false, message: "Este producto no tiene receta asociada" }
     }
 
-    // Calculate new base cost
+    // Calculate new base cost with unit conversion
     let totalCost = 0
     for (const ri of product.recipe.recipe_ingredients) {
-      totalCost += ri.quantity * ri.ingredient.cost_per_unit
+      let itemCost = 0
+      
+      // Check if ingredient has unit and if units are compatible for conversion
+      if (ri.ingredient.unit && areUnitsCompatibleServer(ri.unit, ri.ingredient.unit)) {
+        // Convert quantity to ingredient's unit
+        const convertedQuantity = convertUnitsServer(ri.quantity, ri.unit, ri.ingredient.unit)
+        itemCost = convertedQuantity * ri.ingredient.cost_per_unit
+      } else {
+        // If units are not compatible or ingredient unit is missing, use direct calculation
+        itemCost = ri.quantity * ri.ingredient.cost_per_unit
+      }
+      
+      totalCost += itemCost
     }
 
     const baseCostPerServing = totalCost / product.recipe.servings
@@ -270,7 +322,7 @@ export async function refreshProductCost(id: string) {
 
     if (updateError) throw updateError
 
-    cache.delete(CACHE_KEYS.PRODUCTS) // Limpiar caché de productos
+    cache.delete(CACHE_KEYS.PRODUCTS)
     revalidatePath("/productos")
     return { success: true, message: "Costo recalculado exitosamente" }
   } catch (error: any) {
@@ -300,7 +352,7 @@ export async function refreshAllProductCosts() {
       }
     }
 
-    cache.delete(CACHE_KEYS.PRODUCTS) // Limpiar caché de productos
+    cache.delete(CACHE_KEYS.PRODUCTS)
     revalidatePath("/productos")
     return {
       success: true,
@@ -321,7 +373,7 @@ export async function deleteProduct(id: string) {
 
     if (error) throw error
 
-    cache.delete(CACHE_KEYS.PRODUCTS) // Limpiar caché de productos
+    cache.delete(CACHE_KEYS.PRODUCTS)
     revalidatePath("/productos")
     return { success: true, message: "Producto eliminado exitosamente" }
   } catch (error: any) {
@@ -329,6 +381,3 @@ export async function deleteProduct(id: string) {
     return { success: false, message: error.message || "Error al eliminar producto" }
   }
 }
-
-
-

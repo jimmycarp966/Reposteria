@@ -19,7 +19,9 @@ Sistema web completo para gestionar un emprendimiento de repostería, con cálcu
 - ✅ **Ingredientes**: Control completo de ingredientes con stock, costos y proveedores
 - ✅ **Productos**: Productos derivados de recetas con precios sugeridos y márgenes configurables
 - ✅ **Pedidos**: Gestión integral de pedidos diarios y por efemérides con confirmación de stock
+- ✅ **Ventas**: Sistema completo de registro de ventas diarias con carrito de compras
 - ✅ **Calendario**: Vista de entregas programadas y gestión de efemérides
+- ✅ **Plan Semanal**: Planificación semanal de producción con tareas y recetas
 - ✅ **Producción**: Planificación y seguimiento de tareas de producción por pedido
 - ✅ **Reportes**: Análisis detallado de ventas, márgenes, productos más vendidos y tendencias
 - ✅ **Configuración**: Settings globales, efemérides y reglas de precio especiales
@@ -38,6 +40,10 @@ Sistema web completo para gestionar un emprendimiento de repostería, con cálcu
 - ✅ **Paginación Universal**: Todas las listas con paginación
 - ✅ **Búsqueda Avanzada**: Búsqueda instantánea con debounce
 - ✅ **i18n Preparado**: 200+ strings organizados para internacionalización
+- ✅ **Sistema de Pagos**: Seguimiento de pagos pendientes, parciales y completos
+- ✅ **Plan Semanal**: Planificación semanal de producción con tareas y recetas
+- ✅ **Cuentas por Cobrar**: Reporte de pagos pendientes con totales
+- ✅ **Selector de Unidades**: Conversión automática entre unidades de medida
 
 ## 🛠️ Stack Tecnológico
 

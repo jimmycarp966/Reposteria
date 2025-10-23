@@ -354,13 +354,13 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
-                              {account.type === 'pedido' ? 'Pedido' : 'Venta'}
+                              {account.type === 'order' ? 'Pedido' : 'Venta'}
                             </Badge>
                             {getPaymentStatusBadge(account.payment_status)}
                           </div>
                           <p className="font-medium text-sm">{account.customer_name}</p>
                           <p className="text-xs text-muted-foreground">
-                            Vence: {formatDate(account.due_date)}
+                            Vence: {account.due_date ? formatDate(account.due_date) : 'N/A'}
                           </p>
                         </div>
                       </div>

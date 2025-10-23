@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Factory, CheckCircle, Play, Clock } from "lucide-react"
+import { Factory, CheckCircle, Play } from "lucide-react"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { formatDate } from "@/lib/utils"
 import {

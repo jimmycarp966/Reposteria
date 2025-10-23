@@ -137,7 +137,9 @@ export function CreateSaleDialog({ children }: CreateSaleDialogProps) {
   }, [form, addNotification])
 
   const onSubmit = async (data: any) => {
+    
     if (cartItems.length === 0) {
+      console.log('❌ No items in cart')
       addNotification({
         type: "error",
         message: "Debes agregar al menos un producto al carrito"
@@ -147,7 +149,10 @@ export function CreateSaleDialog({ children }: CreateSaleDialogProps) {
 
     try {
       const saleData = {
-        ...data,
+        sale_date: data.sale_date,
+        payment_method: data.payment_method,
+        notes: data.notes,
+        ...(data.customer_id && { customer_id: data.customer_id }), // Solo incluir customer_id si no está vacío
         items: cartItems.map(item => ({
           product_id: item.id,
           quantity: item.quantity,
@@ -244,7 +249,11 @@ export function CreateSaleDialog({ children }: CreateSaleDialogProps) {
             {/* Right side - Form */}
             <div className="space-y-4">
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={async (e) => {
+                  e.preventDefault()
+                  const formData = form.getValues()
+                  await onSubmit(formData)
+                }} className="space-y-4">
                   {/* Customer Selector */}
                   <div>
                     <h3 className="text-lg font-medium mb-3">Cliente</h3>

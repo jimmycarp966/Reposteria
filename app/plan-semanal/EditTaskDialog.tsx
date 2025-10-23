@@ -8,9 +8,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { getRecipes } from "@/actions/recipeActions"
+import { getTaskCategories } from "@/actions/categoryActions"
 import { updateTask, updateTaskStatus } from "@/actions/weeklyPlanActions"
 import { useNotificationStore } from "@/store/notificationStore"
-import type { Recipe, WeeklyProductionTaskWithRecipe } from "@/lib/types"
+import type { Recipe, WeeklyProductionTaskWithRecipe, TaskCategory } from "@/lib/types"
 
 interface EditTaskDialogProps {
   open: boolean
@@ -25,33 +26,45 @@ export function EditTaskDialog({
   task,
   onUpdate
 }: EditTaskDialogProps) {
-  const [taskDescription, setTaskDescription] = useState("")
-  const [selectedRecipe, setSelectedRecipe] = useState<string>("")
-  const [estimatedTime, setEstimatedTime] = useState("")
+  const [description, setDescription] = useState("")
+  const [selectedRecipe, setSelectedRecipe] = useState<string | undefined>("")
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>("")
+  const [estimatedTime, setEstimatedTime] = useState<string | undefined>("")
   const [status, setStatus] = useState<'pendiente' | 'en_progreso' | 'completada'>('pendiente')
   const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [categories, setCategories] = useState<TaskCategory[]>([])
   const [loading, setLoading] = useState(false)
   const addNotification = useNotificationStore((state) => state.addNotification)
 
-  // Load task data when dialog opens
   useEffect(() => {
-    if (open && task) {
-      setTaskDescription(task.task_description)
-      setSelectedRecipe(task.recipe_id || "")
+    if (task) {
+      setDescription(task.task_description)
+      setSelectedRecipe(task.recipe_id || "none")
+      setSelectedCategory(task.category_id || "none")
       setEstimatedTime(task.estimated_time_minutes?.toString() || "")
       setStatus(task.status)
-      loadRecipes()
     }
-  }, [open, task])
 
-  const loadRecipes = async () => {
+    if (open) {
+      loadInitialData()
+    }
+  }, [task, open])
+
+  const loadInitialData = async () => {
     try {
-      const result = await getRecipes({ activeOnly: true })
-      if (result.success && result.data) {
-        setRecipes(result.data)
+      const [recipesResult, categoriesResult] = await Promise.all([
+        getRecipes({ activeOnly: true }),
+        getTaskCategories()
+      ])
+      
+      if (recipesResult.success && recipesResult.data) {
+        setRecipes(recipesResult.data)
+      }
+      if (categoriesResult.success && categoriesResult.data) {
+        setCategories(categoriesResult.data)
       }
     } catch (error) {
-      console.error("Error loading recipes:", error)
+      console.error("Error loading initial data:", error)
     }
   }
 
@@ -65,9 +78,10 @@ export function EditTaskDialog({
     try {
       // Update task details
       const updateResult = await updateTask(task.id, {
-        task_description: taskDescription,
-        recipe_id: selectedRecipe || null,
-        estimated_time_minutes: estimatedTime ? parseInt(estimatedTime) : null
+        task_description: description,
+        recipe_id: selectedRecipe === "none" ? null : selectedRecipe,
+        estimated_time_minutes: estimatedTime ? parseInt(estimatedTime, 10) : null,
+        category_id: selectedCategory === "none" ? null : selectedCategory,
       })
 
       if (!updateResult.success) {
@@ -115,8 +129,8 @@ export function EditTaskDialog({
             <Label htmlFor="description">Descripción de la tarea</Label>
             <Textarea
               id="description"
-              value={taskDescription}
-              onChange={(e) => setTaskDescription(e.target.value)}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="Ej: Hacer mermelada de frutillas, Preparar masa para tartas..."
               required
               rows={3}
@@ -131,10 +145,33 @@ export function EditTaskDialog({
                 <SelectValue placeholder="Seleccionar receta..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Sin receta específica</SelectItem>
+                <SelectItem value="none">Sin receta específica</SelectItem>
                 {recipes.map((recipe) => (
                   <SelectItem key={recipe.id} value={recipe.id}>
                     {recipe.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="category">Categoría (opcional)</Label>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar categoría..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin categoría</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      {category.name}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>

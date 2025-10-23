@@ -86,13 +86,15 @@ export async function createSale(formData: any) {
     // Call RPC function to create sale atomically
     const { data, error } = await supabase.rpc('create_sale_with_items', {
       sale_date_param: validated.sale_date,
-      sale_items_param: JSON.stringify(saleItemsData),
+      sale_items_param: saleItemsData, // Enviar como array directamente, no como string
       customer_id_param: validated.customer_id || null,
       payment_method_param: validated.payment_method,
       notes_param: validated.notes || null
     })
 
-    if (error) throw error
+    if (error) {
+      throw error
+    }
 
     if (!data.success) {
       return { success: false, message: data.message || "Error al crear venta" }

@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { getRecipes } from "@/actions/recipeActions"
-import type { Recipe } from "@/lib/types"
+import { getTaskCategories } from "@/actions/categoryActions"
+import type { Recipe, TaskCategory } from "@/lib/types"
 
 interface AddTaskDialogProps {
   open: boolean
@@ -31,25 +32,34 @@ export function AddTaskDialog({
 }: AddTaskDialogProps) {
   const [taskDescription, setTaskDescription] = useState("")
   const [selectedRecipe, setSelectedRecipe] = useState<string>("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("")
   const [estimatedTime, setEstimatedTime] = useState("")
   const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [categories, setCategories] = useState<TaskCategory[]>([])
   const [loading, setLoading] = useState(false)
 
-  // Load recipes when dialog opens
+  // Load recipes and categories when dialog opens
   useEffect(() => {
     if (open) {
-      loadRecipes()
+      loadInitialData()
     }
   }, [open])
 
-  const loadRecipes = async () => {
+  const loadInitialData = async () => {
     try {
-      const result = await getRecipes({ activeOnly: true })
-      if (result.success && result.data) {
-        setRecipes(result.data)
+      const [recipesResult, categoriesResult] = await Promise.all([
+        getRecipes({ activeOnly: true }),
+        getTaskCategories()
+      ])
+      
+      if (recipesResult.success && recipesResult.data) {
+        setRecipes(recipesResult.data)
+      }
+      if (categoriesResult.success && categoriesResult.data) {
+        setCategories(categoriesResult.data)
       }
     } catch (error) {
-      console.error("Error loading recipes:", error)
+      console.error("Error loading initial data:", error)
     }
   }
 
@@ -60,7 +70,8 @@ export function AddTaskDialog({
 
     const taskData = {
       task_description: taskDescription,
-      recipe_id: selectedRecipe || null,
+      recipe_id: selectedRecipe && selectedRecipe !== 'none' ? selectedRecipe : null,
+      category_id: selectedCategory && selectedCategory !== 'none' ? selectedCategory : null,
       estimated_time_minutes: estimatedTime ? parseInt(estimatedTime) : null
     }
 
@@ -69,6 +80,7 @@ export function AddTaskDialog({
     // Reset form
     setTaskDescription("")
     setSelectedRecipe("")
+    setSelectedCategory("")
     setEstimatedTime("")
     onOpenChange(false)
   }
@@ -76,6 +88,7 @@ export function AddTaskDialog({
   const handleCancel = () => {
     setTaskDescription("")
     setSelectedRecipe("")
+    setSelectedCategory("")
     setEstimatedTime("")
     onOpenChange(false)
   }
@@ -113,10 +126,34 @@ export function AddTaskDialog({
                 <SelectValue placeholder="Seleccionar receta..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Sin receta específica</SelectItem>
+                <SelectItem value="none">Sin receta específica</SelectItem>
                 {recipes.map((recipe) => (
                   <SelectItem key={recipe.id} value={recipe.id}>
                     {recipe.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Category Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="category">Categoría (opcional)</Label>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar categoría..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin categoría</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      {category.name}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
