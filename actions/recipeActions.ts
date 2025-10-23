@@ -45,7 +45,8 @@ export async function getRecipes(params: RecipesQueryParams = {}): Promise<Pagin
           ingredient:ingredients (
             id,
             name,
-            cost_per_unit
+            cost_per_unit,
+            unit
           )
         )
       `, { count: 'exact' })

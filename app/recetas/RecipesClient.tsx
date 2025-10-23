@@ -76,21 +76,50 @@ export function RecipesClient({ recipes }: RecipesClientProps) {
             {recipes.map((recipe: any) => {
               // Calculate cost with unit conversion
               let totalCost = 0
+              
+              // DEBUG: Log recipe data
+              if (recipe.name === "Tarta coco camila prueba daniel") {
+                console.log("🔍 DEBUGGING RECIPE:", recipe.name)
+                console.log("Recipe data:", JSON.stringify(recipe, null, 2))
+              }
+              
               recipe.recipe_ingredients?.forEach((ri: any) => {
                 let itemCost = 0
                 
-                // Check if units are compatible for conversion
-                if (areUnitsCompatible(ri.unit, ri.ingredient.unit)) {
+                // DEBUG: Log ingredient data for specific recipe
+                if (recipe.name === "Tarta coco camila prueba daniel") {
+                  console.log("📦 Ingredient:", ri.ingredient.name)
+                  console.log("  Quantity:", ri.quantity, ri.unit)
+                  console.log("  Ingredient unit:", ri.ingredient.unit)
+                  console.log("  Cost per unit:", ri.ingredient.cost_per_unit)
+                }
+                
+                // Check if ingredient has unit and if units are compatible for conversion
+                if (ri.ingredient.unit && areUnitsCompatible(ri.unit, ri.ingredient.unit)) {
                   // Convert quantity to ingredient's unit
                   const convertedQuantity = convertUnits(ri.quantity, ri.unit, ri.ingredient.unit)
                   itemCost = convertedQuantity * ri.ingredient.cost_per_unit
+                  
+                  if (recipe.name === "Tarta coco camila prueba daniel") {
+                    console.log("  ✅ Converted:", convertedQuantity, ri.ingredient.unit)
+                    console.log("  ✅ Item cost:", itemCost)
+                  }
                 } else {
-                  // If units are not compatible, use direct calculation
+                  // If units are not compatible or ingredient unit is missing, use direct calculation
                   itemCost = ri.quantity * ri.ingredient.cost_per_unit
+                  
+                  if (recipe.name === "Tarta coco camila prueba daniel") {
+                    console.log("  ⚠️ No conversion (missing unit or incompatible), item cost:", itemCost)
+                  }
                 }
                 
                 totalCost += itemCost
               })
+              
+              if (recipe.name === "Tarta coco camila prueba daniel") {
+                console.log("💰 Total cost:", totalCost)
+              }
+              
               const costPerServing = totalCost / recipe.servings
 
               return (
