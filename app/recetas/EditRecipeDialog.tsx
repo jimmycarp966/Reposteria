@@ -17,6 +17,7 @@ import { updateRecipe } from "@/actions/recipeActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { UnitSelector, convertUnits, areUnitsCompatible } from "@/components/shared/UnitSelector"
 import { formatCurrency } from "@/lib/utils"
+import { useRouter } from "next/navigation"
 
 interface EditRecipeDialogProps {
   recipe: {
@@ -62,6 +63,7 @@ export function EditRecipeDialog({ recipe, ingredients }: EditRecipeDialogProps)
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const addNotification = useNotificationStore((state) => state.addNotification)
+  const router = useRouter()
 
   const {
     register,
@@ -129,7 +131,8 @@ export function EditRecipeDialog({ recipe, ingredients }: EditRecipeDialogProps)
         })
         setOpen(false)
         reset()
-        window.location.reload() // Refresh to show updated data
+        // Refresh the page to show updated data
+        router.refresh()
       } else {
         addNotification({
           type: "error",
