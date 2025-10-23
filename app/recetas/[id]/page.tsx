@@ -1,12 +1,13 @@
-import { getRecipeById, calculateRecipeCost } from "@/actions/recipeActions"
+import { getRecipeById, calculateRecipeCost, deleteRecipe } from "@/actions/recipeActions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
 import { ArrowLeft, Calculator } from "lucide-react"
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import Image from "next/image"
+import { RecipeActions } from "./RecipeActions"
 import {
   Table,
   TableBody,
@@ -133,15 +134,7 @@ export default async function RecipeDetailPage({
                 Crear Producto desde esta Receta
               </Button>
             </Link>
-            <Button className="w-full" variant="outline">
-              Duplicar Receta
-            </Button>
-            <Button className="w-full" variant="outline">
-              Editar Receta
-            </Button>
-            <Button className="w-full" variant="destructive">
-              Eliminar Receta
-            </Button>
+            <RecipeActions recipeId={recipe.id} />
           </CardContent>
         </Card>
       </div>
