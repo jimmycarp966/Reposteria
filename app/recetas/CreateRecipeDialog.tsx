@@ -48,6 +48,7 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
     formState: { errors },
     reset,
     setValue,
+    watch,
   } = useForm<FormData>({
     resolver: zodResolver(createRecipeSchema),
     defaultValues: {
@@ -151,7 +152,7 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
                 <div key={field.id} className="flex gap-2 items-start">
                   <div className="flex-1">
                     <Select
-                      value={field.ingredient_id}
+                      value={watch(`ingredients.${index}.ingredient_id`) || ""}
                       onValueChange={(value) => {
                         setValue(`ingredients.${index}.ingredient_id`, value)
                         // Auto-fill unit from ingredient
