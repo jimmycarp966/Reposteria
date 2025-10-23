@@ -18,6 +18,112 @@ import {
   Setting
 } from './supabase'
 
+// ==================== Nuevos Tipos para Ventas y Efemérides ====================
+
+export interface Customer {
+  id: string
+  name: string
+  email?: string | null
+  phone?: string | null
+  address?: string | null
+  created_at: string
+}
+
+// ==================== Tipos de Pago ====================
+
+export type PaymentStatus = 'pendiente' | 'parcial' | 'pagado'
+
+export interface AccountsReceivable {
+  id: string
+  type: 'pedido' | 'venta'
+  customer_name: string
+  total_amount: number
+  amount_paid: number
+  amount_pending: number
+  payment_status: PaymentStatus
+  created_date: string
+  due_date: string
+}
+
+// ==================== Tipos de Plan Semanal ====================
+
+export type TaskStatus = 'pendiente' | 'en_progreso' | 'completada'
+
+export interface WeeklyProductionPlan {
+  id: string
+  week_start_date: string
+  week_end_date: string
+  notes?: string | null
+  created_at: string
+}
+
+export interface WeeklyProductionTask {
+  id: string
+  plan_id: string
+  day_of_week: number // 1=Lunes, 7=Domingo
+  task_description: string
+  recipe_id?: string | null
+  estimated_time_minutes?: number | null
+  status: TaskStatus
+  completed_at?: string | null
+  order_position: number
+  created_at: string
+}
+
+export interface WeeklyProductionTaskWithRecipe extends WeeklyProductionTask {
+  recipe?: Pick<Recipe, 'id' | 'name' | 'image_url'> | null
+}
+
+export interface WeeklyPlanWithTasks extends WeeklyProductionPlan {
+  tasks: WeeklyProductionTaskWithRecipe[]
+}
+
+export interface WeeklyPlanStats {
+  total_tasks: number
+  completed_tasks: number
+  completion_percentage: number
+  total_time_minutes: number
+  completed_time_minutes: number
+  time_completion_percentage: number
+  tasks_by_day: {
+    day_of_week: number
+    total_tasks: number
+    completed_tasks: number
+    total_time_minutes: number
+    completed_time_minutes: number
+  }[]
+}
+
+export interface Sale {
+  id: string
+  sale_date: string
+  customer_id?: string | null
+  total_amount: number
+  payment_method: 'efectivo' | 'tarjeta' | 'transferencia'
+  payment_status: PaymentStatus
+  amount_paid: number
+  amount_pending: number
+  notes?: string | null
+  created_at: string
+}
+
+export interface SaleItem {
+  id: string
+  sale_id: string
+  product_id: string
+  quantity: number
+  unit_price: number
+  subtotal: number
+}
+
+export interface EventProduct {
+  id: string
+  event_id: string
+  product_id: string
+  special_price?: number | null
+  created_at: string
+}
+
 // ==================== Tipos Compuestos para Relaciones ====================
 
 export type IngredientWithInventory = Ingredient & {
@@ -59,6 +165,28 @@ export type InventoryMovementWithIngredient = InventoryMovement & {
   ingredient: Pick<Ingredient, 'id' | 'name'>
 }
 
+export type SaleItemWithProduct = SaleItem & {
+  product: Pick<Product, 'id' | 'name' | 'image_url' | 'sku'>
+}
+
+export type SaleWithItems = Sale & {
+  sale_items: SaleItemWithProduct[]
+  customer?: Pick<Customer, 'id' | 'name'> | null
+}
+
+export type EventProductWithDetails = EventProduct & {
+  product: Pick<Product, 'id' | 'name' | 'image_url' | 'suggested_price_cache' | 'sku'>
+}
+
+export type EventWithProducts = EventCalendar & {
+  event_products: EventProductWithDetails[]
+}
+
+export type CustomerWithSales = Customer & {
+  sales_count?: number
+  total_spent?: number
+}
+
 // ==================== Tipos para Server Actions ====================
 
 export interface PaginationParams {
@@ -89,6 +217,15 @@ export interface RecipesQueryParams extends PaginationParams, SearchParams {
   activeOnly?: boolean
 }
 
+export interface SalesQueryParams extends PaginationParams, SortParams {
+  dateFrom?: string
+  dateTo?: string
+  customerId?: string
+  paymentMethod?: Sale['payment_method']
+}
+
+export interface CustomersQueryParams extends PaginationParams, SearchParams {}
+
 export interface PaginatedResponse<T> {
   success: boolean
   data?: T[]
@@ -115,6 +252,23 @@ export interface StockShortage {
   required_quantity: number
   available_quantity: number
   shortage: number
+}
+
+export interface EventSalesStats {
+  event_date: string
+  total_sales: number
+  total_items_sold: number
+  total_customers: number
+  average_ticket: number
+}
+
+export interface DailySalesStats {
+  date: string
+  total_sales: number
+  total_items_sold: number
+  total_customers: number
+  total_sales_count: number
+  average_ticket: number
 }
 
 // ==================== Tipos para Componentes UI ====================

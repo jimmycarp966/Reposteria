@@ -8,6 +8,8 @@ import {
   Factory,
   BarChart3,
   Settings,
+  ShoppingCart,
+  CalendarClock,
   type LucideIcon,
 } from "lucide-react"
 
@@ -62,12 +64,28 @@ export const routes: Route[] = [
     activeBg: "bg-gradient-to-r from-pink-500 to-pink-600",
   },
   {
+    label: "Ventas",
+    icon: ShoppingCart,
+    href: "/ventas",
+    color: "text-emerald-600",
+    bgColor: "bg-emerald-50 hover:bg-emerald-100",
+    activeBg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
+  },
+  {
     label: "Calendario",
     icon: Calendar,
     href: "/calendario",
     color: "text-indigo-600",
     bgColor: "bg-indigo-50 hover:bg-indigo-100",
     activeBg: "bg-gradient-to-r from-indigo-500 to-indigo-600",
+  },
+  {
+    label: "Plan Semanal",
+    icon: CalendarClock,
+    href: "/plan-semanal",
+    color: "text-cyan-600",
+    bgColor: "bg-cyan-50 hover:bg-cyan-100",
+    activeBg: "bg-gradient-to-r from-cyan-500 to-cyan-600",
   },
   {
     label: "Producción",

@@ -214,7 +214,56 @@ Precios especiales para efemérides.
 - event_id: UUID (FK → events_calendar)
 ```
 
-#### 12. `settings` (Configuración)
+#### 12. `customers` (Clientes)
+Clientes opcionales para las ventas.
+
+```sql
+- id: UUID (PK)
+- name: VARCHAR(255) NOT NULL
+- email: VARCHAR(255)
+- phone: VARCHAR(50)
+- address: TEXT
+- created_at: TIMESTAMP
+```
+
+#### 13. `sales` (Ventas)
+Registro de ventas diarias realizadas.
+
+```sql
+- id: UUID (PK)
+- sale_date: DATE NOT NULL DEFAULT CURRENT_DATE
+- customer_id: UUID (FK → customers) nullable
+- total_amount: DECIMAL(10,2) NOT NULL ≥ 0
+- payment_method: VARCHAR(20) NOT NULL ∈ {efectivo, tarjeta, transferencia}
+- notes: TEXT
+- created_at: TIMESTAMP
+```
+
+#### 14. `sale_items` (Items de Venta)
+Productos individuales de cada venta.
+
+```sql
+- id: UUID (PK)
+- sale_id: UUID (FK → sales) NOT NULL
+- product_id: UUID (FK → products) NOT NULL
+- quantity: INTEGER NOT NULL > 0
+- unit_price: DECIMAL(10,2) NOT NULL ≥ 0
+- subtotal: DECIMAL(10,2) NOT NULL ≥ 0
+```
+
+#### 15. `event_products` (Productos por Efeméride)
+Asociación de productos a eventos especiales.
+
+```sql
+- id: UUID (PK)
+- event_id: UUID (FK → events_calendar) NOT NULL
+- product_id: UUID (FK → products) NOT NULL
+- special_price: DECIMAL(10,2) ≥ 0 (opcional, precio especial)
+- created_at: TIMESTAMP
+- UNIQUE(event_id, product_id)
+```
+
+#### 16. `settings` (Configuración)
 Settings globales del sistema.
 
 ```sql
@@ -230,7 +279,7 @@ Settings globales del sistema.
 
 ## 🎯 Módulos del Sistema
 
-El sistema está organizado en 9 módulos principales, cada uno con su propia interfaz y funcionalidad:
+El sistema está organizado en 10 módulos principales, cada uno con su propia interfaz y funcionalidad:
 
 ### 1. **Dashboard** (`/`)
 Vista general con KPIs y métricas del negocio:
@@ -278,14 +327,28 @@ Gestión integral de pedidos:
 - **Server Actions**: `orderActions.ts` (8 funciones)
 
 ### 6. **Calendario** (`/calendario`)
-Vista temporal de entregas y eventos:
-- Calendario visual de entregas
-- Gestión de efemérides (Día de la Madre, Navidad, etc.)
-- Recordatorios personalizados
-- Asociación de eventos con reglas de precio especiales
-- Filtros por tipo de evento
+Vista temporal de entregas y eventos con gestión completa:
+- **Vista de calendario mensual**: Grid interactivo con navegación entre meses
+- **Gestión de efemérides**: Crear y administrar eventos especiales
+- **Productos por efeméride**: Asociar productos específicos a cada fecha especial
+- **Política de precios especiales**: Definir precios únicos para productos en efemérides
+- **Estadísticas de ventas**: Ver rendimiento de cada efeméride después de ocurrida
+- **Gestión de pedidos**: Visualizar entregas programadas en el calendario
+- **Click en día**: Ver detalle completo de eventos y ventas del día seleccionado
 
-### 7. **Producción** (`/produccion`)
+### 7. **Ventas** (`/ventas`)
+Sistema completo de registro de ventas diarias:
+- **Carrito de compras**: Selección múltiple de productos con ajuste de cantidades
+- **Gestión de clientes**: Clientes opcionales con información de contacto
+- **Productos destacados**: Resalte automático de productos de efemérides del día
+- **Múltiples métodos de pago**: Efectivo, tarjeta, transferencia
+- **Precios dinámicos**: Edición de precios en tiempo real durante la venta
+- **Estadísticas del día**: Total de ventas, productos vendidos, ticket promedio
+- **Historial de ventas**: Lista completa con filtros por fecha y cliente
+- **Detalle de ventas**: Vista completa de cada transacción
+- **Server Actions**: `saleActions.ts` + `customerActions.ts` (13 funciones)
+
+### 8. **Producción** (`/produccion`)
 Planificación y seguimiento de tareas:
 - Lista de tareas de producción por pedido
 - Estados: PENDING, IN_PROGRESS, COMPLETED
@@ -294,7 +357,7 @@ Planificación y seguimiento de tareas:
 - Actualización de duración de tareas
 - **Server Actions**: `productionActions.ts` (3 funciones)
 
-### 8. **Reportes** (`/reportes`)
+### 9. **Reportes** (`/reportes`)
 Análisis y métricas del negocio:
 - Estadísticas mensuales (ventas, costos, margen)
 - Productos más vendidos
@@ -303,7 +366,7 @@ Análisis y métricas del negocio:
 - Exportación de datos
 - **Server Actions**: `reportActions.ts` (4 funciones)
 
-### 9. **Configuración** (`/configuracion`)
+### 10. **Configuración** (`/configuracion`)
 Settings globales del sistema:
 - Margen de ganancia por defecto
 - Buffer de producción (minutos)
@@ -358,6 +421,47 @@ orderActions.confirmOrder()
   ↓ revalidatePath("/pedidos", "/inventario")
 ```
 
+### 3. Proceso de Venta Completo
+
+```
+UI (módulo de ventas)
+  ↓
+1. Seleccionar productos (destacando los de efemérides del día)
+  ↓
+2. Agregar al carrito con cantidades y precios editables
+  ↓
+3. Seleccionar cliente (opcional) o crear uno nuevo
+  ↓
+4. Elegir método de pago
+  ↓
+5. Confirmar venta
+  ↓
+saleActions.createSale()
+  ↓ validar con Zod
+  ↓ llamar RPC: create_sale_with_items()
+  ↓ RPC calcula total automáticamente
+  ↓ INSERT sale + sale_items (transaccional)
+  ↓ revalidatePath("/ventas")
+  ↓ mostrar notificación de éxito
+```
+
+### 4. Gestión de Productos por Efeméride
+
+```
+UI (calendario → click en día → gestionar productos)
+  ↓
+eventActions.getEventProducts(eventId)
+  ↓ mostrar productos asociados con precios especiales
+  ↓
+eventActions.addProductToEvent(eventId, productId, specialPrice)
+  ↓ INSERT event_products
+  ↓ revalidatePath("/calendario")
+  ↓
+eventActions.updateEventProductPrice(eventProductId, price)
+  ↓ UPDATE event_products SET special_price
+  ↓ revalidatePath("/calendario")
+```
+
 ## 🛠️ Funciones RPC Críticas
 
 ### 1. `calculate_recipe_cost(recipe_id UUID) → DECIMAL`
@@ -407,6 +511,57 @@ BEGIN TRANSACTION;
 
 COMMIT;
 RETURN { success: true, message: '...' }
+```
+
+### 4. `create_sale_with_items(...) → JSON`
+
+**Transacción atómica** que crea una venta con todos sus items.
+
+```sql
+BEGIN TRANSACTION;
+
+1. Calcular total de la venta desde items
+2. INSERT INTO sales (sale_date, customer_id, total_amount, payment_method, notes)
+3. INSERT INTO sale_items para cada producto
+4. Calcular subtotales automáticamente
+
+COMMIT;
+RETURN { success: true, sale_id: UUID, total_amount: DECIMAL }
+```
+
+### 5. `get_event_sales_stats(event_id UUID) → JSON`
+
+Calcula estadísticas de ventas para una efeméride específica.
+
+```sql
+SELECT 
+  event_date,
+  SUM(s.total_amount) as total_sales,
+  SUM(si.quantity) as total_items_sold,
+  COUNT(DISTINCT s.customer_id) as total_customers,
+  AVG(s.total_amount) as average_ticket
+FROM events_calendar e
+LEFT JOIN sales s ON s.sale_date = e.date
+LEFT JOIN sale_items si ON s.id = si.sale_id
+WHERE e.id = event_id
+GROUP BY e.date
+```
+
+### 6. `get_daily_sales_stats(date_param DATE) → JSON`
+
+Calcula estadísticas de ventas para un día específico.
+
+```sql
+SELECT 
+  date_param as date,
+  SUM(total_amount) as total_sales,
+  SUM(si.quantity) as total_items_sold,
+  COUNT(DISTINCT customer_id) as total_customers,
+  COUNT(*) as total_sales_count,
+  AVG(total_amount) as average_ticket
+FROM sales s
+LEFT JOIN sale_items si ON s.id = si.sale_id
+WHERE s.sale_date = date_param
 ```
 
 ## 🔒 Seguridad (RLS)

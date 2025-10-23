@@ -96,5 +96,73 @@ export const settingSchema = z.object({
   value: z.string().min(1, "El valor es requerido"),
 })
 
+// Customer validations
+export const customerSchema = z.object({
+  name: z.string().min(1, "El nombre es requerido"),
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+})
+
+// Sale validations
+export const saleItemSchema = z.object({
+  product_id: z.string().uuid("ID de producto inválido"),
+  quantity: z.number().int().min(1, "La cantidad debe ser mayor a 0"),
+  unit_price: z.number().min(0, "El precio unitario debe ser mayor o igual a 0"),
+})
+
+export const saleSchema = z.object({
+  sale_date: z.string().refine((date) => {
+    return !isNaN(Date.parse(date))
+  }, "Fecha inválida"),
+  customer_id: z.string().uuid().optional(),
+  payment_method: z.enum(["efectivo", "tarjeta", "transferencia"], {
+    required_error: "El método de pago es requerido",
+  }),
+  notes: z.string().optional(),
+  items: z.array(saleItemSchema).min(1, "Debe tener al menos un producto"),
+})
+
+// Event Product validations
+export const eventProductSchema = z.object({
+  event_id: z.string().uuid("ID de evento inválido"),
+  product_id: z.string().uuid("ID de producto inválido"),
+  special_price: z.number().min(0, "El precio especial debe ser mayor o igual a 0").optional(),
+})
+
+// Payment validations
+export const paymentStatusSchema = z.enum(['pendiente', 'parcial', 'pagado'], {
+  required_error: "El estado de pago es requerido",
+})
+
+export const paymentRegistrationSchema = z.object({
+  amount: z.number().min(0.01, "El monto debe ser mayor a 0"),
+  notes: z.string().optional(),
+})
+
+// Weekly Production Plan validations
+export const weeklyProductionPlanSchema = z.object({
+  week_start_date: z.string().refine((date) => {
+    const d = new Date(date)
+    return !isNaN(d.getTime()) && d.getDay() === 1 // Monday
+  }, "La fecha debe ser un lunes"),
+  notes: z.string().optional(),
+})
+
+export const weeklyProductionTaskSchema = z.object({
+  plan_id: z.string().uuid("ID de plan inválido"),
+  day_of_week: z.number().int().min(1).max(7, "El día debe estar entre 1 (Lunes) y 7 (Domingo)"),
+  task_description: z.string().min(1, "La descripción de la tarea es requerida"),
+  recipe_id: z.string().uuid("ID de receta inválido").optional(),
+  estimated_time_minutes: z.number().int().min(0).optional(),
+  order_position: z.number().int().min(0).default(0),
+})
+
+export const updateTaskStatusSchema = z.object({
+  status: z.enum(['pendiente', 'en_progreso', 'completada'], {
+    required_error: "El estado de la tarea es requerido",
+  }),
+})
+
 
 

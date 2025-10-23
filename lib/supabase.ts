@@ -79,6 +79,9 @@ export type Order = {
   delivery_time?: string
   total_cost: number
   total_price: number
+  payment_status: 'pendiente' | 'parcial' | 'pagado'
+  amount_paid: number
+  amount_pending: number
   production_start?: string
   production_end?: string
   notes?: string

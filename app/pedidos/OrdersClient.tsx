@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Plus, ClipboardList, Check, X as XIcon } from "lucide-react"
+import { Plus, ClipboardList, Check, X as XIcon, CreditCard } from "lucide-react"
 import { CreateOrderDialog } from "./CreateOrderDialog"
 import { StockShortagesDialog } from "./StockShortagesDialog"
+import { RegisterPaymentDialog } from "./RegisterPaymentDialog"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -13,7 +14,7 @@ import { confirmOrder, cancelOrder } from "@/actions/orderActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { useMutation } from "@/hooks/useMutation"
 import { useTranslation } from "@/lib/i18n"
-import type { OrderWithItems, StockShortage } from "@/lib/types"
+import type { OrderWithItems, StockShortage, PaymentStatus } from "@/lib/types"
 import {
   Card,
   CardContent,
@@ -35,6 +36,19 @@ const OrderCard = ({ order, onConfirm, onCancel, isConfirming, isCancelling }: {
   isCancelling: boolean
 }) => {
   const { t } = useTranslation()
+
+  const getPaymentStatusBadge = (status: PaymentStatus) => {
+    switch (status) {
+      case 'pagado':
+        return <Badge className="bg-green-100 text-green-800 border-green-200">Pagado</Badge>
+      case 'parcial':
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pago Parcial</Badge>
+      case 'pendiente':
+        return <Badge className="bg-red-100 text-red-800 border-red-200">Pendiente</Badge>
+      default:
+        return <Badge variant="outline">{status}</Badge>
+    }
+  }
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -69,6 +83,26 @@ const OrderCard = ({ order, onConfirm, onCancel, isConfirming, isCancelling }: {
             <span>{t('orders.total')}:</span>
             <span className="text-green-600">{formatCurrency(order.total_price)}</span>
           </div>
+          
+          {/* Payment Status */}
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Estado de pago:</span>
+            {getPaymentStatusBadge(order.payment_status)}
+          </div>
+          
+          {order.payment_status !== 'pagado' && (
+            <div className="bg-gray-50 p-3 rounded-md space-y-1">
+              <div className="flex justify-between text-xs">
+                <span>Pagado:</span>
+                <span className="text-green-600">{formatCurrency(order.amount_paid)}</span>
+              </div>
+              <div className="flex justify-between text-xs font-semibold">
+                <span>Pendiente:</span>
+                <span className="text-red-600">{formatCurrency(order.amount_pending)}</span>
+              </div>
+            </div>
+          )}
+          
           <div className="flex justify-between">
             <span className="text-gray-600">{t('orders.type')}:</span>
             <span>{order.type === 'DAILY' ? t('orders.typeDaily') : t('orders.typeEvent')}</span>
@@ -84,42 +118,61 @@ const OrderCard = ({ order, onConfirm, onCancel, isConfirming, isCancelling }: {
           )}
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end gap-2">
-        {order.status === "PENDING" && (
-          <>
-            <Button
-              size="sm"
-              variant="default"
-              className="btn-gradient-green"
-              onClick={() => onConfirm(order.id)}
-              disabled={isConfirming || isCancelling}
+      <CardFooter className="flex justify-between gap-2">
+        <div className="flex gap-2">
+          {/* Payment Button */}
+          {order.payment_status !== 'pagado' && (
+            <RegisterPaymentDialog
+              orderId={order.id}
+              orderTotal={order.total_price}
+              currentPaid={order.amount_paid}
+              currentPending={order.amount_pending}
             >
-              {isConfirming ? (
-                <>Confirmando...</>
-              ) : (
-                <>
-                  <Check className="h-4 w-4 mr-1" />
-                  {t('orders.confirm')}
-                </>
-              )}
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => onCancel(order.id)}
-              disabled={isConfirming || isCancelling}
-            >
-              {isCancelling ? (
-                <>Cancelando...</>
-              ) : (
-                <>
-                  <XIcon className="h-4 w-4 mr-1" />
-                  {t('orders.cancel')}
-                </>
-              )}
-            </Button>
-          </>
-        )}
+              <Button size="sm" variant="outline" className="btn-gradient-blue">
+                <CreditCard className="h-4 w-4 mr-1" />
+                Pagar
+              </Button>
+            </RegisterPaymentDialog>
+          )}
+        </div>
+        
+        <div className="flex gap-2">
+          {order.status === "PENDING" && (
+            <>
+              <Button
+                size="sm"
+                variant="default"
+                className="btn-gradient-green"
+                onClick={() => onConfirm(order.id)}
+                disabled={isConfirming || isCancelling}
+              >
+                {isConfirming ? (
+                  <>Confirmando...</>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4 mr-1" />
+                    {t('orders.confirm')}
+                  </>
+                )}
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => onCancel(order.id)}
+                disabled={isConfirming || isCancelling}
+              >
+                {isCancelling ? (
+                  <>Cancelando...</>
+                ) : (
+                  <>
+                    <XIcon className="h-4 w-4 mr-1" />
+                    {t('orders.cancel')}
+                  </>
+                )}
+              </Button>
+            </>
+          )}
+        </div>
       </CardFooter>
     </Card>
   )

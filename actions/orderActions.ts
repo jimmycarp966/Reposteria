@@ -140,6 +140,9 @@ export async function createOrder(formData: z.infer<typeof orderSchema>) {
         delivery_time: validated.delivery_time,
         total_cost: totalCost,
         total_price: totalPrice,
+        payment_status: 'pendiente',
+        amount_paid: 0,
+        amount_pending: totalPrice,
         production_start: productionStart.toISOString(),
         notes: validated.notes,
       }])
@@ -287,6 +290,9 @@ export async function getUpcomingOrders(days: number = 7) {
         delivery_time,
         total_cost,
         total_price,
+        payment_status,
+        amount_paid,
+        amount_pending,
         notes,
         order_items (
           id,
@@ -313,6 +319,55 @@ export async function getUpcomingOrders(days: number = 7) {
       success: true,
       data: getMockUpcomingOrders()
     }
+  }
+}
+
+// Register payment for an order
+export async function registerOrderPayment(orderId: string, amount: number) {
+  try {
+    const { data, error } = await supabase
+      .rpc('register_payment', {
+        table_name_param: 'orders',
+        record_id_param: orderId,
+        payment_amount_param: amount
+      })
+
+    if (error) throw error
+
+    const result = data as { success: boolean; message: string; data?: any }
+
+    if (!result.success) {
+      return { success: false, message: result.message }
+    }
+
+    revalidatePath("/pedidos")
+    revalidatePath("/reportes")
+    return { success: true, message: result.message, data: result.data }
+  } catch (error: any) {
+    logger.error("Error registering order payment", error, 'orderActions.registerOrderPayment')
+    return { success: false, message: error.message || "Error al registrar pago" }
+  }
+}
+
+// Get orders with pending payments
+export async function getOrdersWithPendingPayment() {
+  try {
+    const { data, error } = await supabase
+      .from("orders")
+      .select(`
+        *,
+        customer:customers(id, name)
+      `)
+      .in('payment_status', ['pendiente', 'parcial'])
+      .neq('status', 'CANCELLED')
+      .order('delivery_date')
+
+    if (error) throw error
+
+    return { success: true, data: data || [] }
+  } catch (error: any) {
+    logger.error("Error fetching orders with pending payment", error, 'orderActions.getOrdersWithPendingPayment')
+    return { success: false, message: error.message || "Error al obtener pedidos pendientes" }
   }
 }
 
