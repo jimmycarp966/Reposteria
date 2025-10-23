@@ -25,6 +25,7 @@ import { createRecipe } from "@/actions/recipeActions"
 import { getIngredients } from "@/actions/ingredientActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { ImageUpload } from "@/components/shared/ImageUpload"
+import { UnitSelector } from "@/components/shared/UnitSelector"
 import { Plus, Trash2 } from "lucide-react"
 
 interface CreateRecipeDialogProps {
@@ -194,10 +195,12 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
                     )}
                   </div>
 
-                  <div className="w-24">
-                    <Input
+                  <div className="w-32">
+                    <UnitSelector
+                      value={field.unit}
+                      onChange={(value) => setValue(`ingredients.${index}.unit`, value)}
                       placeholder="Unidad"
-                      {...register(`ingredients.${index}.unit`)}
+                      categories={['weight', 'volume', 'count']}
                     />
                   </div>
 

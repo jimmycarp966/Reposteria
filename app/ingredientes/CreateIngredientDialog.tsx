@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label"
 import { createIngredient } from "@/actions/ingredientActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { ImageUpload } from "@/components/shared/ImageUpload"
+import { UnitSelector } from "@/components/shared/UnitSelector"
 
 interface CreateIngredientDialogProps {
   children?: React.ReactNode
@@ -50,9 +51,13 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
+    watch,
   } = useForm<FormData>({
     resolver: zodResolver(ingredientSchema),
   })
+
+  const unitValue = watch("unit")
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -99,7 +104,13 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="unit">Unidad *</Label>
-              <Input id="unit" {...register("unit")} placeholder="kg, litro, unidad" />
+              <UnitSelector
+                value={unitValue}
+                onChange={(value) => setValue("unit", value)}
+                placeholder="Seleccionar unidad"
+                categories={['weight', 'volume', 'count']}
+                showCategories={true}
+              />
               {errors.unit && (
                 <p className="text-sm text-red-600">{errors.unit.message}</p>
               )}
