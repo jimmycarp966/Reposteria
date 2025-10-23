@@ -8,6 +8,7 @@ import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import Image from "next/image"
 import { RecipeActions } from "./RecipeActions"
+import { convertUnits, areUnitsCompatible } from "@/components/shared/UnitSelector"
 import {
   Table,
   TableBody,
@@ -31,10 +32,22 @@ export default async function RecipeDetailPage({
 
   const recipe = result.data
 
-  // Calculate costs
+  // Calculate costs with unit conversion
   let totalCost = 0
   recipe.recipe_ingredients?.forEach((ri: any) => {
-    totalCost += ri.quantity * ri.ingredient.cost_per_unit
+    let itemCost = 0
+    
+    // Check if units are compatible for conversion
+    if (areUnitsCompatible(ri.unit, ri.ingredient.unit)) {
+      // Convert quantity to ingredient's unit
+      const convertedQuantity = convertUnits(ri.quantity, ri.unit, ri.ingredient.unit)
+      itemCost = convertedQuantity * ri.ingredient.cost_per_unit
+    } else {
+      // If units are not compatible, use direct calculation (assume user knows what they're doing)
+      itemCost = ri.quantity * ri.ingredient.cost_per_unit
+    }
+    
+    totalCost += itemCost
   })
   const costPerServing = totalCost / recipe.servings
 
@@ -157,7 +170,15 @@ export default async function RecipeDetailPage({
             </TableHeader>
             <TableBody>
               {recipe.recipe_ingredients?.map((ri: any) => {
-                const itemCost = ri.quantity * ri.ingredient.cost_per_unit
+                // Calculate cost with unit conversion
+                let itemCost = 0
+                if (areUnitsCompatible(ri.unit, ri.ingredient.unit)) {
+                  const convertedQuantity = convertUnits(ri.quantity, ri.unit, ri.ingredient.unit)
+                  itemCost = convertedQuantity * ri.ingredient.cost_per_unit
+                } else {
+                  itemCost = ri.quantity * ri.ingredient.cost_per_unit
+                }
+                
                 return (
                   <TableRow key={ri.id}>
                     <TableCell className="font-medium">
