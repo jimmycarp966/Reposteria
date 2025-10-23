@@ -11,6 +11,7 @@ import { formatCurrency } from "@/lib/utils"
 import { CreateRecipeDialog } from "./CreateRecipeDialog"
 import { duplicateRecipe, deleteRecipe } from "@/actions/recipeActions"
 import { useNotificationStore } from "@/store/notificationStore"
+import { convertUnits, areUnitsCompatible } from "@/components/shared/UnitSelector"
 
 interface RecipesClientProps {
   recipes: any[]
@@ -73,10 +74,22 @@ export function RecipesClient({ recipes }: RecipesClientProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {recipes.map((recipe: any) => {
-              // Calculate cost
+              // Calculate cost with unit conversion
               let totalCost = 0
               recipe.recipe_ingredients?.forEach((ri: any) => {
-                totalCost += ri.quantity * ri.ingredient.cost_per_unit
+                let itemCost = 0
+                
+                // Check if units are compatible for conversion
+                if (areUnitsCompatible(ri.unit, ri.ingredient.unit)) {
+                  // Convert quantity to ingredient's unit
+                  const convertedQuantity = convertUnits(ri.quantity, ri.unit, ri.ingredient.unit)
+                  itemCost = convertedQuantity * ri.ingredient.cost_per_unit
+                } else {
+                  // If units are not compatible, use direct calculation
+                  itemCost = ri.quantity * ri.ingredient.cost_per_unit
+                }
+                
+                totalCost += itemCost
               })
               const costPerServing = totalCost / recipe.servings
 
