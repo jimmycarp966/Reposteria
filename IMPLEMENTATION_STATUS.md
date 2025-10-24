@@ -2,7 +2,49 @@
 
 Este documento detalla el progreso de las mejoras implementadas en el sistema.
 
-## 🎉 Última Actualización - Diseño Responsive Completo (Octubre 2025)
+## 🎉 Última Actualización - Aumento Masivo de Precios (Octubre 2025)
+
+**Estado**: ✅ 100% Completado
+
+### Funcionalidad de Actualización de Precios en Masa
+Se implementó un sistema para aplicar aumentos porcentuales a todos los ingredientes simultáneamente:
+
+**Archivos Creados**:
+- ✅ `app/ingredientes/BulkPriceIncreaseDialog.tsx` - Componente diálogo con confirmación en 2 pasos
+
+**Archivos Modificados**:
+- ✅ `actions/ingredientActions.ts` - Nueva función `bulkUpdateIngredientPrices()`
+- ✅ `app/ingredientes/page.tsx` - Botón "Aumentar Precios" en header
+
+**Características Implementadas**:
+- 📈 Aplicación de incrementos porcentuales (0-100%) a todos los ingredientes
+- 🔄 Confirmación en dos pasos para prevenir errores
+- 📊 Vista previa con ejemplos del efecto del aumento
+- ⚡ Actualización masiva con `Promise.all` para máxima performance
+- 🗄️ Limpieza automática de cachés (ingredientes, productos, recetas)
+- 🎨 Diseño responsive optimizado para móviles y desktop
+- ✅ Validación robusta de porcentajes
+- 📝 Logging de operaciones para auditoría
+- 🔔 Notificaciones de éxito/error con contador de ingredientes actualizados
+
+**Flujo de Trabajo**:
+1. Usuario hace clic en "Aumentar Precios" (solo visible si hay ingredientes)
+2. Ingresa porcentaje deseado (0-100%)
+3. Ve vista previa con ejemplos calculados
+4. Confirma la operación en segunda pantalla
+5. Sistema actualiza todos los ingredientes en paralelo
+6. Limpia cachés y revalida rutas afectadas
+7. Muestra notificación de éxito con cantidad actualizada
+
+**Casos de Uso**:
+- Ajustes por inflación mensual/anual
+- Cambios de precios de proveedores
+- Revalorización de costos de importación
+- Actualización de precios por temporada
+
+---
+
+## 🎉 Diseño Responsive Completo (Octubre 2025)
 
 **Estado**: ✅ 100% Completado
 
