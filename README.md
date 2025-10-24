@@ -427,9 +427,12 @@ Uso privado. Ver `architecture.md` para documentación técnica completa.
 ---
 
 **Última actualización**: Octubre 2025
-**Versión**: 1.3.0 - WhatsApp Integration
+**Versión**: 1.4.0 - Bulk Price Management
 
-### Cambios Recientes (v1.3.0)
+### Cambios Recientes (v1.4.0)
+- 📈 **Aumento Masivo de Precios**: Nueva funcionalidad para aplicar incrementos porcentuales a todos los ingredientes
+- 🔄 **Confirmación en Dos Pasos**: Sistema de doble confirmación para evitar errores en aumentos
+- 📊 **Vista Previa**: Muestra ejemplos del efecto antes de aplicar cambios
 - 💬 **Integración WhatsApp**: Botón WSP en pedidos pendientes para enviar presupuestos pre-formateados
 - 👤 **Datos de Cliente**: Campos opcionales para nombre y teléfono en pedidos
 - 📋 **Mensaje Personalizado**: Incluye productos, precios, fecha de entrega y notas
