@@ -54,7 +54,7 @@ export function ProductSelector({
       </div>
 
       {/* Products grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 max-h-64 sm:max-h-96 overflow-y-auto">
         {filteredProducts.map((product) => {
           const isHighlighted = highlightedProducts.includes(product.id)
           
@@ -62,15 +62,15 @@ export function ProductSelector({
             <Card
               key={product.id}
               className={cn(
-                "cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105",
+                "cursor-pointer transition-all duration-200 hover:shadow-md active:scale-95",
                 isHighlighted && "ring-2 ring-emerald-500 bg-emerald-50"
               )}
               onClick={() => handleProductSelect(product)}
             >
-              <CardContent className="p-3">
-                <div className="flex items-start gap-3">
+              <CardContent className="p-2 sm:p-3">
+                <div className="flex items-start gap-2 sm:gap-3">
                   {/* Product image */}
-                  <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
                     {product.image_url ? (
                       <img
                         src={product.image_url}
@@ -86,24 +86,24 @@ export function ProductSelector({
 
                   {/* Product info */}
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm truncate">
+                    <h4 className="font-medium text-xs sm:text-sm truncate">
                       {product.name}
                     </h4>
                     
                     {product.sku && (
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                         SKU: {product.sku}
                       </p>
                     )}
 
                     {showPrice && (
-                      <p className="text-sm font-semibold text-emerald-600 mt-1">
+                      <p className="text-xs sm:text-sm font-semibold text-emerald-600 mt-0.5 sm:mt-1">
                         ${product.suggested_price_cache?.toFixed(2) || '0.00'}
                       </p>
                     )}
 
                     {isHighlighted && (
-                      <Badge variant="secondary" className="mt-1 text-xs">
+                      <Badge variant="secondary" className="mt-1 text-[10px] sm:text-xs">
                         Destacado
                       </Badge>
                     )}
@@ -113,13 +113,13 @@ export function ProductSelector({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="shrink-0 h-8 w-8 p-0"
+                    className="shrink-0 h-7 w-7 sm:h-8 sm:w-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation()
                       handleProductSelect(product)
                     }}
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -136,5 +136,6 @@ export function ProductSelector({
     </div>
   )
 }
+
 
 

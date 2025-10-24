@@ -125,7 +125,7 @@ export function DataTable<T extends { id: string }>({
       </div>
 
       {/* Mobile Cards */}
-      <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="lg:hidden grid grid-cols-1 gap-3 sm:gap-4">
         {data.map((row) =>
           mobileCardRender ? (
             <div key={row.id}>{mobileCardRender(row)}</div>
@@ -133,15 +133,15 @@ export function DataTable<T extends { id: string }>({
             // Fallback: renderizar como lista simple
             <div
               key={row.id}
-              className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+              className="p-3 sm:p-4 rounded-lg border bg-card hover:shadow-md transition-shadow active:scale-95"
               onClick={() => onRowClick?.(row)}
             >
               {columns.slice(0, 3).map((column) => (
-                <div key={column.key} className="mb-2">
-                  <span className="text-sm text-muted-foreground">
+                <div key={column.key} className="mb-2 last:mb-0">
+                  <span className="text-xs sm:text-sm text-muted-foreground">
                     {column.header}:
                   </span>{' '}
-                  <span className="text-sm font-medium">{column.cell?.(row)}</span>
+                  <span className="text-xs sm:text-sm font-medium">{column.cell?.(row)}</span>
                 </div>
               ))}
             </div>
@@ -151,32 +151,34 @@ export function DataTable<T extends { id: string }>({
 
       {/* Paginación */}
       {pagination && totalPages > 1 && (
-        <div className="flex items-center justify-between px-2">
-          <div className="text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-2">
+          <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
             Mostrando {(pagination.page - 1) * pagination.pageSize + 1} a{' '}
             {Math.min(pagination.page * pagination.pageSize, pagination.total)} de{' '}
             {pagination.total} resultados
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => pagination.onPageChange(1)}
               disabled={!hasPrevPage}
+              className="h-8 w-8 sm:h-9 sm:w-9 p-0"
             >
-              <ChevronsLeft className="h-4 w-4" />
+              <ChevronsLeft className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => pagination.onPageChange(pagination.page - 1)}
               disabled={!hasPrevPage}
+              className="h-8 w-8 sm:h-9 sm:w-9 p-0"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
 
-            <div className="text-sm">
+            <div className="text-xs sm:text-sm px-2">
               Página {pagination.page} de {totalPages}
             </div>
 
@@ -185,16 +187,18 @@ export function DataTable<T extends { id: string }>({
               size="sm"
               onClick={() => pagination.onPageChange(pagination.page + 1)}
               disabled={!hasNextPage}
+              className="h-8 w-8 sm:h-9 sm:w-9 p-0"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => pagination.onPageChange(totalPages)}
               disabled={!hasNextPage}
+              className="h-8 w-8 sm:h-9 sm:w-9 p-0"
             >
-              <ChevronsRight className="h-4 w-4" />
+              <ChevronsRight className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </div>
         </div>

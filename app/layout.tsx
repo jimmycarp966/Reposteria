@@ -27,7 +27,7 @@ export default function RootLayout({
           <MobileSidebar />
           <main className="flex-1 lg:ml-64 animate-fade-in">
             <Header />
-            <div className="p-4 sm:p-8 lg:p-12">
+            <div className="p-3 sm:p-4 md:p-6 lg:p-8 xl:p-12">
               <div className="max-w-7xl mx-auto">
                 {children}
               </div>

@@ -196,23 +196,23 @@ export function CreateSaleDialog({ children }: CreateSaleDialogProps) {
           {children}
         </DialogTrigger>
         
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto p-3 sm:p-6">
           <DialogHeader>
-            <DialogTitle>Nueva Venta</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">Nueva Venta</DialogTitle>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Left side - Products and Cart */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {/* Today's events notice */}
               {todaysEvents.length > 0 && (
-                <div className="p-3 bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg">
-                  <h4 className="font-medium text-emerald-700 mb-2">
+                <div className="p-2 sm:p-3 bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg">
+                  <h4 className="font-medium text-emerald-700 mb-1 sm:mb-2 text-xs sm:text-sm">
                     🎉 Efemérides de Hoy
                   </h4>
-                  <div className="space-y-1">
+                  <div className="space-y-0.5 sm:space-y-1">
                     {todaysEvents.map(event => (
-                      <div key={event.id} className="text-sm">
+                      <div key={event.id} className="text-xs sm:text-sm">
                         <span className="font-medium">{event.name}</span>
                         <span className="text-muted-foreground ml-2">
                           ({event.event_products?.length || 0} productos especiales)
@@ -225,7 +225,7 @@ export function CreateSaleDialog({ children }: CreateSaleDialogProps) {
 
               {/* Product Selector */}
               <div>
-                <h3 className="text-lg font-medium mb-3">Seleccionar Productos</h3>
+                <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">Seleccionar Productos</h3>
                 <ProductSelector
                   products={products}
                   onSelect={handleAddToCart}
@@ -247,16 +247,16 @@ export function CreateSaleDialog({ children }: CreateSaleDialogProps) {
             </div>
 
             {/* Right side - Form */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <Form {...form}>
                 <form onSubmit={async (e) => {
                   e.preventDefault()
                   const formData = form.getValues()
                   await onSubmit(formData)
-                }} className="space-y-4">
+                }} className="space-y-3 sm:space-y-4">
                   {/* Customer Selector */}
                   <div>
-                    <h3 className="text-lg font-medium mb-3">Cliente</h3>
+                    <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">Cliente</h3>
                     <CustomerSelector
                       customers={customers}
                       onSelect={handleCustomerSelect}
@@ -264,8 +264,8 @@ export function CreateSaleDialog({ children }: CreateSaleDialogProps) {
                     />
                     {selectedCustomer && (
                       <div className="mt-2 p-2 bg-emerald-50 rounded-lg">
-                        <p className="text-sm font-medium">Cliente seleccionado:</p>
-                        <p className="text-sm">{selectedCustomer.name}</p>
+                        <p className="text-xs sm:text-sm font-medium">Cliente seleccionado:</p>
+                        <p className="text-xs sm:text-sm">{selectedCustomer.name}</p>
                       </div>
                     )}
                   </div>
@@ -313,15 +313,15 @@ export function CreateSaleDialog({ children }: CreateSaleDialogProps) {
                   />
 
                   {/* Total and Submit */}
-                  <div className="space-y-4 pt-4 border-t">
-                    <div className="flex justify-between items-center text-lg font-semibold">
+                  <div className="space-y-3 sm:space-y-4 pt-3 sm:pt-4 border-t">
+                    <div className="flex justify-between items-center text-base sm:text-lg font-semibold">
                       <span>Total:</span>
                       <span className="text-emerald-600">${total.toFixed(2)}</span>
                     </div>
 
                     <Button 
                       type="submit" 
-                      className="w-full"
+                      className="w-full h-11 sm:h-10"
                       disabled={cartItems.length === 0}
                     >
                       Registrar Venta

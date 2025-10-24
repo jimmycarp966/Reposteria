@@ -137,5 +137,13 @@
   transform: translateY(-4px);
 }
 
+/* Touch target sizes (minimum 44x44px for mobile) */
+@media (max-width: 640px) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
 
 

@@ -61,57 +61,57 @@ export function CustomerSelector({
       {/* No customer option */}
       <Card 
         className={cn(
-          "cursor-pointer transition-all duration-200 hover:shadow-md",
+          "cursor-pointer transition-all duration-200 hover:shadow-md active:scale-95",
           !selectedCustomer && "ring-2 ring-gray-400 bg-gray-50"
         )}
         onClick={handleNoCustomer}
       >
-        <CardContent className="p-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-              <User className="h-5 w-5 text-gray-600" />
+        <CardContent className="p-2 sm:p-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
+              <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
             </div>
             <div className="flex-1">
-              <h4 className="font-medium">Venta sin cliente</h4>
-              <p className="text-sm text-muted-foreground">Cliente anónimo</p>
+              <h4 className="font-medium text-xs sm:text-sm">Venta sin cliente</h4>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Cliente anónimo</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Customers list */}
-      <div className="space-y-2 max-h-64 overflow-y-auto">
+      <div className="space-y-2 max-h-48 sm:max-h-64 overflow-y-auto">
         {filteredCustomers.map((customer) => (
           <Card
             key={customer.id}
             className={cn(
-              "cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105",
+              "cursor-pointer transition-all duration-200 hover:shadow-md active:scale-95",
               selectedCustomer?.id === customer.id && "ring-2 ring-emerald-500 bg-emerald-50"
             )}
             onClick={() => handleCustomerSelect(customer)}
           >
-            <CardContent className="p-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <User className="h-5 w-5 text-emerald-600" />
+            <CardContent className="p-2 sm:p-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                  <User className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-medium truncate">
+                  <h4 className="font-medium text-xs sm:text-sm truncate">
                     {customer.name}
                   </h4>
                   {customer.email && (
-                    <p className="text-sm text-muted-foreground truncate">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                       {customer.email}
                     </p>
                   )}
                   {customer.phone && (
-                    <p className="text-sm text-muted-foreground truncate">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                       {customer.phone}
                     </p>
                   )}
                 </div>
                 {selectedCustomer?.id === customer.id && (
-                  <Badge variant="secondary">Seleccionado</Badge>
+                  <Badge variant="secondary" className="text-[10px] sm:text-xs">Seleccionado</Badge>
                 )}
               </div>
             </CardContent>
@@ -150,5 +150,6 @@ export function CustomerSelector({
     </div>
   )
 }
+
 
 
