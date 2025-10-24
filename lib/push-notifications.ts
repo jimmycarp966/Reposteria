@@ -1,8 +1,5 @@
 'use client'
 
-import { getToken, onMessage } from 'firebase/messaging'
-import { messaging } from './firebase-config'
-
 export interface NotificationPayload {
   title: string
   body: string
@@ -63,7 +60,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Obtiene el token de registro para notificaciones push
+   * Obtiene el token de registro para notificaciones push usando Web Push API
    */
   public async getRegistrationToken(): Promise<string | null> {
     if (!this.isNotificationSupported()) {
@@ -77,13 +74,19 @@ export class PushNotificationService {
     }
 
     try {
-      const token = await getToken(messaging, {
-        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+      // Registrar service worker
+      const registration = await navigator.serviceWorker.register('/sw.js')
+      await navigator.serviceWorker.ready
+
+      // Obtener suscripción push
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: this.getVapidKey()
       })
-      
-      if (token) {
-        console.log('Token de registro obtenido:', token)
-        return token
+
+      if (subscription) {
+        console.log('Token de registro obtenido:', subscription.endpoint)
+        return subscription.endpoint
       } else {
         console.log('No se pudo obtener el token de registro')
         return null
@@ -95,6 +98,16 @@ export class PushNotificationService {
   }
 
   /**
+   * Obtiene la clave VAPID pública
+   */
+  private getVapidKey(): string {
+    if (!this.vapidKey) {
+      this.vapidKey = process.env.NEXT_PUBLIC_VAPID_KEY || ''
+    }
+    return this.vapidKey
+  }
+
+  /**
    * Configura el listener para mensajes en primer plano
    */
   public setupForegroundListener(callback: (payload: any) => void): void {
@@ -102,9 +115,12 @@ export class PushNotificationService {
       return
     }
 
-    onMessage(messaging, (payload) => {
-      console.log('Mensaje recibido en primer plano:', payload)
-      callback(payload)
+    // Escuchar mensajes del service worker
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'NOTIFICATION_RECEIVED') {
+        console.log('Mensaje recibido en primer plano:', event.data.payload)
+        callback(event.data.payload)
+      }
     })
   }
 

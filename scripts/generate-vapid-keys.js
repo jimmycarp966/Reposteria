@@ -1,0 +1,20 @@
+const webpush = require('web-push')
+
+// Generar claves VAPID
+const vapidKeys = webpush.generateVAPIDKeys()
+
+console.log('🔑 Claves VAPID generadas:')
+console.log('')
+console.log('📋 Agrega estas variables a tu archivo .env.local:')
+console.log('')
+console.log('# Web Push API Configuration')
+console.log(`NEXT_PUBLIC_VAPID_KEY=${vapidKeys.publicKey}`)
+console.log(`VAPID_PRIVATE_KEY=${vapidKeys.privateKey}`)
+console.log('')
+console.log('🔐 Clave Pública (NEXT_PUBLIC_VAPID_KEY):')
+console.log(vapidKeys.publicKey)
+console.log('')
+console.log('🔐 Clave Privada (VAPID_PRIVATE_KEY):')
+console.log(vapidKeys.privateKey)
+console.log('')
+console.log('✅ ¡Listo! Ahora puedes usar notificaciones push con Web Push API nativo.')

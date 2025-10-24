@@ -2,7 +2,7 @@
 
 ## ✅ Implementación Completada
 
-Tu sistema de repostería ahora es una **Progressive Web App (PWA)** completamente funcional con notificaciones push.
+Tu sistema de repostería ahora es una **Progressive Web App (PWA)** completamente funcional con notificaciones push usando **Web Push API nativo** (sin Firebase).
 
 ### 🎯 Características Implementadas
 
@@ -12,7 +12,7 @@ Tu sistema de repostería ahora es una **Progressive Web App (PWA)** completamen
    - Funciona en Android, iOS y escritorio
    - Banner de instalación automático
 
-2. **Notificaciones Push**
+2. **Notificaciones Push (Web Push API)**
    - Nuevos pedidos
    - Cambios de estado de pedidos
    - Eventos próximos
@@ -22,6 +22,7 @@ Tu sistema de repostería ahora es una **Progressive Web App (PWA)** completamen
    - Service Worker con caché inteligente
    - Carga rápida offline
    - Experiencia nativa
+   - **Sin dependencias externas** - Usa tu Supabase existente
 
 ## 🔧 Configuración Requerida
 
@@ -30,44 +31,20 @@ Tu sistema de repostería ahora es una **Progressive Web App (PWA)** completamen
 Agrega estas variables a tu archivo `.env.local`:
 
 ```bash
-# Firebase Configuration (para notificaciones push)
-NEXT_PUBLIC_FIREBASE_API_KEY=tu_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tu_proyecto.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=tu_proyecto_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu_proyecto.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=tu_app_id
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=tu_measurement_id
-NEXT_PUBLIC_FIREBASE_VAPID_KEY=tu_vapid_key
-
-# Firebase Server Key (para enviar notificaciones desde el servidor)
-FIREBASE_SERVER_KEY=tu_firebase_server_key
+# Web Push API Configuration (para notificaciones push)
+NEXT_PUBLIC_VAPID_KEY=tu_vapid_public_key
+VAPID_PRIVATE_KEY=tu_vapid_private_key
 ```
 
-### 2. Configuración de Firebase
+### 2. Generar Claves VAPID
 
-#### Paso 1: Crear Proyecto en Firebase
-1. Ve a [Firebase Console](https://console.firebase.google.com/)
-2. Crea un nuevo proyecto o usa uno existente
-3. Habilita **Cloud Messaging**
+Ejecuta este comando para generar las claves automáticamente:
 
-#### Paso 2: Configurar Web App
-1. En Firebase Console, ve a "Project Settings"
-2. Agrega una nueva app web
-3. Copia las credenciales de configuración
-4. Actualiza las variables de entorno
+```bash
+node scripts/generate-vapid-keys.js
+```
 
-#### Paso 3: Generar VAPID Key
-1. En Firebase Console, ve a "Project Settings"
-2. En la pestaña "Cloud Messaging"
-3. Genera un nuevo par de claves VAPID
-4. Copia la clave pública a `NEXT_PUBLIC_FIREBASE_VAPID_KEY`
-5. Copia la clave privada a `FIREBASE_SERVER_KEY`
-
-#### Paso 4: Configurar Service Worker
-1. Descarga el archivo `firebase-messaging-sw.js` desde Firebase Console
-2. Colócalo en la carpeta `public/` de tu proyecto
-3. O usa el archivo que ya está configurado en `lib/firebase-config.ts`
+Esto generará las claves VAPID necesarias para Web Push API. Copia las claves mostradas a tu archivo `.env.local`.
 
 ### 3. Migración de Base de Datos
 
@@ -90,6 +67,22 @@ Ejecuta la migración para crear la tabla de tokens de notificación:
    npm run build
    npm start
    ```
+
+## 🎉 **Ventajas de Web Push API vs Firebase**
+
+### ✅ **Web Push API (Implementado)**
+- **Sin configuración externa** - No necesitas cuenta de Google
+- **Más rápido** - Menos pasos de configuración
+- **Integrado** con tu Supabase existente
+- **Más control** - Todo en tu servidor
+- **Sin límites** - No hay cuotas de notificaciones
+- **Más simple** - Solo necesitas claves VAPID
+
+### ❌ **Firebase (Eliminado)**
+- Requiere cuenta de Google
+- Configuración más compleja
+- Dependencia externa
+- Límites en plan gratuito
 
 ## 📱 Cómo Probar la PWA
 
