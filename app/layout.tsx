@@ -3,7 +3,6 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { Navbar } from "@/components/shared/Navbar"
 import { NotificationToast } from "@/components/shared/NotificationToast"
-import { ConnectionStatus } from "@/components/shared/ConnectionStatus"
 import { MobileSidebar } from "@/components/shared/MobileSidebar"
 import { Header } from "@/components/shared/Header"
 import { InstallPrompt } from "@/components/shared/InstallPrompt"
@@ -93,7 +92,6 @@ export default function RootLayout({
           </main>
         </div>
         <NotificationToast />
-        <ConnectionStatus />
         <InstallPrompt />
       </body>
     </html>

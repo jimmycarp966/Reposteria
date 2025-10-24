@@ -433,20 +433,50 @@ export function OrdersClient({ orders }: OrdersClientProps) {
         </div>
 
         <Tabs defaultValue="pending" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="pending">
-              {t('orders.pending')} ({pending.length})
-            </TabsTrigger>
-            <TabsTrigger value="confirmed">
-              {t('orders.confirmed')} ({confirmed.length})
-            </TabsTrigger>
-            <TabsTrigger value="in_production">
-              {t('orders.inProduction')} ({inProduction.length})
-            </TabsTrigger>
-            <TabsTrigger value="completed">
-              {t('orders.completed')} ({completed.length})
-            </TabsTrigger>
-          </TabsList>
+          <div className="w-full overflow-x-auto">
+            <TabsList className="inline-flex w-full min-w-max h-auto p-1 bg-muted/50">
+              <TabsTrigger 
+                value="pending" 
+                className="flex-shrink-0 px-3 py-2 text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <span className="hidden sm:inline">{t('orders.pending')}</span>
+                <span className="sm:hidden">Pend.</span>
+                <span className="ml-1 bg-muted-foreground/20 px-1.5 py-0.5 rounded-full text-xs">
+                  {pending.length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="confirmed" 
+                className="flex-shrink-0 px-3 py-2 text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <span className="hidden sm:inline">{t('orders.confirmed')}</span>
+                <span className="sm:hidden">Conf.</span>
+                <span className="ml-1 bg-muted-foreground/20 px-1.5 py-0.5 rounded-full text-xs">
+                  {confirmed.length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="in_production" 
+                className="flex-shrink-0 px-3 py-2 text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <span className="hidden sm:inline">{t('orders.inProduction')}</span>
+                <span className="sm:hidden">Prod.</span>
+                <span className="ml-1 bg-muted-foreground/20 px-1.5 py-0.5 rounded-full text-xs">
+                  {inProduction.length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="completed" 
+                className="flex-shrink-0 px-3 py-2 text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <span className="hidden sm:inline">{t('orders.completed')}</span>
+                <span className="sm:hidden">Comp.</span>
+                <span className="ml-1 bg-muted-foreground/20 px-1.5 py-0.5 rounded-full text-xs">
+                  {completed.length}
+                </span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="pending">
             <OrderList orders={pending} />
