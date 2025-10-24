@@ -25,13 +25,25 @@ export default function RootLayout({
         <div className="relative flex min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50">
           <Navbar />
           <MobileSidebar />
-          <main className="flex-1 lg:ml-64 animate-fade-in">
+          <main className="flex-1 lg:ml-64 animate-fade-in flex flex-col min-h-screen">
             <Header />
-            <div className="p-3 sm:p-4 md:p-6 lg:p-8 xl:p-12">
+            <div className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 xl:p-12">
               <div className="max-w-7xl mx-auto">
                 {children}
               </div>
             </div>
+            
+            {/* Footer */}
+            <footer className="mt-auto py-6 px-4 border-t border-gray-200/50 bg-white/30 backdrop-blur-sm">
+              <div className="max-w-7xl mx-auto">
+                <p className="text-center text-xs sm:text-sm text-gray-600">
+                  © {new Date().getFullYear()} Repostería. Todos los derechos reservados • Diseñado por{' '}
+                  <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 cursor-default">
+                    SiriuS
+                  </span>
+                </p>
+              </div>
+            </footer>
           </main>
         </div>
         <NotificationToast />
