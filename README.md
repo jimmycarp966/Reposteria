@@ -210,10 +210,12 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 - Recalcula costos cuando cambien los ingredientes
 
 ### 5. Pedidos
-- Crea pedidos diarios o por efemérides
+- Crea pedidos diarios o por efemérides con datos del cliente opcionales
+- **Botón WhatsApp**: Genera mensajes pre-formateados para enviar presupuestos a clientes
 - Calcula tiempo de inicio de producción automáticamente
 - Confirma pedidos (descuenta stock automáticamente)
 - Visualiza por estado: Pendiente, Confirmado, En Producción, Completado
+- Gestión de pagos y seguimiento de estado de pago
 
 ### 6. Calendario
 - Vista de entregas y efemérides
@@ -425,9 +427,12 @@ Uso privado. Ver `architecture.md` para documentación técnica completa.
 ---
 
 **Última actualización**: Octubre 2025
-**Versión**: 1.2.0 - Responsive Edition
+**Versión**: 1.3.0 - WhatsApp Integration
 
-### Cambios Recientes (v1.2.0)
+### Cambios Recientes (v1.3.0)
+- 💬 **Integración WhatsApp**: Botón WSP en pedidos pendientes para enviar presupuestos pre-formateados
+- 👤 **Datos de Cliente**: Campos opcionales para nombre y teléfono en pedidos
+- 📋 **Mensaje Personalizado**: Incluye productos, precios, fecha de entrega y notas
 - 📱 **Diseño 100% Responsive**: Optimizado completamente para móviles, tablets y desktop
 - 🎯 **Touch Targets**: Botones de mínimo 44x44px para fácil interacción táctil
 - 📊 **DataTable Mejorado**: Vista de cards en móvil, tabla en desktop
