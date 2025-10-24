@@ -193,6 +193,7 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ### 2. Ingredientes
 - Crea ingredientes con costo unitario
+- **Buscador Inteligente**: Filtra ingredientes por nombre o proveedor en tiempo real
 - **Aumento Masivo de Precios**: Aplica incrementos porcentuales a todos los ingredientes (ideal para ajustes por inflación)
 - Actualiza stock (entrada/salida)
 - Edita costos individuales (actualiza automáticamente productos relacionados)
@@ -428,15 +429,15 @@ Uso privado. Ver `architecture.md` para documentación técnica completa.
 ---
 
 **Última actualización**: Octubre 2025
-**Versión**: 1.4.0 - Bulk Price Management
+**Versión**: 1.5.0 - Search & Filter
 
-### Cambios Recientes (v1.4.0)
+### Cambios Recientes (v1.5.0)
+- 🔍 **Buscador de Ingredientes**: Busca y filtra ingredientes por nombre o proveedor en tiempo real con debounce
+- 📊 **Contador de Resultados**: Muestra cantidad de ingredientes encontrados durante la búsqueda
 - 📈 **Aumento Masivo de Precios**: Nueva funcionalidad para aplicar incrementos porcentuales a todos los ingredientes
 - 🔄 **Confirmación en Dos Pasos**: Sistema de doble confirmación para evitar errores en aumentos
-- 📊 **Vista Previa**: Muestra ejemplos del efecto antes de aplicar cambios
 - 💬 **Integración WhatsApp**: Botón WSP en pedidos pendientes para enviar presupuestos pre-formateados
 - 👤 **Datos de Cliente**: Campos opcionales para nombre y teléfono en pedidos
-- 📋 **Mensaje Personalizado**: Incluye productos, precios, fecha de entrega y notas
 - 📱 **Diseño 100% Responsive**: Optimizado completamente para móviles, tablets y desktop
 - 🎯 **Touch Targets**: Botones de mínimo 44x44px para fácil interacción táctil
 - 📊 **DataTable Mejorado**: Vista de cards en móvil, tabla en desktop
