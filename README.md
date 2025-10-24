@@ -429,9 +429,10 @@ Uso privado. Ver `architecture.md` para documentación técnica completa.
 ---
 
 **Última actualización**: Octubre 2025
-**Versión**: 1.5.0 - Search & Filter
+**Versión**: 1.6.0 - Professional Footer
 
-### Cambios Recientes (v1.5.0)
+### Cambios Recientes (v1.6.0)
+- 📝 **Footer Profesional**: Copyright con año dinámico y firma de diseñador con gradiente elegante
 - 🔍 **Buscador de Ingredientes**: Busca y filtra ingredientes por nombre o proveedor en tiempo real con debounce
 - 📊 **Contador de Resultados**: Muestra cantidad de ingredientes encontrados durante la búsqueda
 - 📈 **Aumento Masivo de Precios**: Nueva funcionalidad para aplicar incrementos porcentuales a todos los ingredientes
