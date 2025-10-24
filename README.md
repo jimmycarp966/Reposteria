@@ -193,8 +193,9 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ### 2. Ingredientes
 - Crea ingredientes con costo unitario
+- **Aumento Masivo de Precios**: Aplica incrementos porcentuales a todos los ingredientes (ideal para ajustes por inflación)
 - Actualiza stock (entrada/salida)
-- Edita costos (actualiza automáticamente productos relacionados)
+- Edita costos individuales (actualiza automáticamente productos relacionados)
 - Sube imágenes
 
 ### 3. Recetas

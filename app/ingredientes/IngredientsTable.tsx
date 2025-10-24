@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Ingredient } from "@/lib/supabase"
 import {
   Table,
@@ -18,6 +18,8 @@ import { CreateIngredientDialog } from "./CreateIngredientDialog"
 import { UpdateStockDialog } from "./UpdateStockDialog"
 import { deleteIngredient, updateIngredientCost } from "@/actions/ingredientActions"
 import { useNotificationStore } from "@/store/notificationStore"
+import { useSearchFilter } from "@/hooks/useSearchFilter"
+import { SearchFilter } from "@/components/shared/SearchFilter"
 import { Input } from "@/components/ui/input"
 import {
   Card,
@@ -39,6 +41,20 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
   const [editingCostId, setEditingCostId] = useState<string | null>(null)
   const [newCost, setNewCost] = useState("")
   const addNotification = useNotificationStore((state) => state.addNotification)
+
+  // Hook de búsqueda
+  const { search, debouncedSearch, setSearch, clearSearch, isSearching } = useSearchFilter()
+
+  // Filtrar ingredientes según búsqueda
+  const filteredIngredients = useMemo(() => {
+    if (!debouncedSearch) return ingredients
+
+    const searchLower = debouncedSearch.toLowerCase().trim()
+    return ingredients.filter(ingredient => 
+      ingredient.name?.toLowerCase().includes(searchLower) ||
+      ingredient.supplier?.toLowerCase().includes(searchLower)
+    )
+  }, [ingredients, debouncedSearch])
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Estás seguro de eliminar este ingrediente?")) return
@@ -80,11 +96,26 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
 
   return (
     <>
-      <div className="mb-4">
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Ingrediente
-        </Button>
+      {/* Buscador */}
+      <div className="mb-4 space-y-4">
+        <SearchFilter
+          searchValue={search}
+          onSearchChange={setSearch}
+          onClearSearch={clearSearch}
+          placeholder="Buscar por nombre o proveedor..."
+          isSearching={isSearching}
+          showFilterCount={false}
+        />
+        
+        {/* Contador de resultados */}
+        {debouncedSearch && (
+          <div className="text-sm text-gray-600">
+            {filteredIngredients.length === 0 
+              ? "No se encontraron ingredientes" 
+              : `${filteredIngredients.length} ingrediente${filteredIngredients.length !== 1 ? 's' : ''} encontrado${filteredIngredients.length !== 1 ? 's' : ''}`
+            }
+          </div>
+        )}
       </div>
 
       {/* Desktop Table */}
@@ -104,7 +135,14 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {ingredients.map((ingredient) => (
+            {filteredIngredients.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                  {debouncedSearch ? "No se encontraron ingredientes con ese criterio" : "No hay ingredientes para mostrar"}
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredIngredients.map((ingredient) => (
               <TableRow key={ingredient.id}>
                 <TableCell className="font-medium">{ingredient.name}</TableCell>
                 <TableCell>{ingredient.unit}</TableCell>
@@ -190,14 +228,20 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
                   </Button>
                 </TableCell>
               </TableRow>
-            ))}
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
       {/* Mobile Card View */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
-        {ingredients.map((ingredient) => (
+        {filteredIngredients.length === 0 ? (
+          <div className="col-span-2 text-center py-8 text-gray-500">
+            {debouncedSearch ? "No se encontraron ingredientes con ese criterio" : "No hay ingredientes para mostrar"}
+          </div>
+        ) : (
+          filteredIngredients.map((ingredient) => (
           <Card key={ingredient.id} className="flex flex-col">
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -253,7 +297,8 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
               </Button>
             </CardFooter>
           </Card>
-        ))}
+          ))
+        )}
       </div>
 
       <CreateIngredientDialog
