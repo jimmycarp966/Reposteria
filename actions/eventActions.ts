@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase"
 import { eventProductSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { logger } from "@/lib/logger"
+import { sendUpcomingEventNotification } from "@/lib/notification-service"
 import type { EventProductWithDetails, EventWithProducts, EventSalesStats } from "@/lib/types"
 
 // Get events with their products
@@ -201,6 +202,49 @@ export async function getAvailableProductsForEvent(eventId: string) {
     return { success: false, message: error.message || "Error al obtener productos disponibles" }
   }
 }
+
+// Check for upcoming events and send notifications
+export async function checkAndNotifyUpcomingEvents() {
+  try {
+    const today = new Date()
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    
+    // Buscar eventos de mañana
+    const { data: upcomingEvents, error } = await supabase
+      .from("events_calendar")
+      .select("*")
+      .eq("date", tomorrow.toISOString().split('T')[0])
+      .order("name")
+
+    if (error) throw error
+
+    // Enviar notificación para cada evento próximo
+    for (const event of upcomingEvents || []) {
+      try {
+        await sendUpcomingEventNotification({
+          id: event.id,
+          title: event.name,
+          date: event.date,
+          time: event.time
+        })
+      } catch (notificationError) {
+        console.error(`Error al enviar notificación para evento ${event.id}:`, notificationError)
+      }
+    }
+
+    return { 
+      success: true, 
+      message: `Notificaciones enviadas para ${upcomingEvents?.length || 0} eventos próximos` 
+    }
+  } catch (error: any) {
+    logger.error("Error checking upcoming events", error, 'eventActions.checkAndNotifyUpcomingEvents')
+    return { success: false, message: error.message || "Error al verificar eventos próximos" }
+  }
+}
+
+
+
 
 
 

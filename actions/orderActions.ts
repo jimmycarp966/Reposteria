@@ -9,6 +9,7 @@ import { addMinutes, parseISO } from "date-fns"
 import { clearRelevantCache } from "@/lib/cache-utils"
 import { checkSupabaseConnection, getMockUpcomingOrders } from "@/lib/supabase-fallback"
 import { logger } from "@/lib/logger"
+import { sendNewOrderNotification, sendOrderStatusNotification } from "@/lib/notification-service"
 import type { OrdersQueryParams, PaginatedResponse, OrderWithItems } from "@/lib/types"
 
 export async function getOrders(params: OrdersQueryParams = {}): Promise<PaginatedResponse<OrderWithItems>> {
@@ -170,6 +171,21 @@ export async function createOrder(formData: z.infer<typeof orderSchema>) {
     revalidatePath("/pedidos")
     revalidatePath("/calendario")
     clearRelevantCache('order')
+    
+    // Enviar notificación de nuevo pedido
+    try {
+      await sendNewOrderNotification({
+        id: order.id,
+        customer_name: order.customer_name,
+        total_price: order.total_price,
+        delivery_date: order.delivery_date,
+        delivery_time: order.delivery_time
+      })
+    } catch (notificationError) {
+      // No fallar la creación del pedido si falla la notificación
+      console.error('Error al enviar notificación de nuevo pedido:', notificationError)
+    }
+    
     return { success: true, data: order, message: "Pedido creado exitosamente" }
   } catch (error: any) {
     logger.error("Error creating order", error, 'orderActions.createOrder')
@@ -237,6 +253,29 @@ export async function updateOrderStatus(id: string, status: string) {
 
     revalidatePath("/pedidos")
     revalidatePath("/produccion")
+    
+    // Obtener datos del pedido para la notificación
+    const { data: orderData } = await supabase
+      .from("orders")
+      .select("customer_name, delivery_date")
+      .eq("id", id)
+      .single()
+    
+    // Enviar notificación de cambio de estado
+    if (orderData) {
+      try {
+        await sendOrderStatusNotification({
+          id,
+          customer_name: orderData.customer_name,
+          status: status,
+          delivery_date: orderData.delivery_date
+        })
+      } catch (notificationError) {
+        // No fallar la actualización si falla la notificación
+        console.error('Error al enviar notificación de cambio de estado:', notificationError)
+      }
+    }
+    
     return { success: true, message: "Estado actualizado exitosamente" }
   } catch (error: any) {
     logger.error("Error updating order status", error, 'orderActions.updateOrderStatus')

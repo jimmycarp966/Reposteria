@@ -10,6 +10,11 @@ const key = supabaseAnonKey || 'placeholder-key'
 
 export const supabase = createClient(url, key)
 
+// Función para crear cliente de Supabase (para server actions)
+export function createSupabaseClient() {
+  return createClient(url, key)
+}
+
 // Types para las tablas
 export type Ingredient = {
   id: string
