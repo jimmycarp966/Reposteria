@@ -220,13 +220,35 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
             </div>
           )}
 
+          {/* Customer Name - Optional */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="customer_name">Nombre del Cliente (opcional)</Label>
+              <Input
+                id="customer_name"
+                {...register("customer_name")}
+                placeholder="Ej: María González"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="customer_phone">Teléfono (opcional)</Label>
+              <Input
+                id="customer_phone"
+                type="tel"
+                {...register("customer_phone")}
+                placeholder="Ej: 11 2345-6789"
+              />
+            </div>
+          </div>
+
           {/* Notes */}
           <div>
-            <Label htmlFor="notes">Notas</Label>
+            <Label htmlFor="notes">Notas / Detalles Adicionales</Label>
             <Input
               id="notes"
               {...register("notes")}
-              placeholder="Ej: Agregar velitas, decoración especial..."
+              placeholder="Ej: Decoración especial, bandeja incluida, alérgenos..."
             />
           </div>
 

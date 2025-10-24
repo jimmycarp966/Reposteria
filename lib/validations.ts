@@ -64,6 +64,8 @@ export const orderSchema = z.object({
     return deliveryDate >= today
   }, "La fecha de entrega debe ser hoy o posterior"),
   delivery_time: z.string().optional(),
+  customer_name: z.string().optional(),
+  customer_phone: z.string().optional(),
   notes: z.string().optional(),
   items: z.array(orderItemSchema).min(1, "Debe tener al menos un producto"),
 })
