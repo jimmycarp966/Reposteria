@@ -197,5 +197,62 @@ export async function updateIngredientCost(id: string, newCost: number) {
   }
 }
 
+export async function bulkUpdateIngredientPrices(percentageIncrease: number) {
+  try {
+    if (percentageIncrease <= 0 || percentageIncrease > 100) {
+      return { success: false, message: "El porcentaje debe estar entre 0 y 100" }
+    }
+
+    logger.info(`Applying ${percentageIncrease}% price increase to all ingredients`, {}, 'ingredientActions.bulkUpdateIngredientPrices')
+
+    // Obtener todos los ingredientes
+    const { data: ingredients, error: fetchError } = await supabase
+      .from("ingredients")
+      .select("id, cost_per_unit")
+
+    if (fetchError) throw fetchError
+
+    if (!ingredients || ingredients.length === 0) {
+      return { success: false, message: "No hay ingredientes para actualizar" }
+    }
+
+    // Calcular el multiplicador (ej: 15% = 1.15)
+    const multiplier = 1 + (percentageIncrease / 100)
+
+    // Actualizar cada ingrediente con el nuevo precio
+    const updatePromises = ingredients.map(ingredient => {
+      const newCost = ingredient.cost_per_unit * multiplier
+      
+      return supabase
+        .from("ingredients")
+        .update({ cost_per_unit: newCost })
+        .eq("id", ingredient.id)
+    })
+
+    await Promise.all(updatePromises)
+
+    // Limpiar todos los cachés relacionados
+    cache.delete(CACHE_KEYS.INGREDIENTS)
+    cache.delete(CACHE_KEYS.PRODUCTS)
+    cache.delete(CACHE_KEYS.RECIPES)
+
+    // Revalidate all related paths
+    revalidatePath("/ingredientes")
+    revalidatePath("/productos")
+    revalidatePath("/recetas")
+
+    logger.info(`Successfully updated ${ingredients.length} ingredients with ${percentageIncrease}% increase`, {}, 'ingredientActions.bulkUpdateIngredientPrices')
+
+    return { 
+      success: true, 
+      message: `Precios actualizados correctamente`,
+      updatedCount: ingredients.length
+    }
+  } catch (error: any) {
+    logger.error("Error in bulk price update", error, 'ingredientActions.bulkUpdateIngredientPrices')
+    return { success: false, message: error.message || "Error al actualizar precios masivamente" }
+  }
+}
+
 
 
