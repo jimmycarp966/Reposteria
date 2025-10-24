@@ -11,6 +11,16 @@ Sistema web completo para gestionar un emprendimiento de repostería, con cálcu
 - **Componentes expresivos**: Botones, tarjetas y badges con personalidad
 - **Navbar dinámico**: Cada sección tiene su propio color distintivo
 
+## 📱 **Diseño Totalmente Responsive**
+
+🚀 **Optimizado para todos los dispositivos**:
+- **Móviles (320px+)**: Layout de 1 columna, botones táctiles grandes (44x44px mínimo), navegación hamburger
+- **Tablets (640px+)**: Grids de 2 columnas, balance entre contenido y espaciado
+- **Desktop (1024px+)**: Grids de 3-4 columnas, sidebar fija, espaciado generoso
+- **Tipografía fluida**: Textos escalables automáticamente según el tamaño de pantalla
+- **Touch-friendly**: Controles optimizados para pantallas táctiles
+- **Diálogos adaptativos**: Se ajustan perfectamente a cada dispositivo
+
 ## 🚀 Características
 
 ### Módulos Completos
@@ -28,6 +38,7 @@ Sistema web completo para gestionar un emprendimiento de repostería, con cálcu
 
 ### Características Técnicas
 - ✅ **Diseño Moderno**: Interfaz colorida y expresiva con gradientes temáticos para repostería
+- ✅ **100% Responsive**: Optimizado para móviles, tablets y desktop con touch targets de 44x44px
 - ✅ **Sistema de Caché**: Caché inteligente con TTL para mejorar rendimiento
 - ✅ **Validaciones**: Todas las operaciones validadas con Zod + React Hook Form
 - ✅ **Transacciones Atómicas**: Operaciones críticas usan funciones RPC de PostgreSQL
@@ -400,6 +411,7 @@ Ver `__tests__/README.md` para más detalles sobre testing.
 ### Documentación
 - `architecture.md`: Documentación técnica completa del sistema
 - `PERFORMANCE_OPTIMIZATIONS.md`: Detalles de optimizaciones y caché
+- `RESPONSIVE_IMPROVEMENTS.md`: Guía completa de mejoras responsive implementadas
 - Cada script incluye comentarios sobre su uso
 
 ## 🤝 Contribuir
@@ -413,7 +425,16 @@ Uso privado. Ver `architecture.md` para documentación técnica completa.
 ---
 
 **Última actualización**: Octubre 2025
-**Versión**: 1.1.0
+**Versión**: 1.2.0 - Responsive Edition
+
+### Cambios Recientes (v1.2.0)
+- 📱 **Diseño 100% Responsive**: Optimizado completamente para móviles, tablets y desktop
+- 🎯 **Touch Targets**: Botones de mínimo 44x44px para fácil interacción táctil
+- 📊 **DataTable Mejorado**: Vista de cards en móvil, tabla en desktop
+- 🛒 **Carrito Optimizado**: Controles grandes y fáciles de usar en pantallas pequeñas
+- 📋 **Diálogos Adaptativos**: Se ajustan perfectamente a cada tamaño de pantalla
+- 🎨 **Tipografía Fluida**: Textos escalables automáticamente
+- 📐 **Espaciado Inteligente**: Compacto en móvil, generoso en desktop
 
 
 
