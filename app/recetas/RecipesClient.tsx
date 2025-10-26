@@ -46,14 +46,17 @@ export function RecipesClient({ recipes }: RecipesClientProps) {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Recetas</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold">Recetas</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
               Gestiona tus recetas y calcula costos
             </p>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)}>
+          <Button onClick={() => setShowCreateDialog(true)} className="hidden sm:flex">
             <Plus className="h-4 w-4 mr-2" />
             Nueva Receta
+          </Button>
+          <Button onClick={() => setShowCreateDialog(true)} size="icon" className="sm:hidden">
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
 
@@ -72,7 +75,7 @@ export function RecipesClient({ recipes }: RecipesClientProps) {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {recipes.map((recipe: any) => {
               // Calculate cost with unit conversion
               let totalCost = 0
@@ -173,6 +176,7 @@ export function RecipesClient({ recipes }: RecipesClientProps) {
                           size="sm"
                           onClick={() => handleDuplicate(recipe.id)}
                           title="Duplicar"
+                          className="min-h-[44px] min-w-[44px]"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -181,6 +185,7 @@ export function RecipesClient({ recipes }: RecipesClientProps) {
                           size="sm"
                           onClick={() => handleDelete(recipe.id)}
                           title="Eliminar"
+                          className="min-h-[44px] min-w-[44px]"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

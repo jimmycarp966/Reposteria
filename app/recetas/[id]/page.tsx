@@ -39,22 +39,23 @@ export default async function RecipeDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <Link href="/recetas">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold">{recipe.name}</h1>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">{recipe.name}</h1>
           {recipe.description && (
-            <p className="text-muted-foreground">{recipe.description}</p>
+            <p className="text-muted-foreground text-sm sm:text-base line-clamp-2">{recipe.description}</p>
           )}
         </div>
-        <Badge variant="outline">Versión {recipe.version}</Badge>
+        <Badge variant="outline" className="hidden sm:flex">Versión {recipe.version}</Badge>
+        <Badge variant="outline" className="sm:hidden text-xs">v{recipe.version}</Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Info Card */}
         <Card>
           <CardHeader>
@@ -62,7 +63,7 @@ export default async function RecipeDetailPage({
           </CardHeader>
           <CardContent className="space-y-3">
             {recipe.image_url && (
-              <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4">
+              <div className="relative w-full h-32 sm:h-48 rounded-lg overflow-hidden mb-4">
                 <Image
                   src={recipe.image_url}
                   alt={recipe.name}

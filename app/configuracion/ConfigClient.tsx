@@ -57,8 +57,8 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Configuración</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold">Configuración</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">
           Configura tu sistema de repostería
         </p>
       </div>
@@ -73,36 +73,40 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
             {settings.map((setting: any) => (
               <div
                 key={setting.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-3"
               >
-                <div className="flex-1">
-                  <p className="font-medium">{getSettingLabel(setting.key)}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm sm:text-base">{getSettingLabel(setting.key)}</p>
                   {editingKey === setting.key ? (
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2">
                       <Input
                         type="number"
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        className="w-32"
+                        className="w-full sm:w-32"
                         autoFocus
                       />
-                      <Button
-                        size="sm"
-                        onClick={() => handleSave(setting.key)}
-                        disabled={saving}
-                      >
-                        Guardar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingKey(null)
-                          setEditValue("")
-                        }}
-                      >
-                        Cancelar
-                      </Button>
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        <Button
+                          size="sm"
+                          onClick={() => handleSave(setting.key)}
+                          disabled={saving}
+                          className="flex-1 sm:flex-none"
+                        >
+                          Guardar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingKey(null)
+                            setEditValue("")
+                          }}
+                          className="flex-1 sm:flex-none"
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground mt-1">
@@ -118,6 +122,7 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
                       setEditingKey(setting.key)
                       setEditValue(setting.value)
                     }}
+                    className="w-full sm:w-auto min-h-[44px]"
                   >
                     Editar
                   </Button>
@@ -130,9 +135,9 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
 
       {/* Efemérides */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>Efemérides</CardTitle>
-          <Button>
+          <Button className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Nueva Efeméride
           </Button>
@@ -143,45 +148,75 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
               No hay efemérides configuradas
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead>Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Descripción</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {events.map((event: any) => (
+                      <TableRow key={event.id}>
+                        <TableCell className="font-medium">{event.name}</TableCell>
+                        <TableCell>{formatDate(event.date)}</TableCell>
+                        <TableCell>
+                          <Badge>{event.type}</Badge>
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate">
+                          {event.description || "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm">
+                            Editar
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
                 {events.map((event: any) => (
-                  <TableRow key={event.id}>
-                    <TableCell className="font-medium">{event.name}</TableCell>
-                    <TableCell>{formatDate(event.date)}</TableCell>
-                    <TableCell>
-                      <Badge>{event.type}</Badge>
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {event.description || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">
+                  <div key={event.id} className="border rounded-lg p-4 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-medium text-sm">{event.name}</h4>
+                      <Badge className="text-xs">{event.type}</Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {formatDate(event.date)}
+                    </div>
+                    {event.description && (
+                      <div className="text-sm text-muted-foreground line-clamp-2">
+                        {event.description}
+                      </div>
+                    )}
+                    <div className="pt-2">
+                      <Button variant="ghost" size="sm" className="w-full">
                         Editar
                       </Button>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
       {/* Reglas de Precio */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>Reglas de Precio Especiales</CardTitle>
-          <Button>
+          <Button className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Nueva Regla
           </Button>
@@ -192,40 +227,75 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
               No hay reglas de precio configuradas
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Margen (%)</TableHead>
-                  <TableHead>Tarifa Fija</TableHead>
-                  <TableHead>Vigencia</TableHead>
-                  <TableHead>Evento</TableHead>
-                  <TableHead>Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Margen (%)</TableHead>
+                      <TableHead>Tarifa Fija</TableHead>
+                      <TableHead>Vigencia</TableHead>
+                      <TableHead>Evento</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {priceRules.map((rule: any) => (
+                      <TableRow key={rule.id}>
+                        <TableCell className="font-medium">{rule.name}</TableCell>
+                        <TableCell>{rule.markup_percent}%</TableCell>
+                        <TableCell>${rule.fixed_fee}</TableCell>
+                        <TableCell className="text-sm">
+                          {rule.effective_from && rule.effective_to
+                            ? `${formatDate(rule.effective_from)} - ${formatDate(rule.effective_to)}`
+                            : "Siempre"}
+                        </TableCell>
+                        <TableCell>
+                          {rule.event ? rule.event.name : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm">
+                            Editar
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
                 {priceRules.map((rule: any) => (
-                  <TableRow key={rule.id}>
-                    <TableCell className="font-medium">{rule.name}</TableCell>
-                    <TableCell>{rule.markup_percent}%</TableCell>
-                    <TableCell>${rule.fixed_fee}</TableCell>
-                    <TableCell className="text-sm">
+                  <div key={rule.id} className="border rounded-lg p-4 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-medium text-sm">{rule.name}</h4>
+                      <div className="text-right text-sm">
+                        <div className="font-semibold">{rule.markup_percent}%</div>
+                        <div className="text-muted-foreground">${rule.fixed_fee}</div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
                       {rule.effective_from && rule.effective_to
                         ? `${formatDate(rule.effective_from)} - ${formatDate(rule.effective_to)}`
-                        : "Siempre"}
-                    </TableCell>
-                    <TableCell>
-                      {rule.event ? rule.event.name : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">
+                        : "Siempre activa"}
+                    </div>
+                    {rule.event && (
+                      <div className="text-sm text-muted-foreground">
+                        Evento: {rule.event.name}
+                      </div>
+                    )}
+                    <div className="pt-2">
+                      <Button variant="ghost" size="sm" className="w-full">
                         Editar
                       </Button>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
