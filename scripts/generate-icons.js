@@ -1,20 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// Tamaños de iconos requeridos para PWA
-const iconSizes = [
-  { size: 72, name: 'icon-72x72.png' },
-  { size: 96, name: 'icon-96x96.png' },
-  { size: 128, name: 'icon-128x128.png' },
-  { size: 144, name: 'icon-144x144.png' },
-  { size: 152, name: 'icon-152x152.png' },
-  { size: 192, name: 'icon-192x192.png' },
-  { size: 384, name: 'icon-384x384.png' },
-  { size: 512, name: 'icon-512x512.png' }
-];
-
-// SVG base que se usará para generar todos los iconos
-const svgTemplate = `<svg width="{SIZE}" height="{SIZE}" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+// SVG base que vamos a convertir a PNG
+const svgContent = `<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <!-- Fondo circular con gradiente -->
   <defs>
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -55,9 +43,12 @@ const svgTemplate = `<svg width="{SIZE}" height="{SIZE}" viewBox="0 0 512 512" x
   <ellipse cx="256" cy="380" rx="70" ry="20" fill="#000" opacity="0.1"/>
 </svg>`;
 
-// Función para generar SVG con el tamaño especificado
-function generateSVG(size) {
-  return svgTemplate.replace(/{SIZE}/g, size);
+// Tamaños de iconos necesarios
+const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+
+// Función para crear SVG con tamaño específico
+function createSVGForSize(size) {
+  return svgContent.replace('width="512" height="512"', `width="${size}" height="${size}"`);
 }
 
 // Crear directorio de iconos si no existe
@@ -67,17 +58,17 @@ if (!fs.existsSync(iconsDir)) {
 }
 
 // Generar archivos SVG para cada tamaño
-iconSizes.forEach(({ size, name }) => {
-  const svgContent = generateSVG(size);
-  const filename = name.replace('.png', '.svg');
+sizes.forEach(size => {
+  const svgForSize = createSVGForSize(size);
+  const filename = `icon-${size}x${size}.svg`;
   const filepath = path.join(iconsDir, filename);
   
-  fs.writeFileSync(filepath, svgContent);
-  console.log(`✅ Generado: ${filename} (${size}x${size})`);
+  fs.writeFileSync(filepath, svgForSize);
+  console.log(`✅ Creado: ${filename}`);
 });
 
 console.log('\n🎉 Todos los iconos SVG han sido generados!');
 console.log('📝 Nota: Para convertir a PNG, puedes usar herramientas online como:');
 console.log('   - https://convertio.co/svg-png/');
 console.log('   - https://cloudconvert.com/svg-to-png');
-console.log('   - O usar herramientas locales como ImageMagick');
+console.log('   - O usar ImageMagick: convert icon-192x192.svg icon-192x192.png');
