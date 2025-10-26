@@ -213,9 +213,19 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
     setAddTaskDialogOpen(true);
   };
 
+  const handleCloseAddTaskDialog = () => {
+    setAddTaskDialogOpen(false);
+    setSelectedDay(null);
+  };
+
   const handleOpenEditTaskDialog = (task: WeeklyProductionTaskWithRecipe) => {
     setSelectedTask(task);
     setEditTaskDialogOpen(true);
+  };
+
+  const handleCloseEditTaskDialog = () => {
+    setEditTaskDialogOpen(false);
+    setSelectedTask(null);
   };
 
 
@@ -420,67 +430,71 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Calendar className="h-8 w-8" />
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+        <div className="space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+            <Calendar className="h-6 w-6 md:h-8 md:w-8" />
             Plan Semanal de Producción
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm md:text-base text-muted-foreground">
             {weekRange.start} - {weekRange.end}
           </p>
-          <div className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
-            <Clock className="h-4 w-4" />
+          <div className="text-xs md:text-sm text-muted-foreground flex items-center gap-2">
+            <Clock className="h-3 w-3 md:h-4 md:w-4" />
             <span>
-              Carga horaria total de la semana: <strong>{Math.floor(getTotalTimeForWeek() / 60)}h {getTotalTimeForWeek() % 60}m</strong>
+              Carga horaria total: <strong>{Math.floor(getTotalTimeForWeek() / 60)}h {getTotalTimeForWeek() % 60}m</strong>
             </span>
           </div>
           {!isMonday(currentWeek) && (
-            <p className="text-amber-600 text-sm mt-1">
+            <p className="text-amber-600 text-xs md:text-sm">
               ⚠️ Esta semana no comienza en lunes. Los planes semanales siempre comienzan los lunes.
             </p>
           )}
           {plan && (
-            <p className="text-green-600 text-sm mt-1">
+            <p className="text-green-600 text-xs md:text-sm">
               ✅ Plan semanal disponible
             </p>
           )}
           {availableWeeks.length > 0 && (
-            <p className="text-blue-600 text-sm mt-1">
+            <p className="text-blue-600 text-xs md:text-sm">
               📅 Planes disponibles: {availableWeeks.length} semana{availableWeeks.length !== 1 ? 's' : ''}
             </p>
           )}
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col space-y-2 md:flex-row md:items-center md:gap-4 md:space-y-0">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
+            <Button variant="outline" size="sm" onClick={goToPreviousWeek} className="flex-1 md:flex-none">
               <ChevronLeft className="h-4 w-4" />
+              <span className="ml-1 md:hidden">Anterior</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={goToNextWeek}>
+            <Button variant="outline" size="sm" onClick={goToNextWeek} className="flex-1 md:flex-none">
               <ChevronRight className="h-4 w-4" />
+              <span className="ml-1 md:hidden">Siguiente</span>
             </Button>
           </div>
           
-          {plan && (
-            <DuplicatePlanDialog 
-              sourceWeekStart={currentWeek}
-              onPlanDuplicated={handlePlanDuplicated}
-            />
-          )}
+          <div className="flex flex-col space-y-2 md:flex-row md:gap-2">
+            {plan && (
+              <DuplicatePlanDialog 
+                sourceWeekStart={currentWeek}
+                onPlanDuplicated={handlePlanDuplicated}
+              />
+            )}
 
-          {plan && (
-            <CheckStockDialog 
-              planId={plan.id}
-              planWeek={`${weekRange.start} - ${weekRange.end}`}
-            />
-          )}
+            {plan && (
+              <CheckStockDialog 
+                planId={plan.id}
+                planWeek={`${weekRange.start} - ${weekRange.end}`}
+              />
+            )}
 
-          {!plan && (
-            <CreatePlanDialog onPlanCreated={handleUpdate} />
-          )}
+            {!plan && (
+              <CreatePlanDialog onPlanCreated={handleUpdate} />
+            )}
+          </div>
         </div>
       </div>
 
@@ -516,7 +530,7 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 md:gap-4">
             {DAYS_OF_WEEK.map(({ day, name, short }) => {
               const tasks = tasksByDay[day] || [];
               const totalTime = getTotalTimeForDay(day)
@@ -554,7 +568,7 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
       {/* Dialogs */}
       <AddTaskDialog
         open={addTaskDialogOpen}
-        onOpenChange={setAddTaskDialogOpen}
+        onOpenChange={handleCloseAddTaskDialog}
         dayOfWeek={selectedDay}
         planId={plan?.id}
         onAddTask={handleAddTask}
@@ -562,7 +576,7 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
 
       <EditTaskDialog
         open={editTaskDialogOpen}
-        onOpenChange={setEditTaskDialogOpen}
+        onOpenChange={handleCloseEditTaskDialog}
         task={selectedTask}
         onUpdate={handleUpdate}
       />
