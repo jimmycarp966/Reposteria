@@ -95,67 +95,71 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
   })) || []
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Reportes</h1>
-          <p className="text-muted-foreground">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+        <div className="space-y-1">
+          <h1 className="text-2xl md:text-3xl font-bold">Reportes</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Analiza el rendimiento de tu negocio
           </p>
         </div>
-        <Button onClick={handleExportCSV} disabled={exporting}>
+        <Button 
+          onClick={handleExportCSV} 
+          disabled={exporting}
+          className="w-full md:w-auto h-10 md:h-11 text-sm md:text-base"
+        >
           <Download className="h-4 w-4 mr-2" />
           {exporting ? "Exportando..." : "Exportar CSV"}
         </Button>
       </div>
 
       <Tabs defaultValue="ventas">
-        <TabsList>
-          <TabsTrigger value="ventas">Ventas</TabsTrigger>
-          <TabsTrigger value="margenes">Márgenes</TabsTrigger>
-          <TabsTrigger value="produccion">Producción</TabsTrigger>
-          <TabsTrigger value="cuentas">Cuentas por Cobrar</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+          <TabsTrigger value="ventas" className="text-xs md:text-sm">Ventas</TabsTrigger>
+          <TabsTrigger value="margenes" className="text-xs md:text-sm">Márgenes</TabsTrigger>
+          <TabsTrigger value="produccion" className="text-xs md:text-sm">Producción</TabsTrigger>
+          <TabsTrigger value="cuentas" className="text-xs md:text-sm">Cuentas</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="ventas" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <TabsContent value="ventas" className="space-y-4 md:space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Ingresos del Mes</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">
+                <p className="text-2xl md:text-3xl font-bold">
                   {monthlyStats ? formatCurrency(monthlyStats.totalRevenue) : "-"}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs md:text-sm text-muted-foreground mt-1">
                   {monthlyStats ? `${monthlyStats.orderCount} pedidos` : "Sin datos"}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Costos del Mes</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">
+                <p className="text-2xl md:text-3xl font-bold">
                   {monthlyStats ? formatCurrency(monthlyStats.totalCost) : "-"}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs md:text-sm text-muted-foreground mt-1">
                   Materia prima
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
+            <Card className="sm:col-span-2 lg:col-span-1">
+              <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Ganancia del Mes</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold text-green-600">
+                <p className="text-2xl md:text-3xl font-bold text-green-600">
                   {monthlyStats ? formatCurrency(monthlyStats.profit) : "-"}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs md:text-sm text-muted-foreground mt-1">
                   {monthlyStats ? `Margen: ${monthlyStats.profitMargin.toFixed(1)}%` : "Sin datos"}
                 </p>
               </CardContent>
@@ -164,15 +168,21 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
 
           <Card>
             <CardHeader>
-              <CardTitle>Top Productos del Mes</CardTitle>
+              <CardTitle className="text-base md:text-lg">Top Productos del Mes</CardTitle>
             </CardHeader>
             <CardContent>
               {topProductsData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={topProductsData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
+                    <XAxis 
+                      dataKey="name" 
+                      fontSize={12}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis fontSize={12} />
                     <Tooltip formatter={(value: number) => formatCurrency(value)} />
                     <Legend />
                     <Bar dataKey="revenue" fill="#8884d8" name="Ingresos" />
@@ -188,20 +198,20 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
 
           <Card>
             <CardHeader>
-              <CardTitle>Detalle de Productos Vendidos</CardTitle>
+              <CardTitle className="text-base md:text-lg">Detalle de Productos Vendidos</CardTitle>
             </CardHeader>
             <CardContent>
               {salesReport?.topProducts && salesReport.topProducts.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2 md:space-y-3">
                   {salesReport.topProducts.map((product: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{product.name}</p>
-                        <p className="text-sm text-muted-foreground">
+                    <div key={index} className="flex flex-col space-y-2 p-3 border rounded-lg md:flex-row md:items-center md:justify-between md:space-y-0">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm md:text-base">{product.name}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground">
                           {product.quantity} unidades vendidas
                         </p>
                       </div>
-                      <p className="font-bold text-lg">{formatCurrency(product.revenue)}</p>
+                      <p className="font-bold text-base md:text-lg">{formatCurrency(product.revenue)}</p>
                     </div>
                   ))}
                 </div>
@@ -217,24 +227,24 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
         <TabsContent value="margenes">
           <Card>
             <CardHeader>
-              <CardTitle>Análisis de Márgenes</CardTitle>
+              <CardTitle className="text-base md:text-lg">Análisis de Márgenes</CardTitle>
             </CardHeader>
             <CardContent>
               {monthlyStats && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 border rounded-lg">
-                      <p className="text-sm text-muted-foreground">Margen Bruto</p>
-                      <p className="text-2xl font-bold">{monthlyStats.profitMargin.toFixed(1)}%</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-3 md:p-4 border rounded-lg">
+                      <p className="text-xs md:text-sm text-muted-foreground">Margen Bruto</p>
+                      <p className="text-xl md:text-2xl font-bold">{monthlyStats.profitMargin.toFixed(1)}%</p>
                     </div>
-                    <div className="p-4 border rounded-lg">
-                      <p className="text-sm text-muted-foreground">Ganancia Total</p>
-                      <p className="text-2xl font-bold text-green-600">
+                    <div className="p-3 md:p-4 border rounded-lg">
+                      <p className="text-xs md:text-sm text-muted-foreground">Ganancia Total</p>
+                      <p className="text-xl md:text-2xl font-bold text-green-600">
                         {formatCurrency(monthlyStats.profit)}
                       </p>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-4">
+                  <p className="text-xs md:text-sm text-muted-foreground mt-4">
                     Análisis detallado por producto próximamente
                   </p>
                 </div>
@@ -246,7 +256,7 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
         <TabsContent value="produccion">
           <Card>
             <CardHeader>
-              <CardTitle>Reporte de Producción</CardTitle>
+              <CardTitle className="text-base md:text-lg">Reporte de Producción</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
@@ -256,18 +266,18 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
           </Card>
         </TabsContent>
 
-        <TabsContent value="cuentas" className="space-y-6">
+        <TabsContent value="cuentas" className="space-y-4 md:space-y-6">
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                <CardTitle className="text-xs md:text-sm flex items-center gap-2">
+                  <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 text-red-500" />
                   Total Pendiente
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-xl md:text-2xl font-bold text-red-600">
                   {formatCurrency(accountsTotals.totalPending)}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -278,13 +288,13 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-yellow-500" />
+                <CardTitle className="text-xs md:text-sm flex items-center gap-2">
+                  <CreditCard className="h-3 w-3 md:h-4 md:w-4 text-yellow-500" />
                   Pagos Parciales
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-yellow-600">
+                <p className="text-xl md:text-2xl font-bold text-yellow-600">
                   {accountsTotals.partialCount}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -295,13 +305,13 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-orange-500" />
+                <CardTitle className="text-xs md:text-sm flex items-center gap-2">
+                  <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 text-orange-500" />
                   Completamente Pendientes
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-orange-600">
+                <p className="text-xl md:text-2xl font-bold text-orange-600">
                   {accountsTotals.pendingCount}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -310,15 +320,15 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="sm:col-span-2 lg:col-span-1">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-green-500" />
+                <CardTitle className="text-xs md:text-sm flex items-center gap-2">
+                  <CreditCard className="h-3 w-3 md:h-4 md:w-4 text-green-500" />
                   Total Cobrado
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-xl md:text-2xl font-bold text-green-600">
                   {formatCurrency(accountsTotals.totalPaid)}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -331,7 +341,7 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
           {/* Accounts List */}
           <Card>
             <CardHeader>
-              <CardTitle>Cuentas por Cobrar</CardTitle>
+              <CardTitle className="text-base md:text-lg">Cuentas por Cobrar</CardTitle>
             </CardHeader>
             <CardContent>
               {loadingAccounts ? (
@@ -340,19 +350,19 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
                 </div>
               ) : accountsReceivable.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="text-6xl mb-4">💰</div>
-                  <h3 className="text-lg font-medium mb-2">¡Excelente!</h3>
+                  <div className="text-4xl md:text-6xl mb-4">💰</div>
+                  <h3 className="text-base md:text-lg font-medium mb-2">¡Excelente!</h3>
                   <p className="text-sm text-muted-foreground">
                     No tienes cuentas por cobrar pendientes
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2 md:space-y-3">
                   {accountsReceivable.map((account) => (
-                    <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                      <div className="flex items-center gap-4">
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-2">
+                    <div key={account.id} className="flex flex-col space-y-3 p-3 md:p-4 border rounded-lg hover:bg-gray-50 md:flex-row md:items-center md:justify-between md:space-y-0">
+                      <div className="flex items-start gap-3 md:gap-4">
+                        <div className="flex flex-col space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Badge variant="outline" className="text-xs">
                               {account.type === 'order' ? 'Pedido' : 'Venta'}
                             </Badge>
@@ -365,14 +375,12 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <p className="font-semibold">{formatCurrency(account.total_amount)}</p>
-                          <div className="text-xs space-y-1">
-                            <div className="flex justify-between gap-4">
-                              <span className="text-green-600">Pagado: {formatCurrency(account.amount_paid)}</span>
-                              <span className="text-red-600">Pendiente: {formatCurrency(account.amount_pending)}</span>
-                            </div>
+                      <div className="flex flex-col space-y-2 md:items-end">
+                        <p className="font-semibold text-base md:text-lg">{formatCurrency(account.total_amount)}</p>
+                        <div className="text-xs space-y-1">
+                          <div className="flex flex-col space-y-1 md:flex-row md:justify-between md:gap-4">
+                            <span className="text-green-600">Pagado: {formatCurrency(account.amount_paid)}</span>
+                            <span className="text-red-600">Pendiente: {formatCurrency(account.amount_pending)}</span>
                           </div>
                         </div>
                       </div>

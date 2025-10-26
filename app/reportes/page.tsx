@@ -18,5 +18,9 @@ export default async function ReportesPage() {
   const monthlyStats = monthlyStatsResult.success ? monthlyStatsResult.data : null
   const salesReport = salesReportResult.success ? salesReportResult.data : null
 
-  return <ReportsClient monthlyStats={monthlyStats} salesReport={salesReport} />
+  return (
+    <div className="container mx-auto py-4 px-4 md:py-6 md:px-6">
+      <ReportsClient monthlyStats={monthlyStats} salesReport={salesReport} />
+    </div>
+  )
 }
