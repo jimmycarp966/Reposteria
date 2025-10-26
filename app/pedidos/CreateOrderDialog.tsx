@@ -7,10 +7,10 @@ import { orderSchema } from "@/lib/validations"
 import { z } from "zod"
 import {
   Dialog,
-  DialogContent,
+  MobileDialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/mobile-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -139,16 +139,16 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <MobileDialogContent>
         <DialogHeader>
-          <DialogTitle>Nuevo Pedido</DialogTitle>
+          <DialogTitle className="text-lg md:text-xl">Nuevo Pedido</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
           {/* Order Type */}
-          <div>
-            <Label>Tipo de Pedido *</Label>
-            <div className="flex gap-2 mt-2">
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Tipo de Pedido *</Label>
+            <div className="flex gap-2">
               <Button
                 type="button"
                 variant={orderType === "DAILY" ? "default" : "outline"}
@@ -156,7 +156,7 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
                   setOrderType("DAILY")
                   setValue("type", "DAILY")
                 }}
-                className="flex-1"
+                className="flex-1 h-11 text-base"
               >
                 Pedido Diario
               </Button>
@@ -167,7 +167,7 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
                   setOrderType("EFEMERIDE")
                   setValue("type", "EFEMERIDE")
                 }}
-                className="flex-1"
+                className="flex-1 h-11 text-base"
               >
                 Por Efeméride
               </Button>
@@ -175,12 +175,13 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
           </div>
 
           {/* Delivery Date and Time */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="delivery_date">Fecha de Entrega *</Label>
+          <div className="space-y-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+            <div className="space-y-2">
+              <Label htmlFor="delivery_date" className="text-sm font-medium">Fecha de Entrega *</Label>
               <Input
                 id="delivery_date"
                 type="date"
+                className="h-11 text-base"
                 {...register("delivery_date")}
               />
               {errors.delivery_date && (
@@ -188,11 +189,12 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
               )}
             </div>
 
-            <div>
-              <Label htmlFor="delivery_time">Hora de Entrega</Label>
+            <div className="space-y-2">
+              <Label htmlFor="delivery_time" className="text-sm font-medium">Hora de Entrega</Label>
               <Input
                 id="delivery_time"
                 type="time"
+                className="h-11 text-base"
                 {...register("delivery_time")}
               />
             </div>
@@ -200,10 +202,10 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
 
           {/* Event Selection for EFEMERIDE */}
           {orderType === "EFEMERIDE" && events.length > 0 && (
-            <div>
-              <Label>Efeméride Relacionada</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Efeméride Relacionada</Label>
               <Select>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 text-base">
                   <SelectValue placeholder="Seleccionar efeméride (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
@@ -218,21 +220,23 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
           )}
 
           {/* Customer Name - Optional */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="customer_name">Nombre del Cliente (opcional)</Label>
+          <div className="space-y-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+            <div className="space-y-2">
+              <Label htmlFor="customer_name" className="text-sm font-medium">Nombre del Cliente (opcional)</Label>
               <Input
                 id="customer_name"
+                className="h-11 text-base"
                 {...register("customer_name")}
                 placeholder="Ej: María González"
               />
             </div>
 
-            <div>
-              <Label htmlFor="customer_phone">Teléfono (opcional)</Label>
+            <div className="space-y-2">
+              <Label htmlFor="customer_phone" className="text-sm font-medium">Teléfono (opcional)</Label>
               <Input
                 id="customer_phone"
                 type="tel"
+                className="h-11 text-base"
                 {...register("customer_phone")}
                 placeholder="Ej: 11 2345-6789"
               />
@@ -240,19 +244,20 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
           </div>
 
           {/* Notes */}
-          <div>
-            <Label htmlFor="notes">Notas / Detalles Adicionales</Label>
+          <div className="space-y-2">
+            <Label htmlFor="notes" className="text-sm font-medium">Notas / Detalles Adicionales</Label>
             <Input
               id="notes"
+              className="h-11 text-base"
               {...register("notes")}
               placeholder="Ej: Decoración especial, bandeja incluida, alérgenos..."
             />
           </div>
 
           {/* Order Items */}
-          <div className="border-t pt-4">
-            <div className="flex items-center justify-between mb-4">
-              <Label>Productos *</Label>
+          <div className="border-t pt-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <Label className="text-base font-semibold">Productos *</Label>
               <Button
                 type="button"
                 size="sm"
@@ -264,60 +269,129 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
                   cost_at_sale: 0,
                   production_time_estimate_minutes: 60 
                 })}
+                className="w-full sm:w-auto h-10"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Agregar Producto
               </Button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {fields.map((field, index) => (
-                <div key={field.id} className="flex gap-2 items-start p-3 border rounded-md">
-                  <div className="flex-1">
-                    <Select
-                      value={field.product_id}
-                      onValueChange={(value) => handleProductSelect(index, value)}
+                <div key={field.id} className="border rounded-lg p-4 space-y-4 bg-card">
+                  {/* Desktop Layout */}
+                  <div className="hidden lg:flex gap-2 items-start">
+                    <div className="flex-1">
+                      <Select
+                        value={field.product_id}
+                        onValueChange={(value) => handleProductSelect(index, value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar producto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.name} - {formatCurrency(product.suggested_price_cache)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="w-20">
+                      <Input
+                        type="number"
+                        placeholder="Cant."
+                        min="1"
+                        {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+                      />
+                    </div>
+
+                    <div className="w-28">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Precio"
+                        {...register(`items.${index}.unit_price`, { valueAsNumber: true })}
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => remove(index)}
+                      disabled={fields.length === 1}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar producto" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name} - {formatCurrency(product.suggested_price_cache)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
 
-                  <div className="w-20">
-                    <Input
-                      type="number"
-                      placeholder="Cant."
-                      min="1"
-                      {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                    />
-                  </div>
+                  {/* Mobile Layout */}
+                  <div className="lg:hidden space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Producto</Label>
+                      <Select
+                        value={field.product_id}
+                        onValueChange={(value) => handleProductSelect(index, value)}
+                      >
+                        <SelectTrigger className="h-11 text-base">
+                          <SelectValue placeholder="Seleccionar producto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.name} - {formatCurrency(product.suggested_price_cache)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <div className="w-28">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="Precio"
-                      {...register(`items.${index}.unit_price`, { valueAsNumber: true })}
-                    />
-                  </div>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Cantidad</Label>
+                        <Input
+                          type="number"
+                          placeholder="Ej: 2"
+                          min="1"
+                          className="h-11 text-base"
+                          {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+                        />
+                      </div>
 
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => remove(index)}
-                    disabled={fields.length === 1}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Precio Unitario</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Ej: 1500.00"
+                          className="h-11 text-base"
+                          {...register(`items.${index}.unit_price`, { valueAsNumber: true })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-2 border-t">
+                      <div className="space-y-1">
+                        <span className="text-sm font-medium">Subtotal: </span>
+                        <span className="text-lg font-semibold text-green-600">
+                          {formatCurrency((field.quantity || 0) * (field.unit_price || 0))}
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => remove(index)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 h-10 w-10"
+                        disabled={fields.length === 1}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -327,41 +401,51 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
           </div>
 
           {/* Totals Summary */}
-          <div className="border-t pt-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Costo Total:</span>
-              <span className="font-semibold">{formatCurrency(totals.totalCost)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Precio Total:</span>
-              <span className="font-bold text-lg">{formatCurrency(totals.totalPrice)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Ganancia:</span>
-              <span className="font-semibold text-green-600">
-                {formatCurrency(totals.totalPrice - totals.totalCost)}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Tiempo Estimado Producción:</span>
-              <span className="font-semibold">{totals.totalTime} minutos</span>
+          <div className="border-t pt-6 space-y-3">
+            <div className="bg-muted/50 p-4 rounded-lg border">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Costo Total:</span>
+                  <span className="font-semibold">{formatCurrency(totals.totalCost)}</span>
+                </div>
+                <div className="flex justify-between text-base">
+                  <span className="font-medium">Precio Total:</span>
+                  <span className="font-bold text-xl">{formatCurrency(totals.totalPrice)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Ganancia:</span>
+                  <span className="font-semibold text-green-600">
+                    {formatCurrency(totals.totalPrice - totals.totalCost)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Tiempo Estimado Producción:</span>
+                  <span className="font-semibold">{totals.totalTime} minutos</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className="w-full sm:w-auto h-11 text-base"
+            >
               Cancelar
             </Button>
             <Button 
               type="submit" 
               disabled={submitting}
+              className="w-full sm:w-auto h-11 text-base"
               onClick={() => console.log('🔘 CreateOrder button clicked!')}
             >
               {submitting ? "Creando..." : "Crear Pedido"}
             </Button>
           </div>
         </form>
-      </DialogContent>
+      </MobileDialogContent>
     </Dialog>
   )
 }

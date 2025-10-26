@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, MobileDialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/mobile-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -77,17 +77,17 @@ export function CreatePlanDialog({ onPlanCreated }: CreatePlanDialogProps) {
           Crear Plan Semanal
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <MobileDialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-lg md:text-xl">
             <Calendar className="h-5 w-5" />
             Crear Plan Semanal
           </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="weekStartDate">Fecha de inicio (Lunes)</Label>
+            <Label htmlFor="weekStartDate" className="text-sm font-medium">Fecha de inicio (Lunes)</Label>
             <MondayDatePicker
               value={weekStartDate}
               onChange={setWeekStartDate}
@@ -99,31 +99,37 @@ export function CreatePlanDialog({ onPlanCreated }: CreatePlanDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notas (opcional)</Label>
+            <Label htmlFor="notes" className="text-sm font-medium">Notas (opcional)</Label>
             <Textarea
               id="notes"
               placeholder="Agregar notas sobre el plan semanal..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
+              className="text-base"
             />
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t">
             <Button
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={loading}
+              className="w-full sm:w-auto h-11 text-base"
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading} className="btn-gradient-green">
+            <Button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full sm:w-auto h-11 text-base btn-gradient-green"
+            >
               {loading ? "Creando..." : "Crear Plan"}
             </Button>
           </div>
         </form>
-      </DialogContent>
+      </MobileDialogContent>
     </Dialog>
   )
 }

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, MobileDialogContent, DialogHeader, DialogTitle } from "@/components/ui/mobile-dialog"
 import { getRecipes } from "@/actions/recipeActions"
 import { getTaskCategories } from "@/actions/categoryActions"
 import type { Recipe, TaskCategory } from "@/lib/types"
@@ -97,17 +97,17 @@ export function AddTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <MobileDialogContent>
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-lg md:text-xl">
             Agregar Tarea - {DAY_NAMES[dayOfWeek - 1]}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
           {/* Task Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Descripción de la tarea</Label>
+            <Label htmlFor="description" className="text-sm font-medium">Descripción de la tarea</Label>
             <Textarea
               id="description"
               value={taskDescription}
@@ -115,14 +115,15 @@ export function AddTaskDialog({
               placeholder="Ej: Hacer mermelada de frutillas, Preparar masa para tartas..."
               required
               rows={3}
+              className="text-base"
             />
           </div>
 
           {/* Recipe Selection */}
           <div className="space-y-2">
-            <Label htmlFor="recipe">Receta asociada (opcional)</Label>
+            <Label htmlFor="recipe" className="text-sm font-medium">Receta asociada (opcional)</Label>
             <Select value={selectedRecipe} onValueChange={setSelectedRecipe}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11 text-base">
                 <SelectValue placeholder="Seleccionar receta..." />
               </SelectTrigger>
               <SelectContent>
@@ -138,9 +139,9 @@ export function AddTaskDialog({
 
           {/* Category Selection */}
           <div className="space-y-2">
-            <Label htmlFor="category">Categoría (opcional)</Label>
+            <Label htmlFor="category" className="text-sm font-medium">Categoría (opcional)</Label>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11 text-base">
                 <SelectValue placeholder="Seleccionar categoría..." />
               </SelectTrigger>
               <SelectContent>
@@ -162,7 +163,7 @@ export function AddTaskDialog({
 
           {/* Estimated Time */}
           <div className="space-y-2">
-            <Label htmlFor="time">Tiempo estimado (minutos)</Label>
+            <Label htmlFor="time" className="text-sm font-medium">Tiempo estimado (minutos)</Label>
             <Input
               id="time"
               type="number"
@@ -170,24 +171,30 @@ export function AddTaskDialog({
               value={estimatedTime}
               onChange={(e) => setEstimatedTime(e.target.value)}
               placeholder="Ej: 60"
+              className="h-11 text-base"
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t">
             <Button
               type="button"
               variant="outline"
               onClick={handleCancel}
+              className="w-full sm:w-auto h-11 text-base"
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button 
+              type="submit" 
+              disabled={loading}
+              className="w-full sm:w-auto h-11 text-base"
+            >
               {loading ? "Agregando..." : "Agregar Tarea"}
             </Button>
           </div>
         </form>
-      </DialogContent>
+      </MobileDialogContent>
     </Dialog>
   )
 }
