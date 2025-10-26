@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus } from "lucide-react"
+import { Plus, Edit, Trash2 } from "lucide-react"
 import { updateSetting } from "@/actions/settingsActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { EventDialog } from "./EventDialog"
+import { DeleteEventDialog } from "./DeleteEventDialog"
 
 interface ConfigClientProps {
   settings: any[]
@@ -31,6 +33,15 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
   const [saving, setSaving] = useState(false)
   const addNotification = useNotificationStore((state) => state.addNotification)
 
+  // Estados para el diálogo de efemérides
+  const [eventDialogOpen, setEventDialogOpen] = useState(false)
+  const [eventDialogMode, setEventDialogMode] = useState<"create" | "edit">("create")
+  const [selectedEvent, setSelectedEvent] = useState<any>(null)
+
+  // Estados para el diálogo de eliminación
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [eventToDelete, setEventToDelete] = useState<any>(null)
+
   const handleSave = async (key: string) => {
     setSaving(true)
     const result = await updateSetting(key, editValue)
@@ -43,6 +54,33 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
     } else {
       addNotification({ type: "error", message: result.message! })
     }
+  }
+
+  const handleOpenEventDialog = (mode: "create" | "edit") => {
+    setEventDialogMode(mode)
+    setSelectedEvent(null)
+    setEventDialogOpen(true)
+  }
+
+  const handleCloseEventDialog = () => {
+    setEventDialogOpen(false)
+    setSelectedEvent(null)
+  }
+
+  const handleEditEvent = (event: any) => {
+    setEventDialogMode("edit")
+    setSelectedEvent(event)
+    setEventDialogOpen(true)
+  }
+
+  const handleDeleteEvent = (event: any) => {
+    setEventToDelete(event)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false)
+    setEventToDelete(null)
   }
 
   const getSettingLabel = (key: string) => {
@@ -137,7 +175,10 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
       <Card>
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>Efemérides</CardTitle>
-          <Button className="w-full sm:w-auto">
+          <Button 
+            className="w-full sm:w-auto"
+            onClick={() => handleOpenEventDialog("create")}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Nueva Efeméride
           </Button>
@@ -173,9 +214,22 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
                           {event.description || "-"}
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm">
-                            Editar
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditEvent(event)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteEvent(event)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -199,9 +253,24 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
                         {event.description}
                       </div>
                     )}
-                    <div className="pt-2">
-                      <Button variant="ghost" size="sm" className="w-full">
+                    <div className="pt-2 flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleEditEvent(event)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
                         Editar
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleDeleteEvent(event)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2 text-red-600" />
+                        Eliminar
                       </Button>
                     </div>
                   </div>
@@ -299,6 +368,20 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
           )}
         </CardContent>
       </Card>
+
+      {/* Diálogos */}
+      <EventDialog
+        open={eventDialogOpen}
+        onClose={handleCloseEventDialog}
+        event={selectedEvent}
+        mode={eventDialogMode}
+      />
+
+      <DeleteEventDialog
+        open={deleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        event={eventToDelete || {}}
+      />
     </div>
   )
 }
