@@ -108,12 +108,9 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
   }, { totalCost: 0, totalPrice: 0, totalTime: 0 })
 
   const onSubmit = async (data: FormData) => {
-    console.log('🚀 CreateOrder onSubmit called with data:', data)
     try {
       setSubmitting(true)
-      console.log('🔄 Calling createOrder...')
       const result = await createOrder(data)
-      console.log('📋 createOrder result:', result)
 
       if (result.success) {
         addNotification({ type: "success", message: result.message! })

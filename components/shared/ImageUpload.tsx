@@ -99,7 +99,7 @@ export function ImageUpload({
       <Label>Imagen</Label>
       
       {preview ? (
-        <div className="relative w-full h-48 border rounded-lg overflow-hidden">
+        <div className="relative w-full h-40 md:h-48 border rounded-lg overflow-hidden">
           <Image
             src={preview}
             alt="Preview"
@@ -117,8 +117,8 @@ export function ImageUpload({
           </Button>
         </div>
       ) : (
-        <div className="border-2 border-dashed rounded-lg p-8 text-center">
-          <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+        <div className="border-2 border-dashed rounded-lg p-6 md:p-8 text-center">
+          <Upload className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-2 text-muted-foreground" />
           <Label
             htmlFor="image-upload"
             className="cursor-pointer text-sm text-muted-foreground hover:text-foreground"

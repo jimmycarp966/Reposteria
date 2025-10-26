@@ -505,16 +505,13 @@ export function OrdersClient({ orders }: OrdersClientProps) {
           setShortageOrderId(null) // Limpiar el estado
         }}
         onConfirmAnyway={() => {
-          console.log('🔧 onConfirmAnyway called, shortageOrderId:', shortageOrderId)
           // Cerrar el diálogo primero
           setShowShortagesDialog(false)
           // Llamar a handleConfirmOrder con forceConfirm=true usando el ID guardado
           if (shortageOrderId) {
-            console.log('🚀 Calling handleConfirmOrder with forceConfirm=true')
             handleConfirmOrder(shortageOrderId, true)
             setShortageOrderId(null) // Limpiar el estado
           } else {
-            console.log('❌ No shortageOrderId available')
           }
         }}
         shortages={stockShortages}
