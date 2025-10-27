@@ -12,10 +12,12 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2, Plus, Package } from "lucide-react"
+import { Edit, Trash2, Plus, Package, ShoppingCart, History } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { CreateIngredientDialog } from "./CreateIngredientDialog"
 import { UpdateStockDialog } from "./UpdateStockDialog"
+import { RegisterPurchaseDialog } from "./RegisterPurchaseDialog"
+import { PurchaseHistoryDialog } from "./PurchaseHistoryDialog"
 import { deleteIngredient, updateIngredientCost } from "@/actions/ingredientActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { useSearchFilter } from "@/hooks/useSearchFilter"
@@ -38,6 +40,8 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
   const [selectedIngredient, setSelectedIngredient] = useState<any | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showStockDialog, setShowStockDialog] = useState(false)
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false)
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false)
   const [editingCostId, setEditingCostId] = useState<string | null>(null)
   const [newCost, setNewCost] = useState("")
   const addNotification = useNotificationStore((state) => state.addNotification)
@@ -221,6 +225,28 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
                   </Button>
                   <Button
                     size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedIngredient(ingredient)
+                      setShowPurchaseDialog(true)
+                    }}
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-1" />
+                    Compra
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedIngredient(ingredient)
+                      setShowHistoryDialog(true)
+                    }}
+                  >
+                    <History className="h-4 w-4 mr-1" />
+                    Historial
+                  </Button>
+                  <Button
+                    size="sm"
                     variant="ghost"
                     onClick={() => handleDelete(ingredient.id)}
                   >
@@ -307,14 +333,32 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
       />
 
       {selectedIngredient && (
-        <UpdateStockDialog
-          open={showStockDialog}
-          onClose={() => {
-            setShowStockDialog(false)
-            setSelectedIngredient(null)
-          }}
-          ingredient={selectedIngredient}
-        />
+        <>
+          <UpdateStockDialog
+            open={showStockDialog}
+            onClose={() => {
+              setShowStockDialog(false)
+              setSelectedIngredient(null)
+            }}
+            ingredient={selectedIngredient}
+          />
+          <RegisterPurchaseDialog
+            ingredient={selectedIngredient}
+            open={showPurchaseDialog}
+            onClose={() => {
+              setShowPurchaseDialog(false)
+              setSelectedIngredient(null)
+            }}
+          />
+          <PurchaseHistoryDialog
+            ingredient={selectedIngredient}
+            open={showHistoryDialog}
+            onClose={() => {
+              setShowHistoryDialog(false)
+              setSelectedIngredient(null)
+            }}
+          />
+        </>
       )}
     </>
   )

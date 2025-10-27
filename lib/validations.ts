@@ -170,5 +170,18 @@ export const updateTaskStatusSchema = z.object({
   }),
 })
 
+// Ingredient Purchase validations
+export const ingredientPurchaseSchema = z.object({
+  ingredient_id: z.string().uuid("ID de ingrediente inválido"),
+  purchase_date: z.string().refine((date) => {
+    return !isNaN(Date.parse(date))
+  }, "Fecha inválida"),
+  quantity_purchased: z.number().min(0.001, "La cantidad debe ser mayor a 0"),
+  unit_purchased: z.string().min(1, "La unidad es requerida"),
+  total_price: z.number().min(0, "El precio total debe ser mayor o igual a 0"),
+  supplier: z.string().optional(),
+  notes: z.string().optional(),
+})
+
 
 

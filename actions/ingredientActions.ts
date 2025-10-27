@@ -1,12 +1,13 @@
 "use server"
 
 import { supabase } from "@/lib/supabase"
-import { ingredientSchema } from "@/lib/validations"
+import { ingredientSchema, ingredientPurchaseSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getCachedData, CACHE_KEYS, cache } from "@/lib/cache"
 import { logger } from "@/lib/logger"
-import type { IngredientsQueryParams, PaginatedResponse, IngredientWithInventory } from "@/lib/types"
+import type { IngredientsQueryParams, PaginatedResponse, IngredientWithInventory, IngredientPurchase } from "@/lib/types"
+import { areUnitsCompatibleServer, convertUnitsServer } from "@/lib/unit-conversions"
 
 export async function getIngredients(params: IngredientsQueryParams = {}): Promise<PaginatedResponse<IngredientWithInventory>> {
   const {
@@ -251,6 +252,144 @@ export async function bulkUpdateIngredientPrices(percentageIncrease: number) {
   } catch (error: any) {
     logger.error("Error in bulk price update", error, 'ingredientActions.bulkUpdateIngredientPrices')
     return { success: false, message: error.message || "Error al actualizar precios masivamente" }
+  }
+}
+
+export async function registerPurchase(formData: z.infer<typeof ingredientPurchaseSchema>) {
+  try {
+    const validated = ingredientPurchaseSchema.parse(formData)
+    
+    logger.info(`Registering purchase for ingredient ${validated.ingredient_id}`, validated, 'ingredientActions.registerPurchase')
+    
+    // Get ingredient details
+    const { data: ingredient, error: ingredientError } = await supabase
+      .from("ingredients")
+      .select("id, name, unit, cost_per_unit")
+      .eq("id", validated.ingredient_id)
+      .single()
+    
+    if (ingredientError || !ingredient) {
+      return { success: false, message: "Ingrediente no encontrado" }
+    }
+    
+    // Validate unit compatibility
+    if (!areUnitsCompatibleServer(validated.unit_purchased, ingredient.unit)) {
+      return { 
+        success: false, 
+        message: `Las unidades ${validated.unit_purchased} y ${ingredient.unit} no son compatibles para conversión` 
+      }
+    }
+    
+    // Convert quantity to ingredient's base unit
+    const convertedQuantity = convertUnitsServer(
+      validated.quantity_purchased, 
+      validated.unit_purchased, 
+      ingredient.unit
+    )
+    
+    // Calculate unit cost in the ingredient's base unit
+    const calculatedUnitCost = validated.total_price / convertedQuantity
+    
+    // Insert purchase record
+    const { data: purchase, error: purchaseError } = await supabase
+      .from("ingredient_purchases")
+      .insert([{
+        ingredient_id: validated.ingredient_id,
+        purchase_date: validated.purchase_date,
+        quantity_purchased: validated.quantity_purchased,
+        unit_purchased: validated.unit_purchased,
+        total_price: validated.total_price,
+        calculated_unit_cost: calculatedUnitCost,
+        supplier: validated.supplier,
+        notes: validated.notes,
+      }])
+      .select()
+      .single()
+    
+    if (purchaseError) throw purchaseError
+    
+    // Update ingredient cost per unit
+    const { error: updateError } = await supabase
+      .from("ingredients")
+      .update({ cost_per_unit: calculatedUnitCost })
+      .eq("id", validated.ingredient_id)
+    
+    if (updateError) throw updateError
+    
+    // Add inventory movement (IN)
+    const { error: movementError } = await supabase
+      .from("inventory_movements")
+      .insert([{
+        ingredient_id: validated.ingredient_id,
+        quantity: convertedQuantity,
+        type: "IN",
+        notes: `Compra registrada: ${convertedQuantity.toFixed(3)} ${ingredient.unit}`,
+      }])
+    
+    if (movementError) logger.error("Error creating inventory movement", movementError)
+    
+    // Update inventory quantity
+    const { data: existingInventory } = await supabase
+      .from("inventory")
+      .select("quantity")
+      .eq("ingredient_id", validated.ingredient_id)
+      .single()
+    
+    if (existingInventory) {
+      await supabase
+        .from("inventory")
+        .update({ 
+          quantity: existingInventory.quantity + convertedQuantity,
+          last_updated: new Date().toISOString()
+        })
+        .eq("ingredient_id", validated.ingredient_id)
+    } else {
+      await supabase
+        .from("inventory")
+        .insert([{
+          ingredient_id: validated.ingredient_id,
+          quantity: convertedQuantity,
+          unit: ingredient.unit,
+        }])
+    }
+    
+    // Clear caches
+    cache.delete(CACHE_KEYS.INGREDIENTS)
+    cache.delete(CACHE_KEYS.PRODUCTS)
+    cache.delete(CACHE_KEYS.RECIPES)
+    
+    // Revalidate paths
+    revalidatePath("/ingredientes")
+    revalidatePath("/productos")
+    revalidatePath("/recetas")
+    
+    logger.info(`Purchase registered successfully for ${ingredient.name}`, { calculatedUnitCost }, 'ingredientActions.registerPurchase')
+    
+    return { 
+      success: true, 
+      data: purchase, 
+      message: `Compra registrada. Nuevo costo: $${calculatedUnitCost.toFixed(4)}/${ingredient.unit}` 
+    }
+  } catch (error: any) {
+    logger.error("Error registering purchase", error, 'ingredientActions.registerPurchase')
+    return { success: false, message: error.message || "Error al registrar compra" }
+  }
+}
+
+export async function getPurchaseHistory(ingredientId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("ingredient_purchases")
+      .select("*, ingredient:ingredients(id, name, unit)")
+      .eq("ingredient_id", ingredientId)
+      .order("purchase_date", { ascending: false })
+    
+    if (error) throw error
+    
+    return { success: true, data: data as IngredientPurchase[] }
+  } catch (error: any) {
+    logger.error("Error fetching purchase history", error, 'ingredientActions.getPurchaseHistory')
+    return { success: false, message: error.message || "Error al obtener historial de compras" }
   }
 }
 

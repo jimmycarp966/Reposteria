@@ -356,3 +356,18 @@ export interface Setting {
   key: string
   value: string
 }
+
+// Tipos para compras de ingredientes
+export interface IngredientPurchase {
+  id: string
+  ingredient_id: string
+  purchase_date: string
+  quantity_purchased: number
+  unit_purchased: string
+  total_price: number
+  calculated_unit_cost: number
+  supplier?: string
+  notes?: string
+  created_at: string
+  ingredient?: Ingredient
+}
