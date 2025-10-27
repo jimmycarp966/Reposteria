@@ -103,17 +103,17 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
             unit_purchased: purchaseUnit,
             total_price: purchasePrice,
             supplier: data.supplier,
-            notes: `Compra inicial registrada al crear el ingrediente`,
+            notes: `Costo calculado al crear el ingrediente`,
           })
           
           if (purchaseResult.success) {
-            addNotification({ type: "success", message: "Ingrediente creado y compra registrada" })
+            addNotification({ type: "success", message: "Ingrediente creado exitosamente" })
           } else {
             addNotification({ type: "success", message: result.message! })
-            addNotification({ type: "warning", message: "El ingrediente fue creado pero la compra no pudo registrarse" })
+            addNotification({ type: "warning", message: "El ingrediente fue creado pero el costo no pudo calcularse" })
           }
         } else {
-          addNotification({ type: "error", message: "Debe registrar una compra inicial para crear el ingrediente" })
+          addNotification({ type: "error", message: "Debe ingresar cantidad y precio para calcular el costo del ingrediente" })
           return
         }
         
@@ -219,24 +219,25 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
             onImageUploaded={setImageUrl}
           />
 
-          {/* Required: Register First Purchase */}
+          {/* Calculate Cost from Purchase */}
           <div className="border-t pt-4">
-            <h3 className="text-lg font-medium mb-4">Registrar Primera Compra</h3>
+            <h3 className="text-lg font-medium mb-4">Calcular Costo del Ingrediente</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Es necesario registrar el costo para poder usar este ingrediente en recetas y productos.
+              Ingresa cuánto pagaste y cuánto compraste para calcular automáticamente el costo por unidad.
             </p>
               <div className="space-y-3 bg-muted/30 p-4 rounded-lg">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="purchase_quantity">Cantidad Comprada</Label>
-                    <Input
-                      id="purchase_quantity"
-                      type="number"
-                      step="0.001"
-                      placeholder="Ej: 200"
-                      value={purchaseQuantity || ""}
-                      onChange={(e) => setPurchaseQuantity(parseFloat(e.target.value) || 0)}
-                    />
+                                      <Label htmlFor="purchase_quantity">Cantidad</Label>
+                  <Input
+                    id="purchase_quantity"
+                    type="number"
+                    step="0.001"
+                    placeholder="Ej: 200"
+                    value={purchaseQuantity || ""}
+                    onChange={(e) => setPurchaseQuantity(parseFloat(e.target.value) || 0)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">¿Cuánto compraste?</p>
                   </div>
                   <div>
                     <Label htmlFor="purchase_unit">Unidad de Compra</Label>
@@ -250,7 +251,7 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="purchase_price">Precio Total Pagado</Label>
+                  <Label htmlFor="purchase_price">Precio Total</Label>
                   <Input
                     id="purchase_price"
                     type="number"
@@ -259,14 +260,15 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
                     value={purchasePrice || ""}
                     onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">¿Cuánto pagaste?</p>
                 </div>
                 {preview && (
                   <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
                     <p className="text-sm font-semibold text-primary">
-                      Costo calculado: {preview}
+                      Costo por unidad: {preview}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Este costo se guardará automáticamente al crear el ingrediente
+                      Este será el costo base del ingrediente para recetas y productos
                     </p>
                   </div>
                 )}
