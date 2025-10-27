@@ -133,8 +133,13 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
             addNotification({ type: "success", message: "Ingrediente creado exitosamente con costo calculado" })
           } else {
             console.log('❌ Error en registro de compra:', purchaseResult.message)
-            addNotification({ type: "success", message: result.message! })
-            addNotification({ type: "warning", message: `El ingrediente fue creado pero el costo no pudo calcularse: ${purchaseResult.message}` })
+            // Si la compra falla, el ingrediente se creó pero sin precio calculado
+            addNotification({
+              type: "error",
+              message: `El ingrediente "${data.name}" fue creado, pero no se pudo calcular el costo. Error: ${purchaseResult.message}. Puede actualizar el costo manualmente después.`
+            })
+            // No refrescamos la página para que el usuario pueda intentar corregir
+            return
           }
         } else {
           console.log('⚠️  No se cumplen las condiciones para registro de compra')
