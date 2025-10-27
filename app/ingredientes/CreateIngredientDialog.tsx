@@ -19,6 +19,7 @@ import { createIngredient, registerPurchase as registerPurchaseAction } from "@/
 import { useNotificationStore } from "@/store/notificationStore"
 import { ImageUpload } from "@/components/shared/ImageUpload"
 import { UnitSelector } from "@/components/shared/UnitSelector"
+import { formatCurrency } from "@/lib/utils"
 import { Textarea } from "@/components/ui/textarea"
 import { areUnitsCompatible, convertUnits } from "@/components/shared/UnitSelector"
 
@@ -77,8 +78,8 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
     
     // Since purchaseUnit = unitValue, no conversion needed
     const unitCost = purchasePrice / purchaseQuantity
-    
-    return `$${unitCost.toFixed(4)}/${unitValue}`
+
+    return `${formatCurrency(unitCost)}/${unitValue}`
   }
 
   const preview = calculatePreview()

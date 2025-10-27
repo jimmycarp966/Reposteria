@@ -20,6 +20,7 @@ import { registerPurchase } from "@/actions/ingredientActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { UnitSelector } from "@/components/shared/UnitSelector"
 import { areUnitsCompatible, convertUnits } from "@/components/shared/UnitSelector"
+import { formatCurrency } from "@/lib/utils"
 import type { Ingredient } from "@/lib/types"
 
 interface RegisterPurchaseDialogProps {
@@ -88,8 +89,8 @@ export function RegisterPurchaseDialog({
     
     const convertedQuantity = convertUnits(quantityPurchased, unitPurchased, ingredient.unit)
     const unitCost = totalPrice / convertedQuantity
-    
-    return `$${unitCost.toFixed(4)}/${ingredient.unit}`
+
+    return `${formatCurrency(unitCost)}/${ingredient.unit}`
   }
 
   const preview = calculatePreview()
