@@ -87,36 +87,47 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
   const onSubmit = async (data: FormData) => {
     try {
       setSubmitting(true)
-      
+
+      console.log('Debug: Form data:', data)
+      console.log('Debug: unitValue from watch:', unitValue)
+      console.log('Debug: purchase state:', { purchaseQuantity, purchasePrice })
+
       // Create ingredient first
       const result = await createIngredient({
         ...data,
         image_url: imageUrl || undefined,
       })
 
-             if (result.success) {
-         // Register purchase (now required)
-         if (purchaseQuantity > 0 && purchasePrice > 0 && unitValue) {
-                     const purchaseResult = await registerPurchaseAction({
+      if (result.success) {
+        // Register purchase (now required)
+        console.log('Debug: unitValue:', unitValue, 'purchaseQuantity:', purchaseQuantity, 'purchasePrice:', purchasePrice)
+
+        if (purchaseQuantity > 0 && purchasePrice > 0 && unitValue) {
+          console.log('Debug: Registrando compra con unitValue:', unitValue)
+
+          const purchaseResult = await registerPurchaseAction({
             ingredient_id: result.data!.id,
             purchase_date: new Date().toISOString().split('T')[0],
             quantity_purchased: purchaseQuantity,
             unit_purchased: unitValue, // Same as unit base
             total_price: purchasePrice,
+            supplier: data.supplier || undefined,
             notes: `Costo calculado al crear el ingrediente`,
           })
-          
+
           if (purchaseResult.success) {
-            addNotification({ type: "success", message: "Ingrediente creado exitosamente" })
+            addNotification({ type: "success", message: "Ingrediente creado exitosamente con costo calculado" })
           } else {
+            console.log('Debug: Purchase result failed:', purchaseResult)
             addNotification({ type: "success", message: result.message! })
-            addNotification({ type: "warning", message: "El ingrediente fue creado pero el costo no pudo calcularse" })
+            addNotification({ type: "warning", message: `El ingrediente fue creado pero el costo no pudo calcularse: ${purchaseResult.message}` })
           }
         } else {
+          console.log('Debug: Purchase validation failed - missing data')
           addNotification({ type: "error", message: "Debe ingresar cantidad y precio para calcular el costo del ingrediente" })
           return
         }
-        
+
         reset()
         setImageUrl("")
         setRegisterPurchase(true)
