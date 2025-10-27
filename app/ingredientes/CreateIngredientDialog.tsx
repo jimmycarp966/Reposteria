@@ -61,7 +61,7 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
   })
 
   const unitValue = watch("unit")
-  const [purchaseUnit, setPurchaseUnit] = useState("")
+  // purchaseUnit now always equals unitValue - no need for separate state
   const [purchaseQuantity, setPurchaseQuantity] = useState(0)
   const [purchasePrice, setPurchasePrice] = useState(0)
 
@@ -71,12 +71,12 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
       return null
     }
     
-    if (!unitValue || !areUnitsCompatible(purchaseUnit, unitValue)) {
-      return "Unidades incompatibles"
+    if (!unitValue) {
+      return null
     }
     
-    const convertedQuantity = convertUnits(purchaseQuantity, purchaseUnit, unitValue)
-    const unitCost = purchasePrice / convertedQuantity
+    // Since purchaseUnit = unitValue, no conversion needed
+    const unitCost = purchasePrice / purchaseQuantity
     
     return `$${unitCost.toFixed(4)}/${unitValue}`
   }
@@ -93,18 +93,18 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
         image_url: imageUrl || undefined,
       })
 
-      if (result.success) {
-        // Register purchase (now required)
-        if (purchaseQuantity > 0 && purchasePrice > 0 && purchaseUnit) {
-          const purchaseResult = await registerPurchaseAction({
-            ingredient_id: result.data!.id,
-            purchase_date: new Date().toISOString().split('T')[0],
-            quantity_purchased: purchaseQuantity,
-            unit_purchased: purchaseUnit,
-            total_price: purchasePrice,
-            supplier: data.supplier,
-            notes: `Costo calculado al crear el ingrediente`,
-          })
+             if (result.success) {
+         // Register purchase (now required)
+         if (purchaseQuantity > 0 && purchasePrice > 0 && unitValue) {
+           const purchaseResult = await registerPurchaseAction({
+             ingredient_id: result.data!.id,
+             purchase_date: new Date().toISOString().split('T')[0],
+             quantity_purchased: purchaseQuantity,
+             unit_purchased: unitValue, // Same as unit base
+             total_price: purchasePrice,
+             supplier: data.supplier,
+             notes: `Costo calculado al crear el ingrediente`,
+           })
           
           if (purchaseResult.success) {
             addNotification({ type: "success", message: "Ingrediente creado exitosamente" })
@@ -120,7 +120,6 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
         reset()
         setImageUrl("")
         setRegisterPurchase(true)
-        setPurchaseUnit("")
         setPurchaseQuantity(0)
         setPurchasePrice(0)
         handleOpenChange(false)
@@ -206,31 +205,20 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
           <div className="border-t pt-4">
             <h3 className="text-base font-semibold mb-3">Calcular Costo</h3>
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="purchase_quantity">Cantidad *</Label>
-                  <Input
-                    id="purchase_quantity"
-                    type="number"
-                    step="0.001"
-                    placeholder="Ej: 200"
-                    value={purchaseQuantity || ""}
-                    onChange={(e) => setPurchaseQuantity(parseFloat(e.target.value) || 0)}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">¿Cuánto compraste?</p>
-                </div>
-                <div>
-                  <Label htmlFor="purchase_unit">Unidad de Compra *</Label>
-                  <UnitSelector
-                    value={purchaseUnit || unitValue || ""}
-                    onChange={(value) => setPurchaseUnit(value)}
-                    placeholder="Seleccionar unidad"
-                    categories={['weight', 'volume', 'count']}
-                    showCategories={true}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Unidad de lo que compraste</p>
-                </div>
-              </div>
+                             <div>
+                 <Label htmlFor="purchase_quantity">Cantidad Comprada *</Label>
+                 <Input
+                   id="purchase_quantity"
+                   type="number"
+                   step="0.001"
+                   placeholder={`Ej: 200 (en ${unitValue || "la unidad base"})`}
+                   value={purchaseQuantity || ""}
+                   onChange={(e) => setPurchaseQuantity(parseFloat(e.target.value) || 0)}
+                 />
+                 <p className="text-xs text-muted-foreground mt-1">
+                   Cantidad en {unitValue || "la unidad base seleccionada"}
+                 </p>
+               </div>
               <div>
                 <Label htmlFor="purchase_price">Precio Total *</Label>
                 <Input
