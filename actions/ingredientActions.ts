@@ -364,11 +364,11 @@ export async function registerPurchase(formData: z.infer<typeof ingredientPurcha
     revalidatePath("/recetas")
     
     logger.info(`Purchase registered successfully for ${ingredient.name}`, { calculatedUnitCost }, 'ingredientActions.registerPurchase')
-    
-    return { 
-      success: true, 
-      data: purchase, 
-      message: `Compra registrada. Nuevo costo: $${calculatedUnitCost.toFixed(4)}/${ingredient.unit}` 
+
+    return {
+      success: true,
+      data: purchase,
+      message: `Compra registrada. Nuevo costo: $${calculatedUnitCost.toFixed(2)}/${ingredient.unit}`
     }
   } catch (error: any) {
     logger.error("Error registering purchase", error, 'ingredientActions.registerPurchase')
