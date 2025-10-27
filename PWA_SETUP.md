@@ -129,18 +129,33 @@ Ejecuta la migración para crear la tabla de tokens de notificación:
 - `public/manifest.json` - Configuración PWA
 - `public/icons/` - Iconos en múltiples tamaños
 - `lib/push-notifications.ts` - Utilidades de notificaciones
-- `lib/firebase-config.ts` - Configuración Firebase
+- `lib/web-push.ts` - Configuración Web Push API
 - `lib/notification-service.ts` - Servicio de notificaciones
 - `components/shared/InstallPrompt.tsx` - Banner de instalación
 - `app/api/notifications/` - API routes para suscripciones
 - `supabase/migrations/20241224_notification_tokens.sql` - Migración DB
 
 ### Archivos Modificados
-- `next.config.js` - Configuración PWA
+- `next.config.js` - Configuración PWA con @ducanh2912/next-pwa
 - `app/layout.tsx` - Meta tags PWA
 - `actions/orderActions.ts` - Notificaciones de pedidos
 - `actions/eventActions.ts` - Notificaciones de eventos
 - `lib/supabase.ts` - Función createSupabaseClient
+
+## 🔄 Migración a Next.js 15
+
+### Cambios Realizados
+- **Migrado de `next-pwa@5.6.0` a `@ducanh2912/next-pwa@10.2.9`**
+- **Actualizada configuración de `next.config.js`** para usar `workboxOptions`
+- **Eliminados archivos antiguos** del service worker (`sw.js`, `workbox-*.js`)
+- **Mantenida compatibilidad** con todas las funcionalidades existentes
+
+### Beneficios de la Migración
+- ✅ **Compatible con Next.js 15 y React 19**
+- ✅ **Sin errores de webpack**
+- ✅ **Service Worker optimizado**
+- ✅ **Mejor rendimiento**
+- ✅ **Soporte completo para App Router**
 
 ## 🎨 Personalización
 
@@ -167,7 +182,7 @@ Ejecuta la migración para crear la tabla de tokens de notificación:
 - Revisa la consola del navegador para errores
 
 ### Las notificaciones no llegan
-- Verifica las variables de entorno de Firebase
+- Verifica las variables de entorno de VAPID
 - Asegúrate de que el usuario haya aceptado los permisos
 - Revisa la consola del navegador para errores
 - Verifica que el service worker esté registrado
@@ -176,14 +191,27 @@ Ejecuta la migración para crear la tabla de tokens de notificación:
 - Asegúrate de que todas las dependencias estén instaladas
 - Verifica que las variables de entorno estén configuradas
 - Revisa que la migración de base de datos se haya ejecutado
+- Si hay errores de webpack, ejecuta `npm run build --no-cache`
+
+### Service Worker no se actualiza
+- Limpia la caché del navegador completamente
+- Ejecuta `npm run build` para regenerar el service worker
+- Verifica que los archivos antiguos se hayan eliminado
+
+### Error de webpack en desarrollo
+- **Solucionado:** La configuración condicional evita cargar PWA en desarrollo
+- En desarrollo: PWA está completamente deshabilitada para evitar conflictos
+- En producción: PWA funciona completamente con todas las funcionalidades
+- Si persisten errores, ejecuta `npm run build` para verificar que funciona en producción
 
 ## 📞 Soporte
 
 Si tienes problemas con la configuración:
 
 1. Verifica que todas las variables de entorno estén configuradas
-2. Asegúrate de que Firebase esté correctamente configurado
+2. Asegúrate de que las claves VAPID estén correctamente generadas
 3. Revisa los logs de la consola del navegador
 4. Verifica que la base de datos tenga la tabla `notification_tokens`
+5. Ejecuta `npm run build` para verificar que no hay errores de compilación
 
-¡Tu sistema de repostería ahora es una PWA completa con notificaciones push! 🎉
+¡Tu sistema de repostería ahora es una PWA completa con notificaciones push compatible con Next.js 15! 🎉

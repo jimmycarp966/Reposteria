@@ -4,10 +4,11 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { CreateProductDialog } from "./CreateProductDialog"
 import { EditPriceDialog } from "./EditPriceDialog"
+import { PriceHistoryDialog } from "@/components/shared/PriceHistoryDialog"
 import { deleteProduct, getProducts } from "@/actions/productActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { formatCurrency } from "@/lib/utils"
-import { Plus, Trash2, Edit, Package } from "lucide-react"
+import { Plus, Trash2, Edit, Package, BarChart3 } from "lucide-react"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { DataTable } from "@/components/shared/DataTable"
@@ -30,6 +31,7 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
   const [products, setProducts] = useState<ProductWithRecipe[]>(initialProducts)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showEditPriceDialog, setShowEditPriceDialog] = useState(false)
+  const [showPriceHistoryDialog, setShowPriceHistoryDialog] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<ProductWithRecipe | null>(null)
   const [currentPage, setCurrentPage] = useState(initialPagination?.page || 1)
   const addNotification = useNotificationStore((state) => state.addNotification)
@@ -149,6 +151,18 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
           </Button>
           <Button
             size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation()
+              setSelectedProduct(product)
+              setShowPriceHistoryDialog(true)
+            }}
+          >
+            <BarChart3 className="h-4 w-4 mr-1" />
+            Historial
+          </Button>
+          <Button
+            size="sm"
             variant="ghost"
             onClick={(e) => {
               e.stopPropagation()
@@ -221,6 +235,17 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
         >
           <Edit className="h-4 w-4 mr-1" />
           Precio
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            setSelectedProduct(product)
+            setShowPriceHistoryDialog(true)
+          }}
+        >
+          <BarChart3 className="h-4 w-4 mr-1" />
+          Historial
         </Button>
         <Button
           size="sm"
@@ -330,6 +355,16 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
             setSelectedProduct(null)
           }}
           product={selectedProduct}
+        />
+      )}
+
+      {selectedProduct && (
+        <PriceHistoryDialog
+          open={showPriceHistoryDialog}
+          onOpenChange={setShowPriceHistoryDialog}
+          type="product"
+          itemId={selectedProduct.id}
+          itemName={selectedProduct.name}
         />
       )}
     </>

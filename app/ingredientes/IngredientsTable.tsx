@@ -12,12 +12,13 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2, Plus, Package, ShoppingCart, History } from "lucide-react"
+import { Edit, Trash2, Plus, Package, ShoppingCart, History, BarChart3 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { CreateIngredientDialog } from "./CreateIngredientDialog"
 import { UpdateStockDialog } from "./UpdateStockDialog"
 import { RegisterPurchaseDialog } from "./RegisterPurchaseDialog"
 import { PurchaseHistoryDialog } from "./PurchaseHistoryDialog"
+import { PriceHistoryDialog } from "@/components/shared/PriceHistoryDialog"
 import { deleteIngredient, updateIngredientCost } from "@/actions/ingredientActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { useSearchFilter } from "@/hooks/useSearchFilter"
@@ -42,6 +43,7 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
   const [showStockDialog, setShowStockDialog] = useState(false)
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false)
   const [showHistoryDialog, setShowHistoryDialog] = useState(false)
+  const [showPriceHistoryDialog, setShowPriceHistoryDialog] = useState(false)
   const [editingCostId, setEditingCostId] = useState<string | null>(null)
   const [newCost, setNewCost] = useState("")
   const addNotification = useNotificationStore((state) => state.addNotification)
@@ -234,7 +236,18 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
                     }}
                   >
                     <History className="h-4 w-4 mr-1" />
-                    Historial
+                    Compras
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedIngredient(ingredient)
+                      setShowPriceHistoryDialog(true)
+                    }}
+                  >
+                    <BarChart3 className="h-4 w-4 mr-1" />
+                    Precios
                   </Button>
                   <Button
                     size="sm"
@@ -299,6 +312,17 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
               </Button>
               <Button
                 size="sm"
+                variant="outline"
+                onClick={() => {
+                  setSelectedIngredient(ingredient)
+                  setShowPriceHistoryDialog(true)
+                }}
+              >
+                <BarChart3 className="h-4 w-4 mr-1" />
+                Precios
+              </Button>
+              <Button
+                size="sm"
                 variant="ghost"
                 onClick={() => handleDelete(ingredient.id)}
               >
@@ -340,6 +364,13 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
               setShowHistoryDialog(false)
               setSelectedIngredient(null)
             }}
+          />
+          <PriceHistoryDialog
+            open={showPriceHistoryDialog}
+            onOpenChange={setShowPriceHistoryDialog}
+            type="ingredient"
+            itemId={selectedIngredient.id}
+            itemName={selectedIngredient.name}
           />
         </>
       )}
