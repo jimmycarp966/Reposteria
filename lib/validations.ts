@@ -4,7 +4,7 @@ import { z } from "zod"
 export const ingredientSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   unit: z.string().min(1, "La unidad es requerida"),
-  cost_per_unit: z.number().min(0, "El costo debe ser mayor o igual a 0"),
+  cost_per_unit: z.number().min(0, "El costo debe ser mayor o igual a 0").optional(),
   supplier: z.string().optional(),
   lead_time_days: z.number().int().min(0).optional().nullable(),
   image_url: z.string().url().optional().or(z.literal("")),

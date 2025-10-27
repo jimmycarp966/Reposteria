@@ -153,33 +153,21 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="unit">Unidad *</Label>
-              <UnitSelector
-                value={unitValue}
-                onChange={(value) => setValue("unit", value)}
-                placeholder="Seleccionar unidad"
-                categories={['weight', 'volume', 'count']}
-                showCategories={true}
-              />
-              {errors.unit && (
-                <p className="text-sm text-red-600">{errors.unit.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="cost_per_unit">Costo por Unidad *</Label>
-              <Input
-                id="cost_per_unit"
-                type="number"
-                step="0.01"
-                {...register("cost_per_unit", { valueAsNumber: true })}
-              />
-              {errors.cost_per_unit && (
-                <p className="text-sm text-red-600">{errors.cost_per_unit.message}</p>
-              )}
-            </div>
+          <div>
+            <Label htmlFor="unit">Unidad Base *</Label>
+            <UnitSelector
+              value={unitValue}
+              onChange={(value) => setValue("unit", value)}
+              placeholder="Seleccionar unidad"
+              categories={['weight', 'volume', 'count']}
+              showCategories={true}
+            />
+            {errors.unit && (
+              <p className="text-sm text-red-600">{errors.unit.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              La unidad en la que se medirá este ingrediente (ej: gramos para harina)
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -214,21 +202,13 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
             </div>
           </div>
 
-          <ImageUpload
-            currentImageUrl={imageUrl}
-            onImageUploaded={setImageUrl}
-          />
-
-          {/* Calculate Cost from Purchase */}
+          {/* Calculate Cost */}
           <div className="border-t pt-4">
-            <h3 className="text-lg font-medium mb-4">Calcular Costo del Ingrediente</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Ingresa cuánto pagaste y cuánto compraste para calcular automáticamente el costo por unidad.
-            </p>
-              <div className="space-y-3 bg-muted/30 p-4 rounded-lg">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                                      <Label htmlFor="purchase_quantity">Cantidad</Label>
+            <h3 className="text-base font-semibold mb-3">Calcular Costo</h3>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="purchase_quantity">Cantidad *</Label>
                   <Input
                     id="purchase_quantity"
                     type="number"
@@ -238,42 +218,48 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
                     onChange={(e) => setPurchaseQuantity(parseFloat(e.target.value) || 0)}
                   />
                   <p className="text-xs text-muted-foreground mt-1">¿Cuánto compraste?</p>
-                  </div>
-                  <div>
-                    <Label htmlFor="purchase_unit">Unidad de Compra</Label>
-                    <UnitSelector
-                      value={purchaseUnit || unitValue || ""}
-                      onChange={(value) => setPurchaseUnit(value)}
-                      placeholder="Seleccionar unidad"
-                      categories={['weight', 'volume', 'count']}
-                      showCategories={true}
-                    />
-                  </div>
                 </div>
                 <div>
-                  <Label htmlFor="purchase_price">Precio Total</Label>
-                  <Input
-                    id="purchase_price"
-                    type="number"
-                    step="0.01"
-                    placeholder="Ej: 2000"
-                    value={purchasePrice || ""}
-                    onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)}
+                  <Label htmlFor="purchase_unit">Unidad de Compra *</Label>
+                  <UnitSelector
+                    value={purchaseUnit || unitValue || ""}
+                    onChange={(value) => setPurchaseUnit(value)}
+                    placeholder="Seleccionar unidad"
+                    categories={['weight', 'volume', 'count']}
+                    showCategories={true}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">¿Cuánto pagaste?</p>
+                  <p className="text-xs text-muted-foreground mt-1">Unidad de lo que compraste</p>
                 </div>
-                {preview && (
-                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
-                    <p className="text-sm font-semibold text-primary">
-                      Costo por unidad: {preview}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Este será el costo base del ingrediente para recetas y productos
-                    </p>
-                  </div>
-                )}
               </div>
+              <div>
+                <Label htmlFor="purchase_price">Precio Total *</Label>
+                <Input
+                  id="purchase_price"
+                  type="number"
+                  step="0.01"
+                  placeholder="Ej: 2000"
+                  value={purchasePrice || ""}
+                  onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">¿Cuánto pagaste en total?</p>
+              </div>
+              {preview && (
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
+                  <p className="text-sm font-semibold text-primary">
+                    Costo por {unitValue}: {preview}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Este será el costo base del ingrediente para recetas y productos
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
+
+          <ImageUpload
+            currentImageUrl={imageUrl}
+            onImageUploaded={setImageUrl}
+          />
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
