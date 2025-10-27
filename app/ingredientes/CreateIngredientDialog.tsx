@@ -88,32 +88,56 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
     try {
       setSubmitting(true)
 
+      console.log('🚀 DEBUG: Iniciando creación de ingrediente')
+      console.log('📋 Form data:', data)
+      console.log('📦 Purchase state:', { purchaseQuantity, purchasePrice, unitValue })
+
       // Create ingredient first
       const result = await createIngredient({
         ...data,
         image_url: imageUrl || undefined,
       })
 
+      console.log('📝 Resultado creación ingrediente:', result)
+
       if (result.success) {
+        console.log('✅ Ingrediente creado exitosamente, ID:', result.data?.id)
+
         // Register purchase (now required) - use data.unit instead of unitValue from watch
+        console.log('🛒 Verificando condiciones para registro de compra:')
+        console.log('   - purchaseQuantity > 0:', purchaseQuantity > 0, 'valor:', purchaseQuantity)
+        console.log('   - purchasePrice > 0:', purchasePrice > 0, 'valor:', purchasePrice)
+        console.log('   - data.unit existe:', !!data.unit, 'valor:', data.unit)
+
         if (purchaseQuantity > 0 && purchasePrice > 0 && data.unit) {
-          const purchaseResult = await registerPurchaseAction({
+          console.log('🔄 Registrando compra...')
+
+          const purchaseData = {
             ingredient_id: result.data!.id,
             purchase_date: new Date().toISOString().split('T')[0],
             quantity_purchased: purchaseQuantity,
-            unit_purchased: data.unit, // Use data.unit instead of unitValue
+            unit_purchased: data.unit,
             total_price: purchasePrice,
             supplier: data.supplier || undefined,
             notes: `Costo calculado al crear el ingrediente`,
-          })
+          }
+
+          console.log('📊 Datos de compra a enviar:', purchaseData)
+
+          const purchaseResult = await registerPurchaseAction(purchaseData)
+
+          console.log('💰 Resultado registro de compra:', purchaseResult)
 
           if (purchaseResult.success) {
+            console.log('🎉 Compra registrada exitosamente')
             addNotification({ type: "success", message: "Ingrediente creado exitosamente con costo calculado" })
           } else {
+            console.log('❌ Error en registro de compra:', purchaseResult.message)
             addNotification({ type: "success", message: result.message! })
             addNotification({ type: "warning", message: `El ingrediente fue creado pero el costo no pudo calcularse: ${purchaseResult.message}` })
           }
         } else {
+          console.log('⚠️  No se cumplen las condiciones para registro de compra')
           addNotification({ type: "error", message: "Debe ingresar cantidad y precio para calcular el costo del ingrediente" })
           return
         }
@@ -125,6 +149,7 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
         setPurchasePrice(0)
         handleOpenChange(false)
       } else {
+        console.log('❌ Error al crear ingrediente:', result.message)
         addNotification({ type: "error", message: result.message! })
       }
     } finally {

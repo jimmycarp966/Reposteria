@@ -257,39 +257,60 @@ export async function bulkUpdateIngredientPrices(percentageIncrease: number) {
 
 export async function registerPurchase(formData: z.infer<typeof ingredientPurchaseSchema>) {
   try {
+    console.log('🔍 DEBUG registerPurchase: Iniciando validación de datos')
     const validated = ingredientPurchaseSchema.parse(formData)
-    
+    console.log('✅ DEBUG registerPurchase: Datos validados:', validated)
+
     logger.info(`Registering purchase for ingredient ${validated.ingredient_id}`, validated, 'ingredientActions.registerPurchase')
-    
+
+    console.log('🔍 DEBUG registerPurchase: Buscando ingrediente en BD')
     // Get ingredient details
     const { data: ingredient, error: ingredientError } = await supabase
       .from("ingredients")
       .select("id, name, unit, cost_per_unit")
       .eq("id", validated.ingredient_id)
       .single()
-    
+
+    console.log('📋 DEBUG registerPurchase: Resultado búsqueda ingrediente:', { ingredient, ingredientError })
+
     if (ingredientError || !ingredient) {
+      console.log('❌ DEBUG registerPurchase: Ingrediente no encontrado')
       return { success: false, message: "Ingrediente no encontrado" }
     }
-    
+
+    console.log('🔍 DEBUG registerPurchase: Verificando compatibilidad de unidades')
+    console.log('   - unit_purchased:', validated.unit_purchased)
+    console.log('   - ingredient.unit:', ingredient.unit)
+
     // Validate unit compatibility
     if (!areUnitsCompatibleServer(validated.unit_purchased, ingredient.unit)) {
-      return { 
-        success: false, 
-        message: `Las unidades ${validated.unit_purchased} y ${ingredient.unit} no son compatibles para conversión` 
+      console.log('❌ DEBUG registerPurchase: Unidades no compatibles')
+      return {
+        success: false,
+        message: `Las unidades ${validated.unit_purchased} y ${ingredient.unit} no son compatibles para conversión`
       }
     }
-    
+    console.log('✅ DEBUG registerPurchase: Unidades compatibles')
+
+    console.log('🔄 DEBUG registerPurchase: Convirtiendo cantidad')
+    console.log('   - quantity_purchased:', validated.quantity_purchased)
+    console.log('   - unit_purchased:', validated.unit_purchased)
+    console.log('   - ingredient.unit:', ingredient.unit)
+
     // Convert quantity to ingredient's base unit
     const convertedQuantity = convertUnitsServer(
-      validated.quantity_purchased, 
-      validated.unit_purchased, 
+      validated.quantity_purchased,
+      validated.unit_purchased,
       ingredient.unit
     )
-    
+
+    console.log('📊 DEBUG registerPurchase: Cantidad convertida:', convertedQuantity)
+
     // Calculate unit cost in the ingredient's base unit
     const calculatedUnitCost = validated.total_price / convertedQuantity
-    
+    console.log('💰 DEBUG registerPurchase: Costo unitario calculado:', calculatedUnitCost)
+
+    console.log('💾 DEBUG registerPurchase: Insertando registro de compra en BD')
     // Insert purchase record
     const { data: purchase, error: purchaseError } = await supabase
       .from("ingredient_purchases")
@@ -305,17 +326,33 @@ export async function registerPurchase(formData: z.infer<typeof ingredientPurcha
       }])
       .select()
       .single()
-    
-    if (purchaseError) throw purchaseError
-    
+
+    console.log('📋 DEBUG registerPurchase: Resultado inserción compra:', { purchase, purchaseError })
+
+    if (purchaseError) {
+      console.log('❌ DEBUG registerPurchase: Error al insertar compra:', purchaseError)
+      throw purchaseError
+    }
+
+    console.log('✅ DEBUG registerPurchase: Compra insertada correctamente')
+
+    console.log('🔄 DEBUG registerPurchase: Actualizando costo del ingrediente')
     // Update ingredient cost per unit
     const { error: updateError } = await supabase
       .from("ingredients")
       .update({ cost_per_unit: calculatedUnitCost })
       .eq("id", validated.ingredient_id)
-    
-    if (updateError) throw updateError
-    
+
+    console.log('📋 DEBUG registerPurchase: Resultado actualización costo:', { updateError })
+
+    if (updateError) {
+      console.log('❌ DEBUG registerPurchase: Error al actualizar costo del ingrediente:', updateError)
+      throw updateError
+    }
+
+    console.log('✅ DEBUG registerPurchase: Costo del ingrediente actualizado correctamente')
+
+    console.log('📦 DEBUG registerPurchase: Gestionando inventario')
     // Add inventory movement (IN)
     const { error: movementError } = await supabase
       .from("inventory_movements")
@@ -325,32 +362,44 @@ export async function registerPurchase(formData: z.infer<typeof ingredientPurcha
         type: "IN",
         notes: `Compra registrada: ${convertedQuantity.toFixed(3)} ${ingredient.unit}`,
       }])
-    
-    if (movementError) logger.error("Error creating inventory movement", movementError)
-    
+
+    console.log('📋 DEBUG registerPurchase: Resultado movimiento inventario:', { movementError })
+
+    if (movementError) {
+      console.log('⚠️ DEBUG registerPurchase: Error en movimiento de inventario (no crítico):', movementError)
+      logger.error("Error creating inventory movement", movementError)
+    }
+
     // Update inventory quantity
+    console.log('🔍 DEBUG registerPurchase: Verificando inventario existente')
     const { data: existingInventory } = await supabase
       .from("inventory")
       .select("quantity")
       .eq("ingredient_id", validated.ingredient_id)
       .single()
-    
+
+    console.log('📋 DEBUG registerPurchase: Inventario existente:', existingInventory)
+
     if (existingInventory) {
-      await supabase
+      console.log('🔄 DEBUG registerPurchase: Actualizando inventario existente')
+      const updateResult = await supabase
         .from("inventory")
-        .update({ 
+        .update({
           quantity: existingInventory.quantity + convertedQuantity,
           last_updated: new Date().toISOString()
         })
         .eq("ingredient_id", validated.ingredient_id)
+      console.log('📋 DEBUG registerPurchase: Resultado actualización inventario:', updateResult)
     } else {
-      await supabase
+      console.log('🆕 DEBUG registerPurchase: Creando nuevo registro de inventario')
+      const insertResult = await supabase
         .from("inventory")
         .insert([{
           ingredient_id: validated.ingredient_id,
           quantity: convertedQuantity,
           unit: ingredient.unit,
         }])
+      console.log('📋 DEBUG registerPurchase: Resultado creación inventario:', insertResult)
     }
     
     // Clear caches
