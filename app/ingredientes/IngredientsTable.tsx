@@ -55,8 +55,7 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
 
     const searchLower = debouncedSearch.toLowerCase().trim()
     return ingredients.filter(ingredient => 
-      ingredient.name?.toLowerCase().includes(searchLower) ||
-      ingredient.supplier?.toLowerCase().includes(searchLower)
+      ingredient.name?.toLowerCase().includes(searchLower)
     )
   }, [ingredients, debouncedSearch])
 
@@ -106,7 +105,7 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
           searchValue={search}
           onSearchChange={setSearch}
           onClearSearch={clearSearch}
-          placeholder="Buscar por nombre o proveedor..."
+          placeholder="Buscar por nombre..."
           isSearching={isSearching}
           showFilterCount={false}
         />
@@ -130,8 +129,6 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
               <TableHead>Nombre</TableHead>
               <TableHead>Unidad</TableHead>
               <TableHead>Costo Unitario</TableHead>
-              <TableHead>Proveedor</TableHead>
-              <TableHead>Días Entrega</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Ubicación</TableHead>
@@ -141,7 +138,7 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
           <TableBody>
             {filteredIngredients.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                   {debouncedSearch ? "No se encontraron ingredientes con ese criterio" : "No hay ingredientes para mostrar"}
                 </TableCell>
               </TableRow>
@@ -189,12 +186,6 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
                       {formatCurrency(ingredient.cost_per_unit)}
                     </button>
                   )}
-                </TableCell>
-                <TableCell>
-                  {ingredient.supplier || "-"}
-                </TableCell>
-                <TableCell>
-                  {ingredient.lead_time_days !== null ? `${ingredient.lead_time_days} días` : "No aplica"}
                 </TableCell>
                 <TableCell>
                   {ingredient.inventory ? (
@@ -282,14 +273,6 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
             </CardHeader>
             <CardContent className="flex-grow">
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-semibold text-gray-600">Proveedor:</span>
-                  <span>{ingredient.supplier || "-"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold text-gray-600">Días Entrega:</span>
-                  <span>{ingredient.lead_time_days !== null ? `${ingredient.lead_time_days} días` : "No aplica"}</span>
-                </div>
                 <div className="flex justify-between">
                   <span className="font-semibold text-gray-600">Stock:</span>
                   <span>

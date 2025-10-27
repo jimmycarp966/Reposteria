@@ -96,15 +96,14 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
              if (result.success) {
          // Register purchase (now required)
          if (purchaseQuantity > 0 && purchasePrice > 0 && unitValue) {
-           const purchaseResult = await registerPurchaseAction({
-             ingredient_id: result.data!.id,
-             purchase_date: new Date().toISOString().split('T')[0],
-             quantity_purchased: purchaseQuantity,
-             unit_purchased: unitValue, // Same as unit base
-             total_price: purchasePrice,
-             supplier: data.supplier,
-             notes: `Costo calculado al crear el ingrediente`,
-           })
+                     const purchaseResult = await registerPurchaseAction({
+            ingredient_id: result.data!.id,
+            purchase_date: new Date().toISOString().split('T')[0],
+            quantity_purchased: purchaseQuantity,
+            unit_purchased: unitValue, // Same as unit base
+            total_price: purchasePrice,
+            notes: `Costo calculado al crear el ingrediente`,
+          })
           
           if (purchaseResult.success) {
             addNotification({ type: "success", message: "Ingrediente creado exitosamente" })
@@ -167,38 +166,6 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
             <p className="text-xs text-muted-foreground mt-1">
               La unidad en la que se medirá este ingrediente (ej: gramos para harina)
             </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="supplier">Proveedor</Label>
-              <Input id="supplier" {...register("supplier")} />
-            </div>
-
-            <div>
-              <Label htmlFor="lead_time_days">Días de Entrega</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="lead_time_days"
-                  type="number"
-                  placeholder="Ej: 3"
-                  {...register("lead_time_days", { valueAsNumber: true })}
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setValue("lead_time_days", null)}
-                  className="whitespace-nowrap"
-                >
-                  No aplica
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Días que tarda el proveedor en entregar. Usar "No aplica" para ingredientes del supermercado.
-              </p>
-            </div>
           </div>
 
           {/* Calculate Cost */}
