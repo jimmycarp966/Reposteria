@@ -142,6 +142,10 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
           return
         }
 
+        // Forzar refresh de la página para actualizar la lista
+        console.log('🔄 Refrescando página para actualizar lista de ingredientes')
+        window.location.reload()
+
         reset()
         setImageUrl("")
         setRegisterPurchase(true)
