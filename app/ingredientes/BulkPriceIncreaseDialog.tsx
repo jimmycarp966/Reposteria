@@ -86,7 +86,7 @@ export function BulkPriceIncreaseDialog({ children, totalIngredients }: BulkPric
       </div>
 
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-lg p-4 sm:p-6">
+        <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[85vh] sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-base sm:text-lg flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-orange-600" />

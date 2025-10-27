@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { 
-  DndContext, 
+import {
+  DndContext,
   closestCenter,
   PointerSensor,
   useSensor,
@@ -15,23 +15,23 @@ import {
 import {
   arrayMove,
 } from '@dnd-kit/sortable';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Clock, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock,
   Calendar
 } from "lucide-react"
-import { 
-  getWeeklyPlan, 
+import {
+  getWeeklyPlan,
   getAllWeeklyPlans,
-  addTaskToPlan, 
-  updateTaskStatus, 
+  addTaskToPlan,
+  updateTaskStatus,
   deleteTask,
   reorderTasks
 } from "@/actions/weeklyPlanActions"
-import { 
-  getPreviousWeekStart, 
-  getNextWeekStart, 
+import {
+  getPreviousWeekStart,
+  getNextWeekStart,
   getWeekDateRange,
   isMonday,
   getMondayOfWeek,
@@ -196,7 +196,7 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
         taskData.estimated_time_minutes,
         taskData.category_id
       )
-      
+
       if (result.success) {
         loadPlan(currentWeek) // Reload plan
         addNotification({ type: "success", message: "Tarea agregada exitosamente" })
@@ -246,26 +246,26 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
   function handleDragOver(event: any) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-  
+
     const activeDay = active.data.current.sortable.containerId;
     const overDay = over.id.toString().startsWith('day-') ? over.id : over.data.current?.sortable.containerId;
-  
+
     if (!overDay || activeDay === overDay) {
       return;
     }
-  
+
     setPlan((prevPlan) => {
       if (!prevPlan) return null;
-  
+
       const activeTaskIndex = prevPlan.tasks.findIndex(t => t.id === active.id);
       if (activeTaskIndex === -1) return prevPlan;
-  
+
       const updatedTasks = [...prevPlan.tasks];
       const [movedTask] = updatedTasks.splice(activeTaskIndex, 1);
-      
+
       const newDay = parseInt(overDay.replace('day-', ''), 10);
       movedTask.day_of_week = newDay;
-  
+
       // Find where to insert in the tasks list
       const overTaskIndex = updatedTasks.findIndex(t => t.id === over.id);
       if (overTaskIndex !== -1) {
@@ -276,34 +276,34 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
         const lastTaskIndex = updatedTasks.findLastIndex(t => t.day_of_week === newDay);
         updatedTasks.splice(lastTaskIndex + 1, 0, movedTask);
       }
-  
+
       return { ...prevPlan, tasks: updatedTasks };
     });
   }
-  
+
   async function handleDragEnd(event: any) {
     const { active, over } = event;
     setActiveTask(null);
-  
+
     if (!over || active.id === over.id) {
       return;
     }
-    
+
     const overDay = over.id.toString().startsWith('day-') ? over.id : over.data.current?.sortable.containerId;
     if (!overDay) return;
-  
+
     let finalTasks: WeeklyProductionTaskWithRecipe[] = [];
-  
+
     setPlan((prevPlan) => {
       if (!prevPlan) return null;
-  
+
       const oldIndex = prevPlan.tasks.findIndex(t => t.id === active.id);
       let newIndex = prevPlan.tasks.findIndex(t => t.id === over.id);
-  
+
       const activeDay = active.data.current.sortable.containerId;
-      
+
       let reorderedTasks;
-  
+
       if (activeDay === overDay) {
         // Reordering within the same day
         reorderedTasks = arrayMove(prevPlan.tasks, oldIndex, newIndex);
@@ -311,9 +311,9 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
         // Moving to a different day
         const movedTask = { ...prevPlan.tasks[oldIndex] };
         movedTask.day_of_week = parseInt(overDay.replace('day-', ''), 10);
-        
+
         const remainingTasks = prevPlan.tasks.filter(t => t.id !== active.id);
-        
+
         const overContainerTasks = prevPlan.tasks.filter(t => t.day_of_week === movedTask.day_of_week);
         if (overContainerTasks.some(t => t.id === over.id)) {
            // Dropped on a task in the new container
@@ -326,31 +326,31 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
         }
         reorderedTasks = remainingTasks;
       }
-      
+
       finalTasks = reorderedTasks.map((task, index) => ({
         ...task,
         order_position: index // This is a temporary position; server should re-calculate based on day
       }));
-      
+
       return { ...prevPlan, tasks: reorderedTasks };
     });
-  
+
     // Server update
     const tasksToUpdate = finalTasks.map((task, index) => ({
       id: task.id,
       day_of_week: task.day_of_week,
       order_position: tasksByDay[task.day_of_week].findIndex(t => t.id === task.id),
     })).filter(t => t.order_position !== -1);
-  
+
     // Recalculate positions for all tasks in affected days
     const allTasksToUpdate = new Map<string, { id: string; day_of_week: number; order_position: number }>();
-  
+
     const updatePositionsForDay = (day: number, tasks: WeeklyProductionTaskWithRecipe[]) => {
       tasks.forEach((task, index) => {
         allTasksToUpdate.set(task.id, { id: task.id, day_of_week: day, order_position: index });
       });
     };
-  
+
     const daysToUpdate = new Set<number>();
     if (plan?.tasks) {
       const movedTask = plan.tasks.find(t => t.id === active.id);
@@ -360,11 +360,11 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
         daysToUpdate.add(newDay);
       }
     }
-  
+
     daysToUpdate.forEach(dayNumber => {
       updatePositionsForDay(dayNumber, finalTasks.filter(t => t.day_of_week === dayNumber));
     });
-  
+
     const result = await reorderTasks(Array.from(allTasksToUpdate.values()));
     if (!result.success) {
       addNotification({ type: "error", message: "Error al reordenar tareas. Recargando..." });
@@ -378,7 +378,7 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
   const handleUpdateTaskStatus = async (taskId: string, status: 'pendiente' | 'en_progreso' | 'completada') => {
     try {
       const result = await updateTaskStatus(taskId, status)
-      
+
       if (result.success) {
         loadPlan(currentWeek) // Reload plan
         addNotification({ type: "success", message: "Estado de tarea actualizado" })
@@ -394,7 +394,7 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
   const handleDeleteTask = async (taskId: string) => {
     try {
       const result = await deleteTask(taskId)
-      
+
       if (result.success) {
         loadPlan(currentWeek) // Reload plan
         addNotification({ type: "success", message: "Tarea eliminada exitosamente" })
@@ -430,23 +430,27 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-        <div className="space-y-2">
-          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-            <Calendar className="h-6 w-6 md:h-8 md:w-8" />
-            Plan Semanal de Producción
-          </h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            {weekRange.start} - {weekRange.end}
-          </p>
-          <div className="text-xs md:text-sm text-muted-foreground flex items-center gap-2">
-            <Clock className="h-3 w-3 md:h-4 md:w-4" />
-            <span>
-              Carga horaria total: <strong>{Math.floor(getTotalTimeForWeek() / 60)}h {getTotalTimeForWeek() % 60}m</strong>
-            </span>
-          </div>
+    <div className="space-y-6">
+      {/* Header - Título */}
+      <div className="text-center lg:text-left">
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center justify-center lg:justify-start gap-2 mb-2">
+          <Calendar className="h-6 w-6 md:h-8 md:w-8" />
+          Plan Semanal de Producción
+        </h1>
+        <p className="text-sm md:text-base text-muted-foreground">
+          {weekRange.start} - {weekRange.end}
+        </p>
+        <div className="text-xs md:text-sm text-muted-foreground flex items-center justify-center lg:justify-start gap-2 mt-1">
+          <Clock className="h-3 w-3 md:h-4 md:w-4" />
+          <span>
+            Carga horaria total: <strong>{Math.floor(getTotalTimeForWeek() / 60)}h {getTotalTimeForWeek() % 60}m</strong>
+          </span>
+        </div>
+      </div>
+
+      {/* Header - Información adicional */}
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-1">
           {!isMonday(currentWeek) && (
             <p className="text-amber-600 text-xs md:text-sm">
               ⚠️ Esta semana no comienza en lunes. Los planes semanales siempre comienzan los lunes.
@@ -463,29 +467,35 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
             </p>
           )}
         </div>
-        
-        <div className="flex flex-col space-y-2 md:flex-row md:items-center md:gap-4 md:space-y-0">
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={goToPreviousWeek} className="flex-1 md:flex-none">
-              <ChevronLeft className="h-4 w-4" />
-              <span className="ml-1 md:hidden">Anterior</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={goToNextWeek} className="flex-1 md:flex-none">
-              <ChevronRight className="h-4 w-4" />
-              <span className="ml-1 md:hidden">Siguiente</span>
-            </Button>
-          </div>
-          
-          <div className="flex flex-col space-y-2 md:flex-row md:gap-2">
+      </div>
+
+      {/* Header - Controles */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+        {/* Botones de navegación */}
+        <div className="flex items-center justify-center lg:justify-start gap-2">
+          <Button variant="outline" size="sm" onClick={goToPreviousWeek} className="flex-1 sm:flex-none">
+            <ChevronLeft className="h-4 w-4" />
+            <span className="ml-1 hidden sm:inline">Semana Anterior</span>
+            <span className="ml-1 sm:hidden">Ant.</span>
+          </Button>
+          <Button variant="outline" size="sm" onClick={goToNextWeek} className="flex-1 sm:flex-none">
+            <ChevronRight className="h-4 w-4" />
+            <span className="ml-1 hidden sm:inline">Semana Siguiente</span>
+            <span className="ml-1 sm:hidden">Sig.</span>
+          </Button>
+        </div>
+
+        {/* Botones de acción */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3 lg:gap-3">
             {plan && (
-              <DuplicatePlanDialog 
+              <DuplicatePlanDialog
                 sourceWeekStart={currentWeek}
                 onPlanDuplicated={handlePlanDuplicated}
               />
             )}
 
             {plan && (
-              <CheckStockDialog 
+              <CheckStockDialog
                 planId={plan.id}
                 planWeek={`${weekRange.start} - ${weekRange.end}`}
               />
@@ -494,18 +504,19 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
             {!plan && (
               <CreatePlanDialog onPlanCreated={handleUpdate} />
             )}
-          </div>
         </div>
       </div>
 
+      {/* Task Suggestions */}
       {plan && (
-        <TaskSuggestions 
+        <TaskSuggestions
           weekStartDate={weekRange.startRaw}
           weekEndDate={weekRange.endRaw}
           onAddTask={handleAddTaskFromSuggestion}
         />
       )}
 
+      {/* Weekly Plan Content */}
       {loading ? (
         <div className="text-center py-8">
           <p className="text-muted-foreground">Cargando plan semanal...</p>
@@ -523,18 +534,18 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
         </Card>
       ) : (
         /* Weekly Grid */
-        <DndContext 
+        <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-7 gap-4 lg:gap-6 auto-rows-fr min-h-[600px] lg:min-h-[500px]">
             {DAYS_OF_WEEK.map(({ day, name, short }) => {
               const tasks = tasksByDay[day] || [];
               const totalTime = getTotalTimeForDay(day)
-              
+
               return (
                 <DroppableDay
                   key={day}
@@ -553,7 +564,7 @@ export function WeeklyPlanClient({ initialPlan, currentWeekStart }: WeeklyPlanCl
           </div>
           <DragOverlay>
             {activeTask ? (
-              <DraggableTask 
+              <DraggableTask
                 task={activeTask}
                 getTaskStatusBadge={getTaskStatusBadge}
                 onEditTask={() => {}}

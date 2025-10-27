@@ -32,6 +32,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card"
+import { IngredientActionSheet } from "./IngredientActionSheet"
 
 interface IngredientsTableProps {
   ingredients: any[]
@@ -298,36 +299,27 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-end gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
+            <CardFooter className="flex justify-end">
+              <IngredientActionSheet
+                ingredient={ingredient}
+                onStockClick={() => {
                   setSelectedIngredient(ingredient)
                   setShowStockDialog(true)
                 }}
-              >
-                <Package className="h-4 w-4 mr-1" />
-                Stock
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
+                onPurchaseClick={() => {
+                  setSelectedIngredient(ingredient)
+                  setShowPurchaseDialog(true)
+                }}
+                onHistoryClick={() => {
+                  setSelectedIngredient(ingredient)
+                  setShowHistoryDialog(true)
+                }}
+                onPriceHistoryClick={() => {
                   setSelectedIngredient(ingredient)
                   setShowPriceHistoryDialog(true)
                 }}
-              >
-                <BarChart3 className="h-4 w-4 mr-1" />
-                Precios
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => handleDelete(ingredient.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+                onDeleteClick={() => handleDelete(ingredient.id)}
+              />
             </CardFooter>
           </Card>
           ))

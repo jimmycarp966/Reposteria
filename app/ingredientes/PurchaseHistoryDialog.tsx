@@ -57,7 +57,7 @@ export function PurchaseHistoryDialog({ ingredient, open, onClose }: PurchaseHis
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Historial de Compras - {ingredient.name}</DialogTitle>
         </DialogHeader>

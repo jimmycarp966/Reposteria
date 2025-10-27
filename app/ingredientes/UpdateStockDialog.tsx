@@ -78,7 +78,7 @@ export function UpdateStockDialog({ open, onClose, ingredient }: UpdateStockDial
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[85vh] sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Actualizar Stock - {ingredient.name}</DialogTitle>
         </DialogHeader>

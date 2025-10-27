@@ -22,19 +22,19 @@ export default async function IngredientesPage() {
               Gestiona tus ingredientes y stock
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
             {ingredients.length > 0 && (
               <BulkPriceIncreaseDialog totalIngredients={ingredients.length}>
-                <Button variant="outline" className="w-full sm:w-auto border-orange-300 text-orange-700 hover:bg-orange-50">
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Aumentar Precios
+                <Button variant="outline" className="w-full sm:w-auto border-orange-300 text-orange-700 hover:bg-orange-50 h-12 sm:h-10">
+                  <TrendingUp className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
+                  <span className="text-sm sm:text-base">Aumentar Precios</span>
                 </Button>
               </BulkPriceIncreaseDialog>
             )}
             <CreateIngredientDialog>
-              <Button className="w-full sm:w-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Agregar Ingrediente
+              <Button className="w-full sm:w-auto h-12 sm:h-10">
+                <Plus className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
+                <span className="text-sm sm:text-base">Agregar Ingrediente</span>
               </Button>
             </CreateIngredientDialog>
           </div>
