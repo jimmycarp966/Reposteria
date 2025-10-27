@@ -46,7 +46,7 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
   }
   const [submitting, setSubmitting] = useState(false)
   const [imageUrl, setImageUrl] = useState("")
-  const [registerPurchase, setRegisterPurchase] = useState(false)
+  const [registerPurchase, setRegisterPurchase] = useState(true)
   const addNotification = useNotificationStore((state) => state.addNotification)
 
   const {
@@ -67,7 +67,7 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
 
   // Calculate preview of unit cost
   const calculatePreview = () => {
-    if (!registerPurchase || !purchaseQuantity || !purchasePrice || purchaseQuantity <= 0 || purchasePrice <= 0) {
+    if (!purchaseQuantity || !purchasePrice || purchaseQuantity <= 0 || purchasePrice <= 0) {
       return null
     }
     
@@ -94,8 +94,8 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
       })
 
       if (result.success) {
-        // If purchase data is provided, register it
-        if (registerPurchase && purchaseQuantity > 0 && purchasePrice > 0 && purchaseUnit) {
+        // Register purchase (now required)
+        if (purchaseQuantity > 0 && purchasePrice > 0 && purchaseUnit) {
           const purchaseResult = await registerPurchaseAction({
             ingredient_id: result.data!.id,
             purchase_date: new Date().toISOString().split('T')[0],
@@ -113,12 +113,13 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
             addNotification({ type: "warning", message: "El ingrediente fue creado pero la compra no pudo registrarse" })
           }
         } else {
-          addNotification({ type: "success", message: result.message! })
+          addNotification({ type: "error", message: "Debe registrar una compra inicial para crear el ingrediente" })
+          return
         }
         
         reset()
         setImageUrl("")
-        setRegisterPurchase(false)
+        setRegisterPurchase(true)
         setPurchaseUnit("")
         setPurchaseQuantity(0)
         setPurchasePrice(0)
@@ -218,21 +219,12 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
             onImageUploaded={setImageUrl}
           />
 
-          {/* Optional: Register First Purchase */}
+          {/* Required: Register First Purchase */}
           <div className="border-t pt-4">
-            <div className="flex items-center justify-between mb-3">
-              <Label className="text-base font-semibold">Registrar Primera Compra (Opcional)</Label>
-              <Button
-                type="button"
-                variant={registerPurchase ? "default" : "outline"}
-                size="sm"
-                onClick={() => setRegisterPurchase(!registerPurchase)}
-              >
-                {registerPurchase ? "Ocultar" : "Mostrar"}
-              </Button>
-            </div>
-            
-            {registerPurchase && (
+            <h3 className="text-lg font-medium mb-4">Registrar Primera Compra</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Es necesario registrar el costo para poder usar este ingrediente en recetas y productos.
+            </p>
               <div className="space-y-3 bg-muted/30 p-4 rounded-lg">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -279,7 +271,6 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
                   </div>
                 )}
               </div>
-            )}
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
