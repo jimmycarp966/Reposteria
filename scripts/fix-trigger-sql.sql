@@ -30,3 +30,4 @@ $$ LANGUAGE plpgsql;
 SELECT proname, prokind, prolang
 FROM pg_proc
 WHERE proname = 'log_ingredient_price_change';
+

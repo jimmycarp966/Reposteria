@@ -221,11 +221,6 @@ export function CreateProductDialog({ open, onClose, recipes, onProductCreated }
                   )}
                 </div>
 
-                <div>
-                  <Label htmlFor="sku">SKU</Label>
-                  <Input id="sku" {...form.register("sku")} />
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="base_cost_cache">Costo Base *</Label>
