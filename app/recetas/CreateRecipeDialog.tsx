@@ -175,6 +175,8 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
             <ImageUpload
               currentImageUrl={imageUrl}
               onImageUploaded={setImageUrl}
+              bucket="product-images"
+              folder="recipes"
             />
           </div>
 

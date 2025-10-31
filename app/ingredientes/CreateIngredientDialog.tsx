@@ -250,6 +250,8 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
           <ImageUpload
             currentImageUrl={imageUrl}
             onImageUploaded={setImageUrl}
+            bucket="product-images"
+            folder="ingredients"
           />
 
           <div className="flex justify-end gap-2 pt-4">

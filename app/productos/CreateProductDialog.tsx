@@ -254,6 +254,8 @@ export function CreateProductDialog({ open, onClose, recipes, onProductCreated }
                 <ImageUpload
                   currentImageUrl={imageUrl}
                   onImageUploaded={setImageUrl}
+                  bucket="product-images"
+                  folder="products"
                 />
               </>
             )}

@@ -200,6 +200,8 @@ export function CreateRecipeDialogMobile({
               <ImageUpload
                 currentImageUrl={imageUrl}
                 onImageUploaded={setImageUrl}
+                bucket="product-images"
+                folder="recipes"
               />
             </div>
           </div>

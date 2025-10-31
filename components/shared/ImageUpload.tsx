@@ -16,6 +16,57 @@ interface ImageUploadProps {
   folder?: string
 }
 
+/**
+ * Obtiene un mensaje de error descriptivo basado en el error de Supabase Storage
+ */
+function getErrorMessage(error: any): string {
+  const errorMessage = error?.message || ""
+  const errorStatus = error?.statusCode || error?.status
+
+  // Error de bucket no encontrado
+  if (errorMessage.includes("Bucket not found") || errorMessage.includes("bucket not found")) {
+    return "El bucket de almacenamiento no existe. Por favor, verifica la configuración de Supabase Storage."
+  }
+
+  // Error de permisos RLS
+  if (
+    errorMessage.includes("row-level security policy") ||
+    errorMessage.includes("RLS") ||
+    errorMessage.includes("permission denied") ||
+    errorStatus === 403
+  ) {
+    return "No tienes permisos para subir imágenes. Verifica las políticas de seguridad del bucket en Supabase."
+  }
+
+  // Error de archivo duplicado
+  if (errorMessage.includes("already exists") || errorStatus === 409) {
+    return "Esta imagen ya existe. Intenta con otro archivo."
+  }
+
+  // Error de tamaño de payload
+  if (errorMessage.includes("Payload too large") || errorStatus === 413) {
+    return "La imagen es demasiado grande. El tamaño máximo permitido es 5MB."
+  }
+
+  // Error de conexión
+  if (errorMessage.includes("fetch") || errorMessage.includes("network") || errorStatus === 0) {
+    return "Error de conexión. Verifica tu conexión a internet e intenta nuevamente."
+  }
+
+  // Error de autenticación
+  if (errorStatus === 401) {
+    return "Sesión expirada. Por favor, recarga la página e intenta nuevamente."
+  }
+
+  // Error del servidor
+  if (errorStatus >= 500) {
+    return "Error del servidor. Por favor, intenta nuevamente en unos momentos."
+  }
+
+  // Mensaje genérico con el error original si está disponible
+  return errorMessage || "Error al subir la imagen. Por favor, intenta nuevamente."
+}
+
 export function ImageUpload({
   currentImageUrl,
   onImageUploaded,
@@ -26,17 +77,55 @@ export function ImageUpload({
   const [preview, setPreview] = useState<string | null>(currentImageUrl || null)
   const addNotification = useNotificationStore((state) => state.addNotification)
 
+  /**
+   * Verifica si el bucket existe y está disponible
+   */
+  const checkBucketAvailability = async (): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.storage.listBuckets()
+      
+      if (error) {
+        console.error("Error checking buckets:", error)
+        return false
+      }
+
+      const bucketExists = data?.some((b) => b.name === bucket) ?? false
+      
+      if (!bucketExists) {
+        addNotification({
+          type: "error",
+          message: `El bucket "${bucket}" no existe en Supabase Storage. Por favor, créalo en el panel de Supabase.`,
+        })
+        return false
+      }
+
+      return true
+    } catch (error) {
+      console.error("Error verifying bucket:", error)
+      return false
+    }
+  }
+
   const uploadImage = async (file: File) => {
     try {
       setUploading(true)
 
+      // Verificar que el bucket existe antes de intentar subir
+      const bucketAvailable = await checkBucketAvailability()
+      if (!bucketAvailable) {
+        return
+      }
+
       const fileExt = file.name.split(".").pop()
-      const fileName = `${Math.random()}.${fileExt}`
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`
       const filePath = `${folder}/${fileName}`
 
       const { error: uploadError, data } = await supabase.storage
         .from(bucket)
-        .upload(filePath, file)
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        })
 
       if (uploadError) {
         throw uploadError
@@ -55,9 +144,10 @@ export function ImageUpload({
       })
     } catch (error: any) {
       console.error("Error uploading image:", error)
+      const errorMessage = getErrorMessage(error)
       addNotification({
         type: "error",
-        message: error.message || "Error al subir la imagen",
+        message: errorMessage,
       })
     } finally {
       setUploading(false)
@@ -142,6 +232,3 @@ export function ImageUpload({
     </div>
   )
 }
-
-
-

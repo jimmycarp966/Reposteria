@@ -168,6 +168,8 @@ export function EditIngredientDialog({ ingredient, open, onClose }: EditIngredie
           <ImageUpload
             currentImageUrl={imageUrl}
             onImageUploaded={setImageUrl}
+            bucket="product-images"
+            folder="ingredients"
           />
 
           <div className="flex justify-end gap-2 pt-4">
