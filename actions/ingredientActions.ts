@@ -128,6 +128,13 @@ export async function createIngredient(formData: z.infer<typeof ingredientSchema
 
 export async function updateIngredient(id: string, formData: z.infer<typeof ingredientSchema>) {
   try {
+    // Get current ingredient to check if cost changed
+    const { data: currentIngredient } = await supabase
+      .from("ingredients")
+      .select("cost_per_unit")
+      .eq("id", id)
+      .single()
+
     const validated = ingredientSchema.parse(formData)
 
     const { data, error } = await supabase
@@ -139,8 +146,20 @@ export async function updateIngredient(id: string, formData: z.infer<typeof ingr
 
     if (error) throw error
 
+    // Check if cost changed to determine if we need to invalidate recipe cache
+    const costChanged = currentIngredient && 
+      currentIngredient.cost_per_unit !== validated.cost_per_unit
+
     cache.delete(CACHE_KEYS.INGREDIENTS) // Limpiar caché de ingredientes
     cache.delete(CACHE_KEYS.PRODUCTS) // Limpiar caché de productos (afectados por cambios de costo)
+    
+    // If cost changed, also invalidate recipes cache
+    if (costChanged) {
+      cache.delete(CACHE_KEYS.RECIPES) // Limpiar caché de recetas (afectadas por cambios de costo)
+      revalidatePath("/recetas")
+      return { success: true, data, message: "Ingrediente actualizado. Si cambiaste el costo, recalculá los productos y recetas afectados." }
+    }
+    
     revalidatePath("/ingredientes")
     revalidatePath("/productos")
     return { success: true, data, message: "Ingrediente actualizado exitosamente" }

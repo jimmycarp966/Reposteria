@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { 
   MoreVertical, 
+  Edit,
   Package, 
   ShoppingCart, 
   History, 
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils"
 
 interface IngredientActionSheetProps {
   ingredient: any
+  onEditClick: () => void
   onStockClick: () => void
   onPurchaseClick: () => void
   onHistoryClick: () => void
@@ -24,6 +26,7 @@ interface IngredientActionSheetProps {
 
 export function IngredientActionSheet({
   ingredient,
+  onEditClick,
   onStockClick,
   onPurchaseClick,
   onHistoryClick,
@@ -33,6 +36,17 @@ export function IngredientActionSheet({
   const [open, setOpen] = useState(false)
 
   const actions = [
+    {
+      id: "edit",
+      label: "Editar Ingrediente",
+      description: "Modificar nombre, unidad y otros datos",
+      icon: Edit,
+      onClick: () => {
+        onEditClick()
+        setOpen(false)
+      },
+      variant: "default" as const
+    },
     {
       id: "stock",
       label: "Actualizar Stock",
