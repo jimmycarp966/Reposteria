@@ -52,7 +52,8 @@ export function SimpleMobileDialog({ open, onClose }: SimpleMobileDialogProps) {
     if (open) {
       const loadIngredients = async () => {
         try {
-          const result = await getIngredients()
+          // Cargar TODOS los ingredientes (sin paginación) para que estén disponibles en el selector
+          const result = await getIngredients({ page: 1, pageSize: 1000 })
           if (result.success && result.data) {
             setIngredients(result.data)
           }
@@ -481,6 +482,10 @@ export function SimpleMobileDialog({ open, onClose }: SimpleMobileDialogProps) {
     </div>
   )
 }
+
+
+
+
 
 
 

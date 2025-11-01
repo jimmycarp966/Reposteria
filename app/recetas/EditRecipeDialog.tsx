@@ -16,6 +16,7 @@ import { editRecipeSchema } from "@/lib/validations"
 import { updateRecipe } from "@/actions/recipeActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { UnitSelector, convertUnits, areUnitsCompatible } from "@/components/shared/UnitSelector"
+import { IngredientSelector } from "@/components/shared/IngredientSelector"
 import { formatCurrency } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 
@@ -249,7 +250,8 @@ export function EditRecipeDialog({ recipe, ingredients }: EditRecipeDialogProps)
                 <CardContent className="p-4">
                   <div className="grid grid-cols-12 gap-2 items-end">
                     <div className="col-span-4">
-                      <Select
+                      <IngredientSelector
+                        ingredients={ingredients}
                         value={watch(`ingredients.${index}.ingredient_id`) || ""}
                         onValueChange={(value) => {
                           setValue(`ingredients.${index}.ingredient_id`, value)
@@ -258,18 +260,8 @@ export function EditRecipeDialog({ recipe, ingredients }: EditRecipeDialogProps)
                             setValue(`ingredients.${index}.unit`, selectedIngredient.unit)
                           }
                         }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar ingrediente" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ingredients.map((ing) => (
-                            <SelectItem key={ing.id} value={ing.id}>
-                              {ing.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder="Seleccionar ingrediente"
+                      />
                     </div>
                     
                     <div className="col-span-2">

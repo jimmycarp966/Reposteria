@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select"
 import { ImageUpload } from "@/components/shared/ImageUpload"
 import { UnitSelector } from "@/components/shared/UnitSelector"
+import { IngredientSelector } from "@/components/shared/IngredientSelector"
 import { createRecipe } from "@/actions/recipeActions"
 import { getIngredients } from "@/actions/ingredientActions"
 import { useRouter } from "next/navigation"
@@ -72,7 +73,8 @@ export function CreateRecipeDialogMobile({
     if (open) {
       const loadIngredients = async () => {
         try {
-          const result = await getIngredients()
+          // Cargar TODOS los ingredientes (sin paginación) para que estén disponibles en el selector
+          const result = await getIngredients({ page: 1, pageSize: 1000 })
           if (result.success && result.data) {
             setIngredients(result.data)
           }
@@ -239,21 +241,19 @@ export function CreateRecipeDialogMobile({
                     {/* Ingrediente */}
                     <div className="mb-3">
                       <Label className="text-xs font-medium text-muted-foreground">Ingrediente</Label>
-                      <Select
+                      <IngredientSelector
+                        ingredients={ingredients}
                         value={watch(`ingredients.${index}.ingredient_id`) || ""}
-                        onValueChange={(value) => setValue(`ingredients.${index}.ingredient_id`, value)}
-                      >
-                        <SelectTrigger className="mt-1 h-10">
-                          <SelectValue placeholder="Seleccionar ingrediente" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ingredients.map((ingredient) => (
-                            <SelectItem key={ingredient.id} value={ingredient.id}>
-                              {ingredient.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onValueChange={(value) => {
+                          setValue(`ingredients.${index}.ingredient_id`, value)
+                          // Auto-fill unit from ingredient
+                          const ingredient = ingredients.find(i => i.id === value)
+                          if (ingredient) {
+                            setValue(`ingredients.${index}.unit`, ingredient.unit)
+                          }
+                        }}
+                        placeholder="Seleccionar ingrediente"
+                      />
                       {errors.ingredients?.[index]?.ingredient_id && (
                         <p className="text-sm text-red-600 mt-1">
                           {errors.ingredients[index]?.ingredient_id?.message}

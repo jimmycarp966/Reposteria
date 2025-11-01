@@ -27,7 +27,7 @@ export default async function RecipeDetailPage({
   const { id } = await params
   const [recipeResult, ingredientsResult] = await Promise.all([
     getRecipeById(id),
-    getIngredients()
+    getIngredients({ page: 1, pageSize: 1000 }) // Cargar TODOS los ingredientes para el selector
   ])
   
   if (!recipeResult.success || !recipeResult.data) {

@@ -26,6 +26,7 @@ import { getIngredients } from "@/actions/ingredientActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { ImageUpload } from "@/components/shared/ImageUpload"
 import { UnitSelector, convertUnits, areUnitsCompatible } from "@/components/shared/UnitSelector"
+import { IngredientSelector } from "@/components/shared/IngredientSelector"
 import { Plus, Trash2 } from "lucide-react"
 
 interface CreateRecipeDialogProps {
@@ -68,7 +69,8 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
   }, [open])
 
   const loadIngredients = async () => {
-    const result = await getIngredients()
+    // Cargar TODOS los ingredientes (sin paginación) para que estén disponibles en el selector
+    const result = await getIngredients({ page: 1, pageSize: 1000 })
     if (result.success) {
       setIngredients(result.data || [])
     }
@@ -213,7 +215,8 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
                   {/* Desktop Layout */}
                   <div className="hidden lg:flex gap-2 items-start">
                   <div className="flex-1">
-                    <Select
+                    <IngredientSelector
+                      ingredients={ingredients}
                       value={watch(`ingredients.${index}.ingredient_id`) || ""}
                       onValueChange={(value) => {
                         setValue(`ingredients.${index}.ingredient_id`, value)
@@ -223,18 +226,8 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
                           setValue(`ingredients.${index}.unit`, ingredient.unit)
                         }
                       }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar ingrediente" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ingredients.map((ing) => (
-                          <SelectItem key={ing.id} value={ing.id}>
-                            {ing.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Seleccionar ingrediente"
+                    />
                     {errors.ingredients?.[index]?.ingredient_id && (
                       <p className="text-sm text-red-600">
                         {errors.ingredients[index]?.ingredient_id?.message}
@@ -305,7 +298,8 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
                   <div className="lg:hidden space-y-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Ingrediente</Label>
-                      <Select
+                      <IngredientSelector
+                        ingredients={ingredients}
                         value={watch(`ingredients.${index}.ingredient_id`) || ""}
                         onValueChange={(value) => {
                           setValue(`ingredients.${index}.ingredient_id`, value)
@@ -315,18 +309,8 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
                             setValue(`ingredients.${index}.unit`, ingredient.unit)
                           }
                         }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar ingrediente" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ingredients.map((ing) => (
-                            <SelectItem key={ing.id} value={ing.id}>
-                              {ing.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder="Seleccionar ingrediente"
+                      />
                       {errors.ingredients?.[index]?.ingredient_id && (
                         <p className="text-sm text-red-600">
                           {errors.ingredients[index]?.ingredient_id?.message}
