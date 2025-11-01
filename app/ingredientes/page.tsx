@@ -9,8 +9,10 @@ import { EmptyState } from "@/components/shared/EmptyState"
 import { ShoppingBag } from "lucide-react"
 
 export default async function IngredientesPage() {
-  const result = await getIngredients()
+  // Cargar TODOS los ingredientes (sin paginación) para mostrar la lista completa
+  const result = await getIngredients({ page: 1, pageSize: 1000 })
   const ingredients = result.success && result.data ? result.data : []
+  const totalCount = result.pagination?.total || 0
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -23,8 +25,8 @@ export default async function IngredientesPage() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
-            {ingredients.length > 0 && (
-              <BulkPriceIncreaseDialog totalIngredients={ingredients.length}>
+            {totalCount > 0 && (
+              <BulkPriceIncreaseDialog totalIngredients={totalCount}>
                 <Button variant="outline" className="w-full sm:w-auto border-orange-300 text-orange-700 hover:bg-orange-50 h-12 sm:h-10">
                   <TrendingUp className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
                   <span className="text-sm sm:text-base">Aumentar Precios</span>
@@ -43,7 +45,14 @@ export default async function IngredientesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base sm:text-lg lg:text-xl">Lista de Ingredientes</CardTitle>
+          <CardTitle className="text-base sm:text-lg lg:text-xl">
+            Lista de Ingredientes
+            {totalCount > 0 && (
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                ({totalCount} total)
+              </span>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {ingredients.length === 0 ? (
