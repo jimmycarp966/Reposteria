@@ -93,12 +93,24 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
       console.log('📦 Purchase state:', { purchaseQuantity, purchasePrice, unitValue })
 
       // Create ingredient first
-      const result = await createIngredient({
+      const ingredientData = {
         ...data,
         image_url: imageUrl || undefined,
-      })
+        cost_per_unit: 0, // Valor por defecto, se actualizará después si se registra la compra
+      }
+      
+      console.log('📤 Datos a enviar a createIngredient:', ingredientData)
+      
+      const result = await createIngredient(ingredientData)
 
       console.log('📝 Resultado creación ingrediente:', result)
+      
+      if (!result.success) {
+        console.error('❌ ERROR DETALLADO:', {
+          message: result.message,
+          fullResult: result
+        })
+      }
 
       if (result.success) {
         console.log('✅ Ingrediente creado exitosamente, ID:', result.data?.id)
@@ -108,6 +120,8 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
         console.log('   - purchaseQuantity > 0:', purchaseQuantity > 0, 'valor:', purchaseQuantity)
         console.log('   - purchasePrice > 0:', purchasePrice > 0, 'valor:', purchasePrice)
         console.log('   - data.unit existe:', !!data.unit, 'valor:', data.unit)
+
+        let purchaseSuccess = false
 
         if (purchaseQuantity > 0 && purchasePrice > 0 && data.unit) {
           console.log('🔄 Registrando compra...')
@@ -130,33 +144,37 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
 
           if (purchaseResult.success) {
             console.log('🎉 Compra registrada exitosamente')
+            purchaseSuccess = true
             addNotification({ type: "success", message: "Ingrediente creado exitosamente con costo calculado" })
           } else {
             console.log('❌ Error en registro de compra:', purchaseResult.message)
             // Si la compra falla, el ingrediente se creó pero sin precio calculado
             addNotification({
-              type: "error",
+              type: "warning",
               message: `El ingrediente "${data.name}" fue creado, pero no se pudo calcular el costo. Error: ${purchaseResult.message}. Puede actualizar el costo manualmente después.`
             })
-            // No refrescamos la página para que el usuario pueda intentar corregir
-            return
           }
         } else {
           console.log('⚠️  No se cumplen las condiciones para registro de compra')
-          addNotification({ type: "error", message: "Debe ingresar cantidad y precio para calcular el costo del ingrediente" })
-          return
+          addNotification({ 
+            type: "warning", 
+            message: `Ingrediente "${data.name}" creado exitosamente. Debe ingresar cantidad y precio para calcular el costo del ingrediente.` 
+          })
         }
 
-        // Forzar refresh de la página para actualizar la lista
+        // SIEMPRE refrescar la página después de crear el ingrediente, independientemente del resultado de la compra
         console.log('🔄 Refrescando página para actualizar lista de ingredientes')
-        window.location.reload()
-
         reset()
         setImageUrl("")
         setRegisterPurchase(true)
         setPurchaseQuantity(0)
         setPurchasePrice(0)
         handleOpenChange(false)
+        
+        // Pequeño delay para que la notificación se muestre antes del reload
+        setTimeout(() => {
+          window.location.reload()
+        }, 100)
       } else {
         console.log('❌ Error al crear ingrediente:', result.message)
         addNotification({ type: "error", message: result.message! })

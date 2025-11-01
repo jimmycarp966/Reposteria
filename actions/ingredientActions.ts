@@ -23,6 +23,8 @@ export async function getIngredients(params: IngredientsQueryParams = {}): Promi
     const from = (page - 1) * pageSize
     const to = from + pageSize - 1
 
+    // La relación inventory usa LEFT JOIN implícito por defecto en Supabase
+    // Esto asegura que todos los ingredientes aparezcan incluso sin registro de inventory
     let query = supabase
       .from("ingredients")
       .select(`
@@ -98,18 +100,36 @@ export async function getIngredientById(id: string) {
 
 export async function createIngredient(formData: z.infer<typeof ingredientSchema>) {
   try {
-    const validated = ingredientSchema.parse(formData)
+    logger.info('Creating ingredient', { formData }, 'ingredientActions.createIngredient')
+    
+    // Asegurar que cost_per_unit tenga un valor por defecto si no viene
+    const formDataWithDefaults = {
+      ...formData,
+      cost_per_unit: formData.cost_per_unit ?? 0,
+    }
 
+    logger.debug('Form data with defaults', { formDataWithDefaults }, 'ingredientActions.createIngredient')
+    
+    const validated = ingredientSchema.parse(formDataWithDefaults)
+    
+    logger.debug('Validated data', { validated }, 'ingredientActions.createIngredient')
+
+    logger.debug('Attempting to insert ingredient into Supabase', {}, 'ingredientActions.createIngredient')
     const { data, error } = await supabase
       .from("ingredients")
       .insert([validated])
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      logger.error('Supabase error inserting ingredient', { error, validated }, 'ingredientActions.createIngredient')
+      throw error
+    }
+
+    logger.info('Ingredient created successfully', { ingredientId: data?.id, ingredientName: data?.name }, 'ingredientActions.createIngredient')
 
     // Create initial inventory record
-    await supabase
+    const { error: inventoryError } = await supabase
       .from("inventory")
       .insert([{
         ingredient_id: data.id,
@@ -117,12 +137,34 @@ export async function createIngredient(formData: z.infer<typeof ingredientSchema
         unit: validated.unit,
       }])
 
+    if (inventoryError) {
+      logger.error("Error creating inventory record", inventoryError, 'ingredientActions.createIngredient')
+      // No fallar la creación del ingrediente si el inventory falla, pero loguear el error
+      // El inventory puede crearse después manualmente si es necesario
+    }
+
     cache.delete(CACHE_KEYS.INGREDIENTS) // Limpiar caché de ingredientes
     revalidatePath("/ingredientes")
     return { success: true, data, message: "Ingrediente creado exitosamente" }
   } catch (error: any) {
-    logger.error("Error creating ingredient", error, 'ingredientActions.createIngredient')
-    return { success: false, message: error.message || "Error al crear ingrediente" }
+    logger.error("Error creating ingredient", { 
+      error, 
+      errorMessage: error.message,
+      errorCode: error.code,
+      errorDetails: error.details,
+      errorHint: error.hint,
+      formData 
+    }, 'ingredientActions.createIngredient')
+    
+    // Devolver mensaje de error más detallado
+    let errorMessage = "Error al crear ingrediente"
+    if (error.message) {
+      errorMessage = error.message
+    } else if (error.code) {
+      errorMessage = `Error ${error.code}: ${error.message || 'Error desconocido'}`
+    }
+    
+    return { success: false, message: errorMessage }
   }
 }
 
