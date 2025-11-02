@@ -80,10 +80,11 @@ export function CreateProductDialog({ open, onClose, recipes, onProductCreated }
         const markupPercent = form.getValues("markup_percent") || 60
         console.log("Creando producto desde receta:", {
           recipeId: selectedRecipeId,
-          markupPercent
+          markupPercent,
+          customImageUrl: imageUrl || undefined
         })
         
-        result = await createProductFromRecipe(selectedRecipeId, markupPercent)
+        result = await createProductFromRecipe(selectedRecipeId, markupPercent, imageUrl || undefined)
       } else {
         const formData = form.getValues()
         console.log("Creando producto manual:", formData)
@@ -210,6 +211,18 @@ export function CreateProductDialog({ open, onClose, recipes, onProductCreated }
                     El precio se calculará automáticamente desde el costo de la receta
                   </p>
                 </div>
+
+                <ImageUpload
+                  currentImageUrl={imageUrl}
+                  onImageUploaded={setImageUrl}
+                  bucket="product-images"
+                  folder="products"
+                />
+                {imageUrl && (
+                  <p className="text-xs text-muted-foreground">
+                    La imagen personalizada sobrescribirá la imagen de la receta
+                  </p>
+                )}
               </>
             ) : (
               <>

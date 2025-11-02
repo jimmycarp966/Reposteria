@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Upload, X } from "lucide-react"
 import { useNotificationStore } from "@/store/notificationStore"
+import { ensureStorageBucket } from "@/actions/storageActions"
 import Image from "next/image"
 
 interface ImageUploadProps {
@@ -25,7 +26,7 @@ function getErrorMessage(error: any): string {
 
   // Error de bucket no encontrado
   if (errorMessage.includes("Bucket not found") || errorMessage.includes("bucket not found")) {
-    return "El bucket de almacenamiento no existe. Por favor, verifica la configuración de Supabase Storage."
+    return "El bucket de almacenamiento no existe. El sistema intentará crearlo automáticamente. Si el problema persiste, verifica la configuración de Supabase Storage."
   }
 
   // Error de permisos RLS
@@ -78,30 +79,35 @@ export function ImageUpload({
   const addNotification = useNotificationStore((state) => state.addNotification)
 
   /**
-   * Verifica si el bucket existe y está disponible
+   * Asegura que el bucket existe, creándolo automáticamente si es necesario
    */
-  const checkBucketAvailability = async (): Promise<boolean> => {
+  const ensureBucketExists = async (): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.storage.listBuckets()
+      const result = await ensureStorageBucket(bucket)
       
-      if (error) {
-        console.error("Error checking buckets:", error)
-        return false
-      }
-
-      const bucketExists = data?.some((b) => b.name === bucket) ?? false
-      
-      if (!bucketExists) {
+      if (!result.success) {
         addNotification({
           type: "error",
-          message: `El bucket "${bucket}" no existe en Supabase Storage. Por favor, créalo en el panel de Supabase.`,
+          message: result.message || `No se pudo crear el bucket "${bucket}". ${result.message || 'Por favor, créalo manualmente en el panel de Supabase.'}`,
         })
         return false
       }
-
+      
+      // Si el bucket se creó exitosamente, mostrar notificación informativa
+      if (result.message?.includes("creado exitosamente")) {
+        addNotification({
+          type: "success",
+          message: result.message,
+        })
+      }
+      
       return true
     } catch (error) {
-      console.error("Error verifying bucket:", error)
+      console.error("Error al asegurar el bucket:", error)
+      addNotification({
+        type: "error",
+        message: `Error al verificar el bucket "${bucket}". Por favor, verifica tu configuración de Supabase.`,
+      })
       return false
     }
   }
@@ -110,9 +116,10 @@ export function ImageUpload({
     try {
       setUploading(true)
 
-      // Verificar que el bucket existe antes de intentar subir
-      const bucketAvailable = await checkBucketAvailability()
-      if (!bucketAvailable) {
+      // Asegurar que el bucket existe antes de intentar subir (lo crea automáticamente si no existe)
+      const bucketReady = await ensureBucketExists()
+      if (!bucketReady) {
+        setUploading(false)
         return
       }
 

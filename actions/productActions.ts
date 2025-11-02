@@ -117,7 +117,7 @@ export async function createProduct(formData: z.infer<typeof productSchema>) {
   }
 }
 
-export async function createProductFromRecipe(recipeId: string, markupPercent: number = 60) {
+export async function createProductFromRecipe(recipeId: string, markupPercent: number = 60, customImageUrl?: string) {
   try {
     // Get recipe details with ingredient units
     const { data: recipe, error: recipeError } = await supabase
@@ -184,6 +184,9 @@ export async function createProductFromRecipe(recipeId: string, markupPercent: n
     }, 'productActions.createProductFromRecipe')
 
     // Create product
+    // Usar imagen personalizada si se proporciona, sino usar la de la receta
+    const productImageUrl = customImageUrl || recipe.image_url
+    
     const { data: product, error: productError } = await supabase
       .from("products")
       .insert([{
@@ -191,7 +194,7 @@ export async function createProductFromRecipe(recipeId: string, markupPercent: n
         name: recipe.name,
         base_cost_cache: baseCostPerServing,
         suggested_price_cache: suggestedPrice,
-        image_url: recipe.image_url,
+        image_url: productImageUrl,
       }])
       .select()
       .single()
