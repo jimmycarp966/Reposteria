@@ -144,6 +144,7 @@ export async function createRecipe(formData: z.infer<typeof createRecipeSchema>)
         description: validated.description,
         servings: validated.servings,
         image_url: validated.image_url,
+        active: true, // Asegurar que la receta esté activa desde el inicio
       }])
       .select()
       .single()
@@ -166,6 +167,7 @@ export async function createRecipe(formData: z.infer<typeof createRecipeSchema>)
 
     cache.delete(CACHE_KEYS.RECIPES) // Limpiar caché de recetas
     revalidatePath("/recetas")
+    revalidatePath("/productos") // Revalidar página de productos para que aparezca en el selector
     return { success: true, data: recipe, message: "Receta creada exitosamente" }
   } catch (error: any) {
     logger.error("Error creating recipe", error, 'recipeActions.createRecipe')
@@ -320,6 +322,51 @@ export async function updateRecipe(id: string, data: any) {
   } catch (error: any) {
     logger.error("Error updating recipe", error, 'recipeActions.updateRecipe')
     return { success: false, message: error.message || "Error al actualizar la receta" }
+  }
+}
+
+export async function activateAllRecipes() {
+  try {
+    // Primero obtener todas las recetas que no están activas
+    const { data: inactiveRecipes, error: fetchError } = await supabase
+      .from("recipes")
+      .select("id")
+      .or("active.is.null,active.eq.false")
+
+    if (fetchError) throw fetchError
+
+    if (!inactiveRecipes || inactiveRecipes.length === 0) {
+      return { 
+        success: true, 
+        message: "Todas las recetas ya estaban activas",
+        count: 0
+      }
+    }
+
+    // Activar todas las recetas inactivas
+    const { data, error } = await supabase
+      .from("recipes")
+      .update({ active: true })
+      .in("id", inactiveRecipes.map(r => r.id))
+      .select()
+
+    if (error) throw error
+
+    cache.delete(CACHE_KEYS.RECIPES)
+    revalidatePath("/recetas")
+    revalidatePath("/productos")
+
+    const count = data?.length || 0
+    logger.info(`Activated ${count} recipes`, { count }, 'recipeActions.activateAllRecipes')
+    
+    return { 
+      success: true, 
+      message: `${count} receta(s) activada(s) exitosamente`,
+      count 
+    }
+  } catch (error: any) {
+    logger.error("Error activating recipes", error, 'recipeActions.activateAllRecipes')
+    return { success: false, message: error.message || "Error al activar recetas" }
   }
 }
 
