@@ -208,18 +208,31 @@ export function CreateProductDialog({ open, onClose, recipes: initialRecipes, on
               <>
                 <div>
                   <Label htmlFor="recipe">Seleccionar Receta *</Label>
-                  <div className="space-y-2">
-                    <Input
-                      placeholder="Buscar receta..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full"
-                    />
-                    <Select value={selectedRecipeId} onValueChange={(value) => setSelectedRecipeId(value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar receta" />
-                      </SelectTrigger>
-                      <SelectContent>
+                  <Select value={selectedRecipeId} onValueChange={(value) => setSelectedRecipeId(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar receta" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <div className="p-2 sticky top-0 bg-background border-b">
+                        <Input
+                          placeholder="Buscar receta..."
+                          value={searchTerm}
+                          onChange={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setSearchTerm(e.target.value)
+                          }}
+                          onKeyDown={(e) => {
+                            e.stopPropagation()
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                          }}
+                          className="w-full"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-[250px] overflow-y-auto">
                         {filteredRecipes.length === 0 ? (
                           <div className="p-2 text-sm text-muted-foreground text-center">
                             {loadingRecipes ? "Cargando recetas..." : "No se encontraron recetas."}
@@ -237,9 +250,9 @@ export function CreateProductDialog({ open, onClose, recipes: initialRecipes, on
                             </SelectItem>
                           ))
                         )}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      </div>
+                    </SelectContent>
+                  </Select>
                   {fromRecipe && !selectedRecipeId && (
                     <p className="text-sm text-red-600 mt-1">Debes seleccionar una receta</p>
                   )}
