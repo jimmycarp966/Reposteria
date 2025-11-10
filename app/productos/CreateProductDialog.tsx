@@ -21,20 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Check, ChevronsUpDown } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { createProduct, createProductFromRecipe } from "@/actions/productActions"
 import { getRecipes } from "@/actions/recipeActions"
 import { useNotificationStore } from "@/store/notificationStore"
@@ -67,7 +53,6 @@ export function CreateProductDialog({ open, onClose, recipes: initialRecipes, on
   const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes)
   const [loadingRecipes, setLoadingRecipes] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [openCombobox, setOpenCombobox] = useState(false)
   const addNotification = useNotificationStore((state) => state.addNotification)
 
   // Filtrar recipes basado en el término de búsqueda
@@ -98,7 +83,6 @@ export function CreateProductDialog({ open, onClose, recipes: initialRecipes, on
       // Resetear estado cuando se abre
       setSelectedRecipeId("")
       setSearchTerm("")
-      setOpenCombobox(false)
     }
   }, [open])
 
@@ -212,7 +196,6 @@ export function CreateProductDialog({ open, onClose, recipes: initialRecipes, on
                 setFromRecipe(false)
                 setSelectedRecipeId("")
                 setSearchTerm("")
-                setOpenCombobox(false)
               }}
               className="flex-1"
             >
@@ -225,60 +208,38 @@ export function CreateProductDialog({ open, onClose, recipes: initialRecipes, on
               <>
                 <div>
                   <Label htmlFor="recipe">Seleccionar Receta *</Label>
-                  <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openCombobox}
-                        className="w-full justify-between"
-                        disabled={loadingRecipes}
-                      >
-                        {selectedRecipeId
-                          ? recipes.find((recipe) => recipe.id === selectedRecipeId)?.name
-                          : "Seleccionar receta..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <Command>
-                        <CommandInput
+                  <Select value={selectedRecipeId} onValueChange={(value) => setSelectedRecipeId(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar receta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <div className="p-2">
+                        <Input
                           placeholder="Buscar receta..."
                           value={searchTerm}
-                          onValueChange={setSearchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="mb-2"
                         />
-                        <CommandEmpty>
+                      </div>
+                      {filteredRecipes.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
                           {loadingRecipes ? "Cargando recetas..." : "No se encontraron recetas."}
-                        </CommandEmpty>
-                        <CommandGroup className="max-h-64 overflow-auto">
-                          {filteredRecipes.map((recipe) => (
-                            <CommandItem
-                              key={recipe.id}
-                              value={recipe.name}
-                              onSelect={() => {
-                                setSelectedRecipeId(recipe.id === selectedRecipeId ? "" : recipe.id)
-                                setOpenCombobox(false)
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  selectedRecipeId === recipe.id ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              <div className="flex flex-col">
-                                <span className="font-medium">{recipe.name}</span>
-                                <span className="text-sm text-muted-foreground">
-                                  {recipe.servings} porciones
-                                  {recipe.description && ` • ${recipe.description}`}
-                                </span>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                        </div>
+                      ) : (
+                        filteredRecipes.map((recipe) => (
+                          <SelectItem key={recipe.id} value={recipe.id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{recipe.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {recipe.servings} porciones
+                                {recipe.description && ` • ${recipe.description}`}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                   {fromRecipe && !selectedRecipeId && (
                     <p className="text-sm text-red-600 mt-1">Debes seleccionar una receta</p>
                   )}
