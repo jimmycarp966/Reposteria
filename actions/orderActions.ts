@@ -24,8 +24,12 @@ export async function getOrders(params: OrdersQueryParams = {}): Promise<Paginat
   try {
     logger.debug('Fetching orders', params, 'orderActions.getOrders')
 
-    const from = (page - 1) * pageSize
-    const to = from + pageSize - 1
+    // Si no se pasan parámetros específicos (llamado desde página principal), mostrar todas las órdenes
+    const isDefaultCall = Object.keys(params).length === 0 || (page === 1 && pageSize === 20 && !status && sortBy === 'delivery_date' && sortOrder === 'asc')
+    const actualPageSize = isDefaultCall ? 10000 : pageSize // Usar un límite alto para mostrar todas las órdenes
+
+    const from = (page - 1) * actualPageSize
+    const to = from + actualPageSize - 1
 
     let query = supabase
       .from("orders")
@@ -58,9 +62,9 @@ export async function getOrders(params: OrdersQueryParams = {}): Promise<Paginat
       data: data as OrderWithItems[],
       pagination: {
         page,
-        pageSize,
+        pageSize: isDefaultCall ? (count || 0) : pageSize,
         total: count || 0,
-        totalPages: Math.ceil((count || 0) / pageSize)
+        totalPages: isDefaultCall ? 1 : Math.ceil((count || 0) / pageSize)
       }
     }
   } catch (error: any) {
