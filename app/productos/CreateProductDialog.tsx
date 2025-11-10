@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -21,7 +21,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { createProduct, createProductFromRecipe } from "@/actions/productActions"
+import { getRecipes } from "@/actions/recipeActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { ImageUpload } from "@/components/shared/ImageUpload"
 import type { Recipe } from "@/lib/types"
@@ -44,12 +59,48 @@ const productFormSchema = z.object({
 
 type FormData = z.infer<typeof productFormSchema>
 
-export function CreateProductDialog({ open, onClose, recipes, onProductCreated }: CreateProductDialogProps) {
+export function CreateProductDialog({ open, onClose, recipes: initialRecipes, onProductCreated }: CreateProductDialogProps) {
   const [submitting, setSubmitting] = useState(false)
   const [imageUrl, setImageUrl] = useState("")
-  const [fromRecipe, setFromRecipe] = useState(recipes.length > 0)
+  const [fromRecipe, setFromRecipe] = useState(initialRecipes.length > 0)
   const [selectedRecipeId, setSelectedRecipeId] = useState("")
+  const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes)
+  const [loadingRecipes, setLoadingRecipes] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [openCombobox, setOpenCombobox] = useState(false)
   const addNotification = useNotificationStore((state) => state.addNotification)
+
+  // Filtrar recipes basado en el término de búsqueda
+  const filteredRecipes = recipes.filter(recipe =>
+    recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (recipe.description && recipe.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  )
+
+  // Función para refrescar las recipes
+  const refreshRecipes = async () => {
+    try {
+      setLoadingRecipes(true)
+      const result = await getRecipes({ page: 1, pageSize: 1000, activeOnly: true })
+      if (result.success && result.data) {
+        setRecipes(result.data)
+      }
+    } catch (error) {
+      console.error("Error refreshing recipes:", error)
+    } finally {
+      setLoadingRecipes(false)
+    }
+  }
+
+  // Refrescar recipes cuando se abre el diálogo
+  useEffect(() => {
+    if (open) {
+      refreshRecipes()
+      // Resetear estado cuando se abre
+      setSelectedRecipeId("")
+      setSearchTerm("")
+      setOpenCombobox(false)
+    }
+  }, [open])
 
   const form = useForm<FormData>({
     resolver: zodResolver(productFormSchema),
@@ -124,10 +175,6 @@ export function CreateProductDialog({ open, onClose, recipes, onProductCreated }
     }
   }
 
-  const handleRecipeChange = (value: string) => {
-    console.log("Receta seleccionada:", value)
-    setSelectedRecipeId(value)
-  }
 
   if (!open) return null
 
@@ -150,11 +197,12 @@ export function CreateProductDialog({ open, onClose, recipes, onProductCreated }
                 console.log("Cambiando a modo receta")
                 setFromRecipe(true)
                 setSelectedRecipeId("")
+                setSearchTerm("")
               }}
               className="flex-1"
-              disabled={recipes.length === 0}
+              disabled={loadingRecipes || recipes.length === 0}
             >
-              Desde Receta {recipes.length === 0 && "(No disponible)"}
+              Desde Receta {loadingRecipes ? "(Cargando...)" : recipes.length === 0 ? "(No disponible)" : `(${recipes.length} disponibles)`}
             </Button>
             <Button
               type="button"
@@ -163,6 +211,8 @@ export function CreateProductDialog({ open, onClose, recipes, onProductCreated }
                 console.log("Cambiando a modo manual")
                 setFromRecipe(false)
                 setSelectedRecipeId("")
+                setSearchTerm("")
+                setOpenCombobox(false)
               }}
               className="flex-1"
             >
@@ -175,18 +225,60 @@ export function CreateProductDialog({ open, onClose, recipes, onProductCreated }
               <>
                 <div>
                   <Label htmlFor="recipe">Seleccionar Receta *</Label>
-                  <Select value={selectedRecipeId} onValueChange={handleRecipeChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar receta" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {recipes.map((recipe) => (
-                        <SelectItem key={recipe.id} value={recipe.id}>
-                          {recipe.name} ({recipe.servings} porciones)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openCombobox}
+                        className="w-full justify-between"
+                        disabled={loadingRecipes}
+                      >
+                        {selectedRecipeId
+                          ? recipes.find((recipe) => recipe.id === selectedRecipeId)?.name
+                          : "Seleccionar receta..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput
+                          placeholder="Buscar receta..."
+                          value={searchTerm}
+                          onValueChange={setSearchTerm}
+                        />
+                        <CommandEmpty>
+                          {loadingRecipes ? "Cargando recetas..." : "No se encontraron recetas."}
+                        </CommandEmpty>
+                        <CommandGroup className="max-h-64 overflow-auto">
+                          {filteredRecipes.map((recipe) => (
+                            <CommandItem
+                              key={recipe.id}
+                              value={recipe.name}
+                              onSelect={() => {
+                                setSelectedRecipeId(recipe.id === selectedRecipeId ? "" : recipe.id)
+                                setOpenCombobox(false)
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedRecipeId === recipe.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <span className="font-medium">{recipe.name}</span>
+                                <span className="text-sm text-muted-foreground">
+                                  {recipe.servings} porciones
+                                  {recipe.description && ` • ${recipe.description}`}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   {fromRecipe && !selectedRecipeId && (
                     <p className="text-sm text-red-600 mt-1">Debes seleccionar una receta</p>
                   )}
