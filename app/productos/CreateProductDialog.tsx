@@ -208,38 +208,38 @@ export function CreateProductDialog({ open, onClose, recipes: initialRecipes, on
               <>
                 <div>
                   <Label htmlFor="recipe">Seleccionar Receta *</Label>
-                  <Select value={selectedRecipeId} onValueChange={(value) => setSelectedRecipeId(value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar receta" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <div className="p-2">
-                        <Input
-                          placeholder="Buscar receta..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="mb-2"
-                        />
-                      </div>
-                      {filteredRecipes.length === 0 ? (
-                        <div className="p-2 text-sm text-muted-foreground text-center">
-                          {loadingRecipes ? "Cargando recetas..." : "No se encontraron recetas."}
-                        </div>
-                      ) : (
-                        filteredRecipes.map((recipe) => (
-                          <SelectItem key={recipe.id} value={recipe.id}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{recipe.name}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {recipe.servings} porciones
-                                {recipe.description && ` • ${recipe.description}`}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Buscar receta..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full"
+                    />
+                    <Select value={selectedRecipeId} onValueChange={(value) => setSelectedRecipeId(value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar receta" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredRecipes.length === 0 ? (
+                          <div className="p-2 text-sm text-muted-foreground text-center">
+                            {loadingRecipes ? "Cargando recetas..." : "No se encontraron recetas."}
+                          </div>
+                        ) : (
+                          filteredRecipes.map((recipe) => (
+                            <SelectItem key={recipe.id} value={recipe.id}>
+                              <div className="flex flex-col">
+                                <span className="font-medium">{recipe.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {recipe.servings} porciones
+                                  {recipe.description && ` • ${recipe.description}`}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   {fromRecipe && !selectedRecipeId && (
                     <p className="text-sm text-red-600 mt-1">Debes seleccionar una receta</p>
                   )}
