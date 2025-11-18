@@ -451,4 +451,5 @@ Uso privado. Ver `architecture.md` para documentación técnica completa.
 
 #   R e p o s t e r i a 
  
+ #   r i n c o n  
  
