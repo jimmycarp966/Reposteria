@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase"
 import { saleSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { logger } from "@/lib/logger"
+import { getTodayGMT3 } from "@/lib/utils"
 import type { SalesQueryParams, SaleWithItems, DailySalesStats } from "@/lib/types"
 
 // Get sales with filters
@@ -192,7 +193,7 @@ export async function getDailySalesStats(date: string) {
 // Get today's sales
 export async function getTodaysSales() {
   try {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getTodayGMT3()
     
     const { data, error } = await supabase
       .from("sales")

@@ -83,6 +83,8 @@ export function CreateProductDialog({ open, onClose, recipes: initialRecipes, on
       // Resetear estado cuando se abre
       setSelectedRecipeId("")
       setSearchTerm("")
+      setImageUrl("")
+      form.reset()
     }
   }, [open])
 

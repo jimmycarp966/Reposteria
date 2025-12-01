@@ -8,6 +8,7 @@ import { getCachedData, CACHE_KEYS, cache } from "@/lib/cache"
 import { logger } from "@/lib/logger"
 import type { ProductsQueryParams, PaginatedResponse, ProductWithRecipe } from "@/lib/types"
 import { convertUnitsServer, areUnitsCompatibleServer } from "@/lib/unit-conversions"
+import { checkSupabaseConnection, getFallbackData } from "@/lib/supabase-fallback"
 
 export async function getProducts(params: ProductsQueryParams = {}): Promise<PaginatedResponse<ProductWithRecipe>> {
   const {
@@ -18,6 +19,48 @@ export async function getProducts(params: ProductsQueryParams = {}): Promise<Pag
 
   try {
     logger.debug('Fetching products', params, 'productActions.getProducts')
+
+    // Check if Supabase is available, otherwise use fallback data
+    const isSupabaseAvailable = await checkSupabaseConnection()
+
+    if (!isSupabaseAvailable) {
+      logger.info('Using fallback data for products', {}, 'productActions.getProducts')
+      const mockProducts = getFallbackData('products') as any[]
+
+      // Apply search filter if provided
+      let filteredProducts = mockProducts
+      if (search) {
+        filteredProducts = mockProducts.filter(product =>
+          product.name?.toLowerCase().includes(search.toLowerCase())
+        )
+      }
+
+      // Apply pagination
+      const from = (page - 1) * pageSize
+      const to = from + pageSize
+      const paginatedProducts = filteredProducts.slice(from, to)
+
+      // Add mock recipe data
+      const productsWithRecipe = paginatedProducts.map(product => ({
+        ...product,
+        recipe: {
+          id: product.recipe_id,
+          name: 'Torta de Chocolate',
+          servings: 8
+        }
+      }))
+
+      return {
+        success: true,
+        data: productsWithRecipe,
+        pagination: {
+          page,
+          pageSize,
+          total: filteredProducts.length,
+          totalPages: Math.ceil(filteredProducts.length / pageSize)
+        }
+      }
+    }
 
     const from = (page - 1) * pageSize
     const to = from + pageSize - 1

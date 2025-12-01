@@ -48,10 +48,91 @@ export function get_current_date(): Date {
 }
 
 /**
+ * Zona horaria GMT-3 (Argentina)
+ * Constante para el offset en minutos: -3 horas = -180 minutos
+ */
+const GMT3_OFFSET_MINUTES = -180
+
+/**
+ * Obtiene la fecha y hora actual en GMT-3
+ * @returns Date con la fecha/hora actual ajustada a GMT-3
+ */
+export function getCurrentDateGMT3(): Date {
+  const now = new Date()
+  // Obtener el offset local del sistema
+  const localOffset = now.getTimezoneOffset() // en minutos, positivo hacia el oeste
+  // Calcular la diferencia entre GMT-3 y la zona horaria local
+  const gmt3Offset = GMT3_OFFSET_MINUTES
+  const offsetDiff = localOffset - gmt3Offset // diferencia en minutos
+  // Ajustar la fecha
+  return new Date(now.getTime() + offsetDiff * 60 * 1000)
+}
+
+/**
+ * Obtiene la fecha de hoy en GMT-3 como string "YYYY-MM-DD"
+ * @returns String con formato "YYYY-MM-DD" de la fecha actual en GMT-3
+ */
+export function getTodayGMT3(): string {
+  const gmt3Date = getCurrentDateGMT3()
+  const year = gmt3Date.getFullYear()
+  const month = (gmt3Date.getMonth() + 1).toString().padStart(2, '0')
+  const day = gmt3Date.getDate().toString().padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * Parsea un string de fecha "YYYY-MM-DD" interpretándolo en GMT-3 (no UTC)
+ * Esto evita que JavaScript interprete la fecha como UTC medianoche,
+ * lo cual causaría que aparezca como el día anterior en GMT-3
+ * @param dateStr String con formato "YYYY-MM-DD"
+ * @returns Date interpretado como medianoche en GMT-3
+ */
+export function parseDateGMT3(dateStr: string): Date {
+  // Parsear la fecha como componentes
+  const [year, month, day] = dateStr.split('-').map(Number)
+  
+  // Crear fecha en UTC que represente medianoche en GMT-3
+  // Si queremos "2025-12-01 00:00:00" en GMT-3, eso es "2025-12-01 03:00:00" en UTC
+  // Por lo tanto, creamos la fecha en UTC con 3 horas de adelanto
+  const utcDate = new Date(Date.UTC(year, month - 1, day, 3, 0, 0, 0))
+  
+  return utcDate
+}
+
+/**
+ * Crea un Date en GMT-3 desde un string de fecha y opcionalmente hora
+ * @param dateStr String con formato "YYYY-MM-DD"
+ * @param timeStr String opcional con formato "HH:mm" o "HH:mm:ss"
+ * @returns Date interpretado en GMT-3
+ */
+export function createDateGMT3(dateStr: string, timeStr?: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  
+  let hours = 0
+  let minutes = 0
+  let seconds = 0
+  
+  if (timeStr) {
+    const timeParts = timeStr.split(':')
+    hours = parseInt(timeParts[0] || '0', 10)
+    minutes = parseInt(timeParts[1] || '0', 10)
+    seconds = parseInt(timeParts[2] || '0', 10)
+  }
+  
+  // Crear fecha en UTC que represente esa fecha/hora en GMT-3
+  // Si queremos "2025-12-01 12:00:00" en GMT-3, eso es "2025-12-01 15:00:00" en UTC
+  // Por lo tanto, sumamos 3 horas a la hora especificada
+  const utcDate = new Date(Date.UTC(year, month - 1, day, hours + 3, minutes, seconds, 0))
+  
+  return utcDate
+}
+
+/**
  * Formatea una fecha para mostrar en la UI
+ * Parsea strings de fecha interpretándolos en GMT-3 para evitar problemas de zona horaria
  */
 export function formatDate(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
+  const d = typeof date === 'string' ? parseDateGMT3(date) : date
   return d.toLocaleDateString('es-ES', {
     year: 'numeric',
     month: 'long',
@@ -61,9 +142,10 @@ export function formatDate(date: Date | string): string {
 
 /**
  * Formatea una fecha y hora para mostrar en la UI
+ * Parsea strings de fecha interpretándolos en GMT-3 para evitar problemas de zona horaria
  */
 export function formatDateTime(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
+  const d = typeof date === 'string' ? parseDateGMT3(date) : date
   return d.toLocaleDateString('es-ES', {
     year: 'numeric',
     month: 'long',

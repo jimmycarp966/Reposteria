@@ -19,7 +19,7 @@ import { getProducts } from "@/actions/productActions"
 import { getCustomers } from "@/actions/customerActions"
 import { getTodaysEventsWithProducts } from "@/actions/eventActions"
 import { saleSchema } from "@/lib/validations"
-import { formatDate } from "@/lib/utils"
+import { formatDate, getTodayGMT3 } from "@/lib/utils"
 import type { Product, Customer, EventWithProducts } from "@/lib/types"
 
 interface CreateSaleDialogProps {
@@ -36,7 +36,7 @@ export function CreateSaleDialog({ children }: CreateSaleDialogProps) {
   const form = useForm({
     resolver: zodResolver(saleSchema.omit({ items: true })),
     defaultValues: {
-      sale_date: new Date().toISOString().split('T')[0],
+      sale_date: getTodayGMT3(),
       customer_id: "",
       payment_method: "efectivo" as const,
       notes: ""

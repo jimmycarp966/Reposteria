@@ -32,11 +32,12 @@ import { Plus, Trash2 } from "lucide-react"
 interface CreateRecipeDialogProps {
   open: boolean
   onClose: () => void
+  onRecipeCreated?: () => void
 }
 
 type FormData = z.infer<typeof createRecipeSchema>
 
-export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
+export function CreateRecipeDialog({ open, onClose, onRecipeCreated }: CreateRecipeDialogProps) {
   const [submitting, setSubmitting] = useState(false)
   const [imageUrl, setImageUrl] = useState("")
   const [ingredients, setIngredients] = useState<any[]>([])
@@ -65,8 +66,10 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
   useEffect(() => {
     if (open) {
       loadIngredients()
+      reset()
+      setImageUrl("")
     }
-  }, [open])
+  }, [open, reset])
 
   const loadIngredients = async () => {
     // Cargar TODOS los ingredientes (sin paginación) para que estén disponibles en el selector
@@ -116,6 +119,7 @@ export function CreateRecipeDialog({ open, onClose }: CreateRecipeDialogProps) {
         reset()
         setImageUrl("")
         onClose()
+        onRecipeCreated?.()
       } else {
         addNotification({ type: "error", message: result.message! })
       }

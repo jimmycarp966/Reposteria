@@ -9,10 +9,11 @@ import { RegisterPaymentDialog } from "./RegisterPaymentDialog"
 import { CompleteOrderDialog } from "./CompleteOrderDialog"
 import { WhatsAppMessageDialog } from "./WhatsAppMessageDialog"
 import { EmptyState } from "@/components/shared/EmptyState"
+import { DataTable } from "@/components/shared/DataTable"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { confirmOrder, cancelOrder, completeOrderWithSale, moveOrderToProduction } from "@/actions/orderActions"
+import { getOrders, confirmOrder, cancelOrder, completeOrderWithSale, moveOrderToProduction } from "@/actions/orderActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { useMutation } from "@/hooks/useMutation"
 import { useTranslation } from "@/lib/i18n"
@@ -27,7 +28,12 @@ import {
 } from "@/components/ui/card"
 
 interface OrdersClientProps {
-  orders: OrderWithItems[]
+  initialOrders: OrderWithItems[]
+  initialPagination?: {
+    page: number
+    pageSize: number
+    total: number
+  }
 }
 
 const OrderCard = ({ order, onConfirm, onCancel, onComplete, onMoveToProduction, isConfirming, isCancelling, isMovingToProduction }: { 
@@ -226,7 +232,10 @@ const OrderCard = ({ order, onConfirm, onCancel, onComplete, onMoveToProduction,
   )
 }
 
-export function OrdersClient({ orders }: OrdersClientProps) {
+export function OrdersClient({ initialOrders, initialPagination }: OrdersClientProps) {
+  const [orders, setOrders] = useState<OrderWithItems[]>(initialOrders)
+  const [pagination, setPagination] = useState(initialPagination)
+  const [isLoading, setIsLoading] = useState(false)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showShortagesDialog, setShowShortagesDialog] = useState(false)
   const [showCompleteDialog, setShowCompleteDialog] = useState(false)
@@ -241,6 +250,28 @@ export function OrdersClient({ orders }: OrdersClientProps) {
   
   const addNotification = useNotificationStore((state) => state.addNotification)
   const { t } = useTranslation()
+
+  const handlePageChange = async (page: number) => {
+    setIsLoading(true)
+    try {
+      const result = await getOrders({ page, pageSize: pagination?.pageSize || 20 })
+      if (result.success && result.data) {
+        setOrders(result.data)
+        setPagination(result.pagination)
+      }
+    } catch (error) {
+      console.error('Error loading orders:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleOrderCreated = async () => {
+    // Recargar la página actual después de crear un pedido
+    if (pagination) {
+      await handlePageChange(pagination.page)
+    }
+  }
 
   const handleConfirmOrder = async (id: string, forceConfirm: boolean = false) => {
     // Si no es confirmación forzada, mostrar confirmación
@@ -381,6 +412,7 @@ export function OrdersClient({ orders }: OrdersClientProps) {
         <CreateOrderDialog
           open={showCreateDialog}
           onClose={() => setShowCreateDialog(false)}
+          onOrderCreated={handleOrderCreated}
         />
       </>
     )
@@ -396,8 +428,10 @@ export function OrdersClient({ orders }: OrdersClientProps) {
     }
 
     return (
-      <div className="space-y-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
-        {orders.map((order) => (
+      <DataTable
+        data={orders}
+        columns={[]} // Orders use only card view, no table columns
+        mobileCardRender={(order: OrderWithItems) => (
           <OrderCard
             key={order.id}
             order={order}
@@ -409,8 +443,15 @@ export function OrdersClient({ orders }: OrdersClientProps) {
             isCancelling={cancellingOrderId === order.id}
             isMovingToProduction={movingToProductionId === order.id}
           />
-        ))}
-      </div>
+        )}
+        pagination={pagination ? {
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          onPageChange: handlePageChange
+        } : undefined}
+        isLoading={isLoading}
+      />
     )
   }
 
@@ -496,6 +537,7 @@ export function OrdersClient({ orders }: OrdersClientProps) {
       <CreateOrderDialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
+        onOrderCreated={handleOrderCreated}
       />
 
       <StockShortagesDialog

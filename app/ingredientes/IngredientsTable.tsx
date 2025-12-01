@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2, Plus, Package, ShoppingCart, History, BarChart3 } from "lucide-react"
+import { Edit, Trash2, Plus, Package, ShoppingCart, History, BarChart3, ShoppingBag } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { CreateIngredientDialog } from "./CreateIngredientDialog"
 import { EditIngredientDialog } from "./EditIngredientDialog"
@@ -24,6 +24,8 @@ import { deleteIngredient } from "@/actions/ingredientActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { useSearchFilter } from "@/hooks/useSearchFilter"
 import { SearchFilter } from "@/components/shared/SearchFilter"
+import { DataTable } from "@/components/shared/DataTable"
+import { EmptyState } from "@/components/shared/EmptyState"
 import {
   Card,
   CardContent,
@@ -33,13 +35,25 @@ import {
   CardDescription,
 } from "@/components/ui/card"
 import { IngredientActionSheet } from "./IngredientActionSheet"
+import type { IngredientWithInventory, Column } from "@/lib/types"
 
 interface IngredientsTableProps {
-  ingredients: any[]
+  ingredients: IngredientWithInventory[]
+  pagination?: {
+    page: number
+    pageSize: number
+    total: number
+    onPageChange: (page: number) => void
+  }
+  isLoading?: boolean
 }
 
-export function IngredientsTable({ ingredients }: IngredientsTableProps) {
-  const [selectedIngredient, setSelectedIngredient] = useState<any | null>(null)
+export function IngredientsTable({
+  ingredients,
+  pagination,
+  isLoading = false
+}: IngredientsTableProps) {
+  const [selectedIngredient, setSelectedIngredient] = useState<IngredientWithInventory | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showStockDialog, setShowStockDialog] = useState(false)
@@ -47,19 +61,6 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
   const [showHistoryDialog, setShowHistoryDialog] = useState(false)
   const [showPriceHistoryDialog, setShowPriceHistoryDialog] = useState(false)
   const addNotification = useNotificationStore((state) => state.addNotification)
-
-  // Hook de búsqueda
-  const { search, debouncedSearch, setSearch, clearSearch, isSearching } = useSearchFilter()
-
-  // Filtrar ingredientes según búsqueda
-  const filteredIngredients = useMemo(() => {
-    if (!debouncedSearch) return ingredients
-
-    const searchLower = debouncedSearch.toLowerCase().trim()
-    return ingredients.filter(ingredient => 
-      ingredient.name?.toLowerCase().includes(searchLower)
-    )
-  }, [ingredients, debouncedSearch])
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Estás seguro de eliminar este ingrediente?")) return
@@ -82,209 +83,194 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
     }
   }
 
+  const columns: Column<IngredientWithInventory>[] = [
+    {
+      key: 'name',
+      header: 'Nombre',
+      cell: (ingredient) => <span className="font-medium">{ingredient.name}</span>,
+      sortable: true
+    },
+    {
+      key: 'unit',
+      header: 'Unidad',
+      cell: (ingredient) => ingredient.unit
+    },
+    {
+      key: 'cost_per_unit',
+      header: 'Costo Unitario',
+      cell: (ingredient) => formatCurrency(ingredient.cost_per_unit)
+    },
+    {
+      key: 'stock',
+      header: 'Stock',
+      cell: (ingredient) => (
+        ingredient.inventory ? (
+          <>
+            {ingredient.inventory.quantity} {ingredient.inventory.unit}
+          </>
+        ) : (
+          "0"
+        )
+      )
+    },
+    {
+      key: 'status',
+      header: 'Estado',
+      cell: (ingredient) => (
+        ingredient.inventory && getStockBadge(ingredient.inventory.quantity)
+      )
+    },
+    {
+      key: 'location',
+      header: 'Ubicación',
+      cell: (ingredient) => ingredient.inventory?.location || "-"
+    },
+    {
+      key: 'actions',
+      header: 'Acciones',
+      className: 'text-right',
+      cell: (ingredient) => (
+        <div className="flex justify-end gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setSelectedIngredient(ingredient)
+              setShowEditDialog(true)
+            }}
+          >
+            <Edit className="h-4 w-4 mr-1" />
+            Editar
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setSelectedIngredient(ingredient)
+              setShowStockDialog(true)
+            }}
+          >
+            <Package className="h-4 w-4 mr-1" />
+            Stock
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setSelectedIngredient(ingredient)
+              setShowPurchaseDialog(true)
+            }}
+          >
+            <ShoppingCart className="h-4 w-4 mr-1" />
+            Compra
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setSelectedIngredient(ingredient)
+              setShowHistoryDialog(true)
+            }}
+          >
+            <History className="h-4 w-4 mr-1" />
+            Compras
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setSelectedIngredient(ingredient)
+              setShowPriceHistoryDialog(true)
+            }}
+          >
+            <BarChart3 className="h-4 w-4 mr-1" />
+            Precios
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleDelete(ingredient.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      )
+    }
+  ]
+
+  const renderMobileCard = (ingredient: IngredientWithInventory) => (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader>
+        <CardTitle className="text-lg">{ingredient.name}</CardTitle>
+        <CardDescription>
+          {formatCurrency(ingredient.cost_per_unit)} / {ingredient.unit}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="font-semibold text-gray-600">Stock:</span>
+            <span>
+              {ingredient.inventory ? `${ingredient.inventory.quantity} ${ingredient.inventory.unit}` : "0"}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-semibold text-gray-600">Ubicación:</span>
+            <span>{ingredient.inventory?.location || "-"}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-semibold text-gray-600">Estado:</span>
+            <span>
+              {ingredient.inventory && getStockBadge(ingredient.inventory.quantity)}
+            </span>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-end gap-2">
+        <IngredientActionSheet
+          ingredient={ingredient}
+          onEditClick={() => {
+            setSelectedIngredient(ingredient)
+            setShowEditDialog(true)
+          }}
+          onStockClick={() => {
+            setSelectedIngredient(ingredient)
+            setShowStockDialog(true)
+          }}
+          onPurchaseClick={() => {
+            setSelectedIngredient(ingredient)
+            setShowPurchaseDialog(true)
+          }}
+          onHistoryClick={() => {
+            setSelectedIngredient(ingredient)
+            setShowHistoryDialog(true)
+          }}
+          onPriceHistoryClick={() => {
+            setSelectedIngredient(ingredient)
+            setShowPriceHistoryDialog(true)
+          }}
+          onDeleteClick={() => handleDelete(ingredient.id)}
+        />
+      </CardFooter>
+    </Card>
+  )
+
   return (
     <>
-      {/* Buscador */}
-      <div className="mb-4 space-y-4">
-        <SearchFilter
-          searchValue={search}
-          onSearchChange={setSearch}
-          onClearSearch={clearSearch}
-          placeholder="Buscar por nombre..."
-          isSearching={isSearching}
-          showFilterCount={false}
-        />
-        
-        {/* Contador de resultados */}
-        {debouncedSearch && (
-          <div className="text-sm text-gray-600">
-            {filteredIngredients.length === 0 
-              ? "No se encontraron ingredientes" 
-              : `${filteredIngredients.length} ingrediente${filteredIngredients.length !== 1 ? 's' : ''} encontrado${filteredIngredients.length !== 1 ? 's' : ''}`
-            }
-          </div>
-        )}
-      </div>
-
-      {/* Desktop Table */}
-      <div className="hidden lg:block">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Unidad</TableHead>
-              <TableHead>Costo Unitario</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Ubicación</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredIngredients.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                  {debouncedSearch ? "No se encontraron ingredientes con ese criterio" : "No hay ingredientes para mostrar"}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredIngredients.map((ingredient) => (
-              <TableRow key={ingredient.id}>
-                <TableCell className="font-medium">{ingredient.name}</TableCell>
-                <TableCell>{ingredient.unit}</TableCell>
-                <TableCell>
-                  {formatCurrency(ingredient.cost_per_unit)}
-                </TableCell>
-                <TableCell>
-                  {ingredient.inventory ? (
-                    <>
-                      {ingredient.inventory.quantity} {ingredient.inventory.unit}
-                    </>
-                  ) : (
-                    "0"
-                  )}
-                </TableCell>
-                <TableCell>
-                  {ingredient.inventory && getStockBadge(ingredient.inventory.quantity)}
-                </TableCell>
-                <TableCell>
-                  {ingredient.inventory?.location || "-"}
-                </TableCell>
-                <TableCell className="text-right space-x-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedIngredient(ingredient)
-                      setShowEditDialog(true)
-                    }}
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Editar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedIngredient(ingredient)
-                      setShowStockDialog(true)
-                    }}
-                  >
-                    <Package className="h-4 w-4 mr-1" />
-                    Stock
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedIngredient(ingredient)
-                      setShowPurchaseDialog(true)
-                    }}
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-1" />
-                    Compra
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedIngredient(ingredient)
-                      setShowHistoryDialog(true)
-                    }}
-                  >
-                    <History className="h-4 w-4 mr-1" />
-                    Compras
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedIngredient(ingredient)
-                      setShowPriceHistoryDialog(true)
-                    }}
-                  >
-                    <BarChart3 className="h-4 w-4 mr-1" />
-                    Precios
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDelete(ingredient.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Mobile Card View */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
-        {filteredIngredients.length === 0 ? (
-          <div className="col-span-2 text-center py-8 text-gray-500">
-            {debouncedSearch ? "No se encontraron ingredientes con ese criterio" : "No hay ingredientes para mostrar"}
-          </div>
-        ) : (
-          filteredIngredients.map((ingredient) => (
-          <Card key={ingredient.id} className="flex flex-col">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>{ingredient.name}</CardTitle>
-                  <CardDescription>
-                    {formatCurrency(ingredient.cost_per_unit)} / {ingredient.unit}
-                  </CardDescription>
-                </div>
-                {ingredient.inventory && getStockBadge(ingredient.inventory.quantity)}
-              </div>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-semibold text-gray-600">Stock:</span>
-                  <span>
-                    {ingredient.inventory ? `${ingredient.inventory.quantity} ${ingredient.inventory.unit}` : "0"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold text-gray-600">Ubicación:</span>
-                  <span>{ingredient.inventory?.location || "-"}</span>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-end">
-              <IngredientActionSheet
-                ingredient={ingredient}
-                onEditClick={() => {
-                  setSelectedIngredient(ingredient)
-                  setShowEditDialog(true)
-                }}
-                onStockClick={() => {
-                  setSelectedIngredient(ingredient)
-                  setShowStockDialog(true)
-                }}
-                onPurchaseClick={() => {
-                  setSelectedIngredient(ingredient)
-                  setShowPurchaseDialog(true)
-                }}
-                onHistoryClick={() => {
-                  setSelectedIngredient(ingredient)
-                  setShowHistoryDialog(true)
-                }}
-                onPriceHistoryClick={() => {
-                  setSelectedIngredient(ingredient)
-                  setShowPriceHistoryDialog(true)
-                }}
-                onDeleteClick={() => handleDelete(ingredient.id)}
-              />
-            </CardFooter>
-          </Card>
-          ))
-        )}
-      </div>
+      <DataTable
+        data={ingredients}
+        columns={columns}
+        mobileCardRender={renderMobileCard}
+        pagination={pagination}
+        isLoading={isLoading}
+        emptyState={
+          <EmptyState
+            icon={ShoppingBag}
+            title="No se encontraron ingredientes"
+            description="No hay ingredientes que coincidan con los criterios de búsqueda"
+          />
+        }
+      />
 
       <CreateIngredientDialog
         open={showCreateDialog}

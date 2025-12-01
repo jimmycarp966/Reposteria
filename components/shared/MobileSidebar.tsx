@@ -39,6 +39,7 @@ export function MobileSidebar() {
           <div className="space-y-3">
             {routes.map((route) => {
               const isActive = pathname === route.href
+              const IconComponent = route.icon
               return (
                 <Link
                   key={route.href}
@@ -51,7 +52,7 @@ export function MobileSidebar() {
                       : `${route.bgColor} ${route.color}`
                   )}
                 >
-                  <route.icon
+                  <IconComponent
                     className={cn(
                       "h-5 w-5",
                       isActive ? "text-white" : route.color

@@ -8,6 +8,7 @@ import { getCachedData, CACHE_KEYS, cache } from "@/lib/cache"
 import { logger } from "@/lib/logger"
 import type { IngredientsQueryParams, PaginatedResponse, IngredientWithInventory, IngredientPurchase } from "@/lib/types"
 import { areUnitsCompatibleServer, convertUnitsServer } from "@/lib/unit-conversions"
+import { checkSupabaseConnection, getFallbackData } from "@/lib/supabase-fallback"
 
 export async function getIngredients(params: IngredientsQueryParams = {}): Promise<PaginatedResponse<IngredientWithInventory>> {
   const {
@@ -19,6 +20,48 @@ export async function getIngredients(params: IngredientsQueryParams = {}): Promi
 
   try {
     logger.debug('Fetching ingredients', params, 'ingredientActions.getIngredients')
+
+    // Check if Supabase is available, otherwise use fallback data
+    const isSupabaseAvailable = await checkSupabaseConnection()
+
+    if (!isSupabaseAvailable) {
+      logger.info('Using fallback data for ingredients', {}, 'ingredientActions.getIngredients')
+      const mockIngredients = getFallbackData('ingredients') as any[]
+
+      // Apply search filter if provided
+      let filteredIngredients = mockIngredients
+      if (search) {
+        filteredIngredients = mockIngredients.filter(ingredient =>
+          ingredient.name?.toLowerCase().includes(search.toLowerCase())
+        )
+      }
+
+      // Apply pagination
+      const from = (page - 1) * pageSize
+      const to = from + pageSize
+      const paginatedIngredients = filteredIngredients.slice(from, to)
+
+      // Add mock inventory data
+      const ingredientsWithInventory = paginatedIngredients.map(ingredient => ({
+        ...ingredient,
+        inventory: {
+          quantity: Math.floor(Math.random() * 50) + 10,
+          unit: ingredient.unit,
+          location: ['Despensa', 'Refrigerador', 'Congelador'][Math.floor(Math.random() * 3)]
+        }
+      }))
+
+      return {
+        success: true,
+        data: ingredientsWithInventory,
+        pagination: {
+          page,
+          pageSize,
+          total: filteredIngredients.length,
+          totalPages: Math.ceil(filteredIngredients.length / pageSize)
+        }
+      }
+    }
 
     const from = (page - 1) * pageSize
     const to = from + pageSize - 1

@@ -1,26 +1,58 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Plus, ChefHat, Copy, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { EmptyState } from "@/components/shared/EmptyState"
+import { DataTable } from "@/components/shared/DataTable"
 import { formatCurrency } from "@/lib/utils"
 import { CreateRecipeDialog } from "./CreateRecipeDialog"
 import { SimpleMobileDialog } from "./SimpleMobileDialog"
-import { duplicateRecipe, deleteRecipe } from "@/actions/recipeActions"
+import { getRecipes, duplicateRecipe, deleteRecipe } from "@/actions/recipeActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { convertUnits, areUnitsCompatible } from "@/components/shared/UnitSelector"
 
 interface RecipesClientProps {
-  recipes: any[]
+  initialRecipes: any[]
+  initialPagination?: {
+    page: number
+    pageSize: number
+    total: number
+  }
 }
 
-export function RecipesClient({ recipes }: RecipesClientProps) {
+export function RecipesClient({ initialRecipes, initialPagination }: RecipesClientProps) {
+  const [recipes, setRecipes] = useState(initialRecipes)
+  const [pagination, setPagination] = useState(initialPagination)
+  const [isLoading, setIsLoading] = useState(false)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const addNotification = useNotificationStore((state) => state.addNotification)
+
+  const handlePageChange = async (page: number) => {
+    setIsLoading(true)
+    try {
+      const result = await getRecipes({ page, pageSize: pagination?.pageSize || 12 })
+      if (result.success && result.data) {
+        setRecipes(result.data)
+        setPagination(result.pagination)
+      }
+    } catch (error) {
+      console.error('Error loading recipes:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleRecipeCreated = async () => {
+    // Recargar la página actual después de crear una receta
+    if (pagination) {
+      await handlePageChange(pagination.page)
+    }
+  }
 
   const handleDuplicate = async (id: string) => {
     const result = await duplicateRecipe(id)
@@ -76,14 +108,16 @@ export function RecipesClient({ recipes }: RecipesClientProps) {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {recipes.map((recipe: any) => {
+          <DataTable
+            data={recipes}
+            columns={[]} // Recipes use only card view, no table columns
+            mobileCardRender={(recipe: any) => {
               // Calculate cost with unit conversion
               let totalCost = 0
-              
+
               recipe.recipe_ingredients?.forEach((ri: any) => {
                 let itemCost = 0
-                
+
                 // Check if ingredient has unit and if units are compatible for conversion
                 if (ri.ingredient.unit && areUnitsCompatible(ri.unit, ri.ingredient.unit)) {
                   // Convert quantity to ingredient's unit
@@ -93,10 +127,10 @@ export function RecipesClient({ recipes }: RecipesClientProps) {
                   // If units are not compatible or ingredient unit is missing, use direct calculation
                   itemCost = ri.quantity * ri.ingredient.cost_per_unit
                 }
-                
+
                 totalCost += itemCost
               })
-              
+
               const costPerServing = totalCost / recipe.servings
 
               return (
@@ -116,6 +150,16 @@ export function RecipesClient({ recipes }: RecipesClientProps) {
                       </Badge>
                     </div>
                   </CardHeader>
+                  {recipe.image_url && (
+                    <div className="relative w-full h-48 sm:h-56 mx-4 mb-4 rounded-lg overflow-hidden border">
+                      <Image
+                        src={recipe.image_url}
+                        alt={recipe.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
                   <CardContent>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
@@ -168,8 +212,15 @@ export function RecipesClient({ recipes }: RecipesClientProps) {
                   </CardContent>
                 </Card>
               )
-            })}
-          </div>
+            }}
+            pagination={pagination ? {
+              page: pagination.page,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              onPageChange: handlePageChange
+            } : undefined}
+            isLoading={isLoading}
+          />
         )}
       </div>
 
@@ -178,6 +229,7 @@ export function RecipesClient({ recipes }: RecipesClientProps) {
         <CreateRecipeDialog
           open={showCreateDialog}
           onClose={() => setShowCreateDialog(false)}
+          onRecipeCreated={handleRecipeCreated}
         />
       </div>
 
@@ -186,6 +238,7 @@ export function RecipesClient({ recipes }: RecipesClientProps) {
         <SimpleMobileDialog
           open={showCreateDialog}
           onClose={() => setShowCreateDialog(false)}
+          onRecipeCreated={handleRecipeCreated}
         />
       </div>
     </>

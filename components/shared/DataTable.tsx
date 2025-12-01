@@ -74,58 +74,63 @@ export function DataTable<T extends { id: string }>({
     )
   }
 
+  // Si no hay columnas pero hay mobileCardRender, mostrar cards en todas las pantallas
+  const showCardsOnly = columns.length === 0 && mobileCardRender
+
   return (
     <div className="space-y-4">
-      {/* Desktop Table */}
-      <div className="hidden lg:block rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {columns.map((column) => (
-                <TableHead key={column.key} className={column.className}>
-                  {column.sortable && onSort ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onSort(column.key)}
-                      className="-ml-3 h-8"
-                    >
-                      {column.header}
-                      <ArrowUpDown
-                        className={`ml-2 h-4 w-4 ${
-                          currentSortKey === column.key
-                            ? 'text-blue-600'
-                            : 'text-gray-400'
-                        }`}
-                      />
-                    </Button>
-                  ) : (
-                    column.header
-                  )}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((row) => (
-              <TableRow
-                key={row.id}
-                onClick={() => onRowClick?.(row)}
-                className={onRowClick ? 'cursor-pointer hover:bg-muted/50' : ''}
-              >
+      {/* Desktop Table - Solo si hay columnas */}
+      {columns.length > 0 && (
+        <div className="hidden lg:block rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
                 {columns.map((column) => (
-                  <TableCell key={column.key} className={column.className}>
-                    {column.cell?.(row)}
-                  </TableCell>
+                  <TableHead key={column.key} className={column.className}>
+                    {column.sortable && onSort ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onSort(column.key)}
+                        className="-ml-3 h-8"
+                      >
+                        {column.header}
+                        <ArrowUpDown
+                          className={`ml-2 h-4 w-4 ${
+                            currentSortKey === column.key
+                              ? 'text-blue-600'
+                              : 'text-gray-400'
+                          }`}
+                        />
+                      </Button>
+                    ) : (
+                      column.header
+                    )}
+                  </TableHead>
                 ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {data.map((row) => (
+                <TableRow
+                  key={row.id}
+                  onClick={() => onRowClick?.(row)}
+                  className={onRowClick ? 'cursor-pointer hover:bg-muted/50' : ''}
+                >
+                  {columns.map((column) => (
+                    <TableCell key={column.key} className={column.className}>
+                      {column.cell?.(row)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
-      {/* Mobile Cards */}
-      <div className="lg:hidden grid grid-cols-1 gap-3 sm:gap-4">
+      {/* Cards - Móvil siempre, Desktop si no hay columnas */}
+      <div className={`grid grid-cols-1 gap-3 sm:gap-4 ${showCardsOnly ? 'lg:grid-cols-2 xl:grid-cols-3' : 'lg:hidden'}`}>
         {data.map((row) =>
           mobileCardRender ? (
             <div key={row.id}>{mobileCardRender(row)}</div>

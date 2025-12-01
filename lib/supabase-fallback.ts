@@ -82,7 +82,13 @@ export const MOCK_DATA = {
       id: '1',
       type: 'DAILY',
       status: 'PENDING',
-      delivery_date: new Date().toISOString().split('T')[0],
+      delivery_date: (() => {
+        const now = new Date()
+        const year = now.getFullYear()
+        const month = (now.getMonth() + 1).toString().padStart(2, '0')
+        const day = now.getDate().toString().padStart(2, '0')
+        return `${year}-${month}-${day}`
+      })(),
       delivery_time: '15:00',
       total_cost: 150,
       total_price: 240,

@@ -19,7 +19,7 @@ import { createIngredient, registerPurchase as registerPurchaseAction } from "@/
 import { useNotificationStore } from "@/store/notificationStore"
 import { ImageUpload } from "@/components/shared/ImageUpload"
 import { UnitSelector } from "@/components/shared/UnitSelector"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, getTodayGMT3 } from "@/lib/utils"
 import { Textarea } from "@/components/ui/textarea"
 import { areUnitsCompatible, convertUnits } from "@/components/shared/UnitSelector"
 
@@ -27,11 +27,17 @@ interface CreateIngredientDialogProps {
   children?: React.ReactNode
   open?: boolean
   onClose?: () => void
+  onIngredientCreated?: () => void
 }
 
 type FormData = z.infer<typeof ingredientSchema>
 
-export function CreateIngredientDialog({ children, open: externalOpen, onClose: externalOnClose }: CreateIngredientDialogProps) {
+export function CreateIngredientDialog({
+  children,
+  open: externalOpen,
+  onClose: externalOnClose,
+  onIngredientCreated
+}: CreateIngredientDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false)
 
   const isControlled = externalOpen !== undefined && externalOnClose !== undefined
@@ -128,7 +134,7 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
 
           const purchaseData = {
             ingredient_id: result.data!.id,
-            purchase_date: new Date().toISOString().split('T')[0],
+            purchase_date: getTodayGMT3(),
             quantity_purchased: purchaseQuantity,
             unit_purchased: data.unit,
             total_price: purchasePrice,
@@ -162,19 +168,17 @@ export function CreateIngredientDialog({ children, open: externalOpen, onClose: 
           })
         }
 
-        // SIEMPRE refrescar la página después de crear el ingrediente, independientemente del resultado de la compra
-        console.log('🔄 Refrescando página para actualizar lista de ingredientes')
+        // Refrescar datos después de crear el ingrediente
+        console.log('🔄 Actualizando lista de ingredientes')
         reset()
         setImageUrl("")
         setRegisterPurchase(true)
         setPurchaseQuantity(0)
         setPurchasePrice(0)
         handleOpenChange(false)
-        
-        // Pequeño delay para que la notificación se muestre antes del reload
-        setTimeout(() => {
-          window.location.reload()
-        }, 100)
+
+        // Llamar callback para actualizar la lista
+        onIngredientCreated?.()
       } else {
         console.log('❌ Error al crear ingrediente:', result.message)
         addNotification({ type: "error", message: result.message! })

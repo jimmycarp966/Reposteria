@@ -5,7 +5,7 @@ import { AlertTriangle, Settings } from "lucide-react"
 import Link from "next/link"
 
 export default async function RecetasPage() {
-  const result = await getRecipes()
+  const result = await getRecipes({ page: 1, pageSize: 12 })
 
   // Si Supabase no está configurado, mostrar mensaje de configuración
   if (!result.success && result.needsSetup) {
@@ -74,6 +74,7 @@ export default async function RecetasPage() {
   }
 
   const recipes = result.success && result.data ? result.data : []
+  const pagination = result.pagination
 
-  return <RecipesClient recipes={recipes} />
+  return <RecipesClient initialRecipes={recipes} initialPagination={pagination} />
 }

@@ -15,9 +15,10 @@ import { formatCurrency } from "@/lib/utils"
 interface SimpleMobileDialogProps {
   open: boolean
   onClose: () => void
+  onRecipeCreated?: () => void
 }
 
-export function SimpleMobileDialog({ open, onClose }: SimpleMobileDialogProps) {
+export function SimpleMobileDialog({ open, onClose, onRecipeCreated }: SimpleMobileDialogProps) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const [imageUrl, setImageUrl] = useState<string>("")
@@ -78,6 +79,7 @@ export function SimpleMobileDialog({ open, onClose }: SimpleMobileDialogProps) {
       if (result.success) {
         toast.success("Receta creada exitosamente")
         onClose()
+        onRecipeCreated?.()
         router.refresh()
       } else {
         toast.error(result.message || "Error al crear la receta")

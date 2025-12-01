@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, Calendar, BarChart3, Plus } from "lucide-react"
-import { formatDate } from "@/lib/utils"
+import { formatDate, getTodayGMT3, parseDateGMT3 } from "@/lib/utils"
 import { EventProductsDialog } from "./EventProductsDialog"
 import { getEventSalesStats } from "@/actions/eventActions"
 import { getSalesByDateRange } from "@/actions/saleActions"
@@ -24,8 +24,8 @@ export function DayDetailDialog({ date, events, orders, children }: DayDetailDia
   const [daySales, setDaySales] = useState<SaleWithItems[]>([])
   const [loading, setLoading] = useState(false)
 
-  const isToday = date === new Date().toISOString().split('T')[0]
-  const isPastDate = new Date(date) < new Date(new Date().toISOString().split('T')[0])
+  const isToday = date === getTodayGMT3()
+  const isPastDate = parseDateGMT3(date) < parseDateGMT3(getTodayGMT3())
 
   useEffect(() => {
     const fetchData = async () => {

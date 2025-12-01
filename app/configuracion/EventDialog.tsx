@@ -24,6 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { createEvent, updateEvent } from "@/actions/settingsActions"
 import { useNotificationStore } from "@/store/notificationStore"
+import { getTodayGMT3 } from "@/lib/utils"
 
 type FormData = z.infer<typeof eventSchema>
 
@@ -49,7 +50,7 @@ export function EventDialog({ open, onClose, event, mode }: EventDialogProps) {
     resolver: zodResolver(eventSchema),
     defaultValues: {
       name: "",
-      date: new Date().toISOString().split("T")[0],
+      date: getTodayGMT3(),
       type: "EFEMERIDE",
       description: "",
     },
@@ -62,14 +63,14 @@ export function EventDialog({ open, onClose, event, mode }: EventDialogProps) {
     if (mode === "edit" && event && open) {
       reset({
         name: event.name || "",
-        date: event.date || new Date().toISOString().split("T")[0],
+        date: event.date || getTodayGMT3(),
         type: event.type || "EFEMERIDE",
         description: event.description || "",
       })
     } else if (mode === "create" && open) {
       reset({
         name: "",
-        date: new Date().toISOString().split("T")[0],
+        date: getTodayGMT3(),
         type: "EFEMERIDE",
         description: "",
       })

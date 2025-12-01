@@ -26,17 +26,18 @@ import { getProducts } from "@/actions/productActions"
 import { getEvents } from "@/actions/settingsActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { Plus, Trash2, Calendar as CalendarIcon } from "lucide-react"
-import { formatCurrency, get_current_date } from "@/lib/utils"
+import { formatCurrency, getTodayGMT3 } from "@/lib/utils"
 import { addMinutes } from "date-fns"
 
 interface CreateOrderDialogProps {
   open: boolean
   onClose: () => void
+  onOrderCreated?: () => void
 }
 
 type FormData = z.infer<typeof orderSchema>
 
-export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
+export function CreateOrderDialog({ open, onClose, onOrderCreated }: CreateOrderDialogProps) {
   const [submitting, setSubmitting] = useState(false)
   const [products, setProducts] = useState<any[]>([])
   const [events, setEvents] = useState<any[]>([])
@@ -55,7 +56,7 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
     resolver: zodResolver(orderSchema),
     defaultValues: {
       type: "DAILY",
-      delivery_date: get_current_date().toISOString().split("T")[0],
+      delivery_date: getTodayGMT3(),
       items: [{ 
         product_id: "", 
         quantity: 1, 
@@ -116,6 +117,7 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
         addNotification({ type: "success", message: result.message! })
         reset()
         onClose()
+        onOrderCreated?.()
       } else {
         addNotification({ type: "error", message: result.message! })
       }
@@ -283,7 +285,7 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
                   <div className="hidden lg:flex gap-2 items-start">
                     <div className="flex-1">
                       <Select
-                        value={field.product_id}
+                        value={watchedItems[index]?.product_id || ""}
                         onValueChange={(value) => handleProductSelect(index, value)}
                       >
                         <SelectTrigger>
@@ -333,7 +335,7 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Producto</Label>
                       <Select
-                        value={field.product_id}
+                        value={watchedItems[index]?.product_id || ""}
                         onValueChange={(value) => handleProductSelect(index, value)}
                       >
                         <SelectTrigger className="h-11 text-base">
@@ -377,7 +379,7 @@ export function CreateOrderDialog({ open, onClose }: CreateOrderDialogProps) {
                       <div className="space-y-1">
                         <span className="text-sm font-medium">Subtotal: </span>
                         <span className="text-lg font-semibold text-green-600">
-                          {formatCurrency((field.quantity || 0) * (field.unit_price || 0))}
+                          {formatCurrency((watchedItems[index]?.quantity || 0) * (watchedItems[index]?.unit_price || 0))}
                         </span>
                       </div>
                       <Button

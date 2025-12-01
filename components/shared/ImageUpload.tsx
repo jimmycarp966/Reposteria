@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -77,6 +77,11 @@ export function ImageUpload({
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(currentImageUrl || null)
   const addNotification = useNotificationStore((state) => state.addNotification)
+
+  // Sincronizar preview con currentImageUrl cuando cambia (para resetear formularios)
+  useEffect(() => {
+    setPreview(currentImageUrl || null)
+  }, [currentImageUrl])
 
   /**
    * Asegura que el bucket existe, creándolo automáticamente si es necesario

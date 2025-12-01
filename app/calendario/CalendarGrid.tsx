@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { DayDetailDialog } from "./DayDetailDialog"
+import { getTodayGMT3 } from "@/lib/utils"
 import type { EventWithProducts, OrderWithItems } from "@/lib/types"
 
 interface CalendarGridProps {
@@ -69,7 +70,7 @@ export function CalendarGrid({ events, orders }: CalendarGridProps) {
     const dateString = date.toISOString().split('T')[0]
     const dayEvents = eventsByDate[dateString] || []
     const dayOrders = ordersByDate[dateString] || []
-    const isToday = dateString === new Date().toISOString().split('T')[0]
+    const isToday = dateString === getTodayGMT3()
 
     return (
       <DayDetailDialog

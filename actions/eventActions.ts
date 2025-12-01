@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase"
 import { eventProductSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { logger } from "@/lib/logger"
+import { getTodayGMT3 } from "@/lib/utils"
 import { sendUpcomingEventNotification } from "@/lib/notification-service"
 import type { EventProductWithDetails, EventWithProducts, EventSalesStats } from "@/lib/types"
 
@@ -133,7 +134,7 @@ export async function getEventSalesStats(eventId: string) {
 // Get today's events with products
 export async function getTodaysEventsWithProducts() {
   try {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getTodayGMT3()
     
     const { data, error } = await supabase
       .from("events_calendar")

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { parseDateGMT3, getTodayGMT3 } from "./utils"
 
 // Ingredient validations
 export const ingredientSchema = z.object({
@@ -7,7 +8,10 @@ export const ingredientSchema = z.object({
   cost_per_unit: z.number().min(0, "El costo debe ser mayor o igual a 0").default(0),
   supplier: z.string().optional(),
   lead_time_days: z.number().int().min(0).optional().nullable(),
-  image_url: z.string().url().optional().or(z.literal("")),
+  image_url: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? undefined : val),
+    z.string().url().optional()
+  ),
 })
 
 // Recipe validations
@@ -15,7 +19,10 @@ export const recipeSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   description: z.string().optional(),
   servings: z.number().int().min(1, "Las porciones deben ser mayor a 0"),
-  image_url: z.string().url().optional().or(z.literal("")),
+  image_url: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? undefined : val),
+    z.string().url().optional()
+  ),
 })
 
 export const recipeIngredientSchema = z.object({
@@ -41,7 +48,10 @@ export const productSchema = z.object({
   sku: z.string().optional(),
   base_cost_cache: z.number().min(0, "El costo base debe ser mayor o igual a 0"),
   suggested_price_cache: z.number().min(0, "El precio sugerido debe ser mayor o igual a 0"),
-  image_url: z.string().url().optional().or(z.literal("")),
+  image_url: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? undefined : val),
+    z.string().url().optional()
+  ),
 })
 
 // Order validations
@@ -58,9 +68,16 @@ export const orderSchema = z.object({
     required_error: "El tipo de pedido es requerido",
   }),
   delivery_date: z.string().refine((date) => {
-    const deliveryDate = new Date(date)
-    const today = new Date()
+    // Parsear la fecha de entrega en GMT-3
+    const deliveryDate = parseDateGMT3(date)
+    deliveryDate.setHours(0, 0, 0, 0)
+    
+    // Obtener fecha de hoy en GMT-3 y normalizar a medianoche
+    const todayStr = getTodayGMT3()
+    const today = parseDateGMT3(todayStr)
     today.setHours(0, 0, 0, 0)
+    
+    // Comparar solo las fechas (sin hora)
     return deliveryDate >= today
   }, "La fecha de entrega debe ser hoy o posterior"),
   delivery_time: z.string().optional(),

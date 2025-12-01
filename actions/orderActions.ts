@@ -4,10 +4,10 @@ import { supabase } from "@/lib/supabase"
 import { orderSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
-import { get_current_date } from "@/lib/utils"
+import { get_current_date, createDateGMT3 } from "@/lib/utils"
 import { addMinutes, parseISO } from "date-fns"
 import { clearRelevantCache } from "@/lib/cache-utils"
-import { checkSupabaseConnection, getMockUpcomingOrders } from "@/lib/supabase-fallback"
+import { checkSupabaseConnection, getMockUpcomingOrders, getFallbackData } from "@/lib/supabase-fallback"
 import { logger } from "@/lib/logger"
 import { sendNewOrderNotification, sendOrderStatusNotification } from "@/lib/notification-service"
 import type { OrdersQueryParams, PaginatedResponse, OrderWithItems } from "@/lib/types"
@@ -24,12 +24,35 @@ export async function getOrders(params: OrdersQueryParams = {}): Promise<Paginat
   try {
     logger.debug('Fetching orders', params, 'orderActions.getOrders')
 
-    // Si no se pasan parámetros específicos (llamado desde página principal), mostrar todas las órdenes
-    const isDefaultCall = Object.keys(params).length === 0 || (page === 1 && pageSize === 20 && !status && sortBy === 'delivery_date' && sortOrder === 'asc')
-    const actualPageSize = isDefaultCall ? 10000 : pageSize // Usar un límite alto para mostrar todas las órdenes
+    // Check if Supabase is available, otherwise use fallback data
+    const isSupabaseAvailable = await checkSupabaseConnection()
 
-    const from = (page - 1) * actualPageSize
-    const to = from + actualPageSize - 1
+    if (!isSupabaseAvailable) {
+      logger.info('Using fallback data for orders', {}, 'orderActions.getOrders')
+      const mockOrders = getFallbackData('orders') as any[]
+
+      // Apply status filter if provided
+      let filteredOrders = status ? mockOrders.filter(order => order.status === status) : mockOrders
+
+      // Apply pagination
+      const from = (page - 1) * pageSize
+      const to = from + pageSize
+      const paginatedOrders = filteredOrders.slice(from, to)
+
+      return {
+        success: true,
+        data: paginatedOrders,
+        pagination: {
+          page,
+          pageSize,
+          total: filteredOrders.length,
+          totalPages: Math.ceil(filteredOrders.length / pageSize)
+        }
+      }
+    }
+
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
 
     let query = supabase
       .from("orders")
@@ -62,9 +85,9 @@ export async function getOrders(params: OrdersQueryParams = {}): Promise<Paginat
       data: data as OrderWithItems[],
       pagination: {
         page,
-        pageSize: isDefaultCall ? (count || 0) : pageSize,
+        pageSize,
         total: count || 0,
-        totalPages: isDefaultCall ? 1 : Math.ceil((count || 0) / pageSize)
+        totalPages: Math.ceil((count || 0) / pageSize)
       }
     }
   } catch (error: any) {
@@ -121,8 +144,8 @@ export async function createOrder(formData: z.infer<typeof orderSchema>) {
 
     // Calculate production start time
     const deliveryDateTime = validated.delivery_time 
-      ? new Date(`${validated.delivery_date}T${validated.delivery_time}`)
-      : new Date(`${validated.delivery_date}T12:00:00`)
+      ? createDateGMT3(validated.delivery_date, validated.delivery_time)
+      : createDateGMT3(validated.delivery_date, "12:00:00")
 
     // Get buffer setting
     const { data: bufferSetting } = await supabase

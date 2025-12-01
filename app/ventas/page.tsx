@@ -3,14 +3,14 @@ import { getTodaysEventsWithProducts } from "@/actions/eventActions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, TrendingUp, ShoppingCart, Users, DollarSign } from "lucide-react"
-import { formatDate } from "@/lib/utils"
+import { formatDate, getTodayGMT3 } from "@/lib/utils"
 import { CreateSaleDialog } from "./CreateSaleDialog"
 import { SalesClient } from "./SalesClient"
 
 export default async function VentasPage() {
   const [salesResult, statsResult, eventsResult] = await Promise.all([
     getTodaysSales(),
-    getDailySalesStats(new Date().toISOString().split('T')[0]),
+    getDailySalesStats(getTodayGMT3()),
     getTodaysEventsWithProducts()
   ])
 
@@ -24,7 +24,7 @@ export default async function VentasPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Ventas</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Gestión de ventas diarias - {formatDate(new Date().toISOString().split('T')[0])}
+            Gestión de ventas diarias - {formatDate(getTodayGMT3())}
           </p>
         </div>
         <CreateSaleDialog>

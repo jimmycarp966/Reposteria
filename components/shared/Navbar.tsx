@@ -31,6 +31,7 @@ export function Navbar() {
       <div className="space-y-3">
         {routes.map((route, index) => {
           const isActive = pathname === route.href
+          const IconComponent = route.icon
           return (
             <Link
               key={route.href}
@@ -44,7 +45,7 @@ export function Navbar() {
               )}
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              <route.icon className={cn(
+              <IconComponent className={cn(
                 "h-5 w-5 transition-transform duration-200",
                 isActive ? "text-white" : route.color,
                 "group-hover:scale-110"

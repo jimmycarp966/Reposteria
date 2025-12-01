@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { CreateProductDialog } from "./CreateProductDialog"
 import { EditPriceDialog } from "./EditPriceDialog"
@@ -29,12 +30,36 @@ interface ProductsClientProps {
 
 export function ProductsClient({ initialProducts, recipes, initialPagination }: ProductsClientProps) {
   const [products, setProducts] = useState<ProductWithRecipe[]>(initialProducts)
+  const [pagination, setPagination] = useState(initialPagination)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showEditPriceDialog, setShowEditPriceDialog] = useState(false)
   const [showPriceHistoryDialog, setShowPriceHistoryDialog] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<ProductWithRecipe | null>(null)
   const [currentPage, setCurrentPage] = useState(initialPagination?.page || 1)
   const addNotification = useNotificationStore((state) => state.addNotification)
+
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSearchChange = useCallback(async (term: string) => {
+    // Hacer búsqueda del lado servidor
+    setIsLoading(true)
+    try {
+      const result = await getProducts({
+        page: 1, // Reset to first page when searching
+        pageSize: initialPagination?.pageSize || 20,
+        search: term || undefined
+      })
+      if (result.success && result.data) {
+        setProducts(result.data)
+        setPagination(result.pagination)
+        setCurrentPage(1) // Reset to first page
+      }
+    } catch (error) {
+      console.error('Error searching products:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [initialPagination?.pageSize])
 
   const {
     search,
@@ -43,10 +68,7 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
     clearSearch,
     isSearching
   } = useSearchFilter({
-    onSearchChange: (term) => {
-      // En una implementación real, aquí se haría fetch con el término de búsqueda
-      console.log('Searching for:', term)
-    }
+    onSearchChange: handleSearchChange
   })
 
   const handleDelete = async (id: string) => {
@@ -62,6 +84,25 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
   }
 
   const columns: Column<ProductWithRecipe>[] = [
+    {
+      key: 'image',
+      header: 'Imagen',
+      cell: (product) => (
+        <div className="relative w-12 h-12 rounded-lg overflow-hidden border bg-gray-100 flex items-center justify-center">
+          {product.image_url ? (
+            <Image
+              src={product.image_url}
+              alt={product.name}
+              fill
+              className="object-cover"
+              sizes="48px"
+            />
+          ) : (
+            <Package className="h-6 w-6 text-gray-400" />
+          )}
+        </div>
+      )
+    },
     {
       key: 'name',
       header: 'Nombre',
@@ -182,6 +223,16 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
         <CardTitle className="text-lg">{product.name}</CardTitle>
         <CardDescription>{product.recipe?.name || "Sin receta base"}</CardDescription>
       </CardHeader>
+      {product.image_url && (
+        <div className="relative w-full h-48 sm:h-56 mx-4 mb-4 rounded-lg overflow-hidden border">
+          <Image
+            src={product.image_url}
+            alt={product.name}
+            fill
+            className="object-cover"
+          />
+        </div>
+      )}
       <CardContent>
         <div className="space-y-2 text-sm">
           <div className="space-y-2">
@@ -258,11 +309,7 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
     </Card>
   )
 
-  const filteredProducts = debouncedSearch
-    ? products.filter(p => 
-        p.name.toLowerCase().includes(debouncedSearch.toLowerCase())
-      )
-    : products
+  // Los productos ya vienen filtrados del servidor, no necesitamos filtrado adicional
 
   if (initialProducts.length === 0 && !debouncedSearch) {
     return (
@@ -315,20 +362,39 @@ export function ProductsClient({ initialProducts, recipes, initialPagination }: 
         />
 
         <DataTable
-          data={filteredProducts}
+          data={products}
           columns={columns}
           mobileCardRender={renderMobileCard}
-          pagination={initialPagination ? {
+          pagination={pagination ? {
             page: currentPage,
-            pageSize: initialPagination.pageSize,
-            total: initialPagination.total,
-            onPageChange: setCurrentPage
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            onPageChange: async (page: number) => {
+              setIsLoading(true)
+              try {
+                const result = await getProducts({
+                  page,
+                  pageSize: pagination?.pageSize || 20,
+                  search: search || undefined
+                })
+                if (result.success && result.data) {
+                  setProducts(result.data)
+                  setPagination(result.pagination)
+                  setCurrentPage(page)
+                }
+              } catch (error) {
+                console.error('Error loading products page:', error)
+              } finally {
+                setIsLoading(false)
+              }
+            }
           } : undefined}
+          isLoading={isLoading}
           emptyState={
             <EmptyState
               icon={Package}
               title="No se encontraron productos"
-              description={debouncedSearch ? `No hay productos que coincidan con "${debouncedSearch}"` : "No hay productos disponibles"}
+              description={search ? `No hay productos que coincidan con "${search}"` : "No hay productos disponibles"}
             />
           }
         />

@@ -20,7 +20,7 @@ import { registerPurchase } from "@/actions/ingredientActions"
 import { useNotificationStore } from "@/store/notificationStore"
 import { UnitSelector } from "@/components/shared/UnitSelector"
 import { areUnitsCompatible, convertUnits } from "@/components/shared/UnitSelector"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, getTodayGMT3 } from "@/lib/utils"
 import type { Ingredient } from "@/lib/types"
 
 interface RegisterPurchaseDialogProps {
@@ -65,7 +65,7 @@ export function RegisterPurchaseDialog({
     resolver: zodResolver(ingredientPurchaseSchema),
     defaultValues: {
       ingredient_id: ingredient.id,
-      purchase_date: new Date().toISOString().split('T')[0],
+      purchase_date: getTodayGMT3(),
       quantity_purchased: 0,
       unit_purchased: ingredient.unit,
       total_price: 0,

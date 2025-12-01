@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { CalendarIcon } from "lucide-react"
 import { format, addDays, addWeeks, startOfWeek } from "date-fns"
 import { es } from "date-fns/locale"
-import { cn } from "@/lib/utils"
+import { cn, parseDateGMT3 } from "@/lib/utils"
 
 interface MondayDatePickerProps {
   value: string
@@ -17,7 +17,7 @@ interface MondayDatePickerProps {
 
 export function MondayDatePicker({ value, onChange, placeholder = "Seleccionar lunes" }: MondayDatePickerProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    value ? new Date(value + 'T00:00:00') : undefined
+    value ? parseDateGMT3(value) : undefined
   )
 
   // Generar opciones de lunes para los próximos 3 meses
@@ -43,7 +43,7 @@ export function MondayDatePicker({ value, onChange, placeholder = "Seleccionar l
   const mondayOptions = generateMondayOptions()
 
   const handleDateChange = (dateString: string) => {
-    const date = new Date(dateString + 'T00:00:00')
+    const date = parseDateGMT3(dateString)
     setSelectedDate(date)
     onChange(format(date, 'yyyy-MM-dd'))
   }
