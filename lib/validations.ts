@@ -105,6 +105,12 @@ export const eventSchema = z.object({
   type: z.enum(["EFEMERIDE", "REMINDER"]),
 })
 
+// Category validations
+export const categorySchema = z.object({
+  name: z.string().min(1, "El nombre es requerido"),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "El color debe ser un código hexadecimal válido (ej: #FF5733)"),
+})
+
 // Price Rule validations
 export const priceRuleSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),

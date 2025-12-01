@@ -42,6 +42,7 @@ export async function createTaskCategory(formData: { name: string; color: string
     if (error) throw error
 
     revalidatePath("/plan-semanal") // Revalidate to show new category in selectors
+    revalidatePath("/configuracion") // Revalidate configuration page
     return { success: true, data, message: "Categoría creada exitosamente" }
   } catch (error: any) {
     logger.error("Error creating task category", error, 'categoryActions.createTaskCategory')
@@ -64,6 +65,7 @@ export async function updateTaskCategory(id: string, formData: { name: string; c
     if (error) throw error
     
     revalidatePath("/plan-semanal")
+    revalidatePath("/configuracion") // Revalidate configuration page
     return { success: true, data, message: "Categoría actualizada exitosamente" }
   } catch (error: any) {
     logger.error("Error updating task category", { id, ...error }, 'categoryActions.updateTaskCategory')
@@ -82,6 +84,7 @@ export async function deleteTaskCategory(id: string) {
     if (error) throw error
 
     revalidatePath("/plan-semanal")
+    revalidatePath("/configuracion") // Revalidate configuration page
     return { success: true, message: "Categoría eliminada exitosamente" }
   } catch (error: any) {
     logger.error("Error deleting task category", { id, ...error }, 'categoryActions.deleteTaskCategory')

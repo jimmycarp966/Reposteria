@@ -18,16 +18,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { EventDialog } from "./EventDialog"
 import { DeleteEventDialog } from "./DeleteEventDialog"
+import { CategoryDialog } from "./CategoryDialog"
+import { DeleteCategoryDialog } from "./DeleteCategoryDialog"
 
 interface ConfigClientProps {
   settings: any[]
   events: any[]
   priceRules: any[]
+  categories: any[]
 }
 
-export function ConfigClient({ settings, events, priceRules }: ConfigClientProps) {
+export function ConfigClient({ settings, events, priceRules, categories }: ConfigClientProps) {
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [editValue, setEditValue] = useState("")
   const [saving, setSaving] = useState(false)
@@ -38,9 +42,18 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
   const [eventDialogMode, setEventDialogMode] = useState<"create" | "edit">("create")
   const [selectedEvent, setSelectedEvent] = useState<any>(null)
 
-  // Estados para el diálogo de eliminación
+  // Estados para el diálogo de eliminación de eventos
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [eventToDelete, setEventToDelete] = useState<any>(null)
+
+  // Estados para el diálogo de categorías
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false)
+  const [categoryDialogMode, setCategoryDialogMode] = useState<"create" | "edit">("create")
+  const [selectedCategory, setSelectedCategory] = useState<any>(null)
+
+  // Estados para el diálogo de eliminación de categorías
+  const [deleteCategoryDialogOpen, setDeleteCategoryDialogOpen] = useState(false)
+  const [categoryToDelete, setCategoryToDelete] = useState<any>(null)
 
   const handleSave = async (key: string) => {
     setSaving(true)
@@ -83,6 +96,33 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
     setEventToDelete(null)
   }
 
+  const handleOpenCategoryDialog = (mode: "create" | "edit") => {
+    setCategoryDialogMode(mode)
+    setSelectedCategory(null)
+    setCategoryDialogOpen(true)
+  }
+
+  const handleCloseCategoryDialog = () => {
+    setCategoryDialogOpen(false)
+    setSelectedCategory(null)
+  }
+
+  const handleEditCategory = (category: any) => {
+    setCategoryDialogMode("edit")
+    setSelectedCategory(category)
+    setCategoryDialogOpen(true)
+  }
+
+  const handleDeleteCategory = (category: any) => {
+    setCategoryToDelete(category)
+    setDeleteCategoryDialogOpen(true)
+  }
+
+  const handleCloseDeleteCategoryDialog = () => {
+    setDeleteCategoryDialogOpen(false)
+    setCategoryToDelete(null)
+  }
+
   const getSettingLabel = (key: string) => {
     const labels: Record<string, string> = {
       default_markup_percent: "Margen por Defecto (%)",
@@ -101,8 +141,18 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
         </p>
       </div>
 
-      {/* Settings Globales */}
-      <Card>
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
+          <TabsTrigger value="general" className="text-xs md:text-sm">General</TabsTrigger>
+          <TabsTrigger value="efemerides" className="text-xs md:text-sm">Efemérides</TabsTrigger>
+          <TabsTrigger value="reglas" className="text-xs md:text-sm">Reglas de Precio</TabsTrigger>
+          <TabsTrigger value="categorias" className="text-xs md:text-sm">Categorías</TabsTrigger>
+        </TabsList>
+
+        {/* Pestaña General */}
+        <TabsContent value="general" className="space-y-6">
+          {/* Settings Globales */}
+          <Card>
         <CardHeader>
           <CardTitle>Configuraciones Globales</CardTitle>
         </CardHeader>
@@ -170,9 +220,11 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
 
-      {/* Efemérides */}
-      <Card>
+        {/* Pestaña Efemérides */}
+        <TabsContent value="efemerides" className="space-y-6">
+          <Card>
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>Efemérides</CardTitle>
           <Button 
@@ -280,9 +332,11 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
           )}
         </CardContent>
       </Card>
+        </TabsContent>
 
-      {/* Reglas de Precio */}
-      <Card>
+        {/* Pestaña Reglas de Precio */}
+        <TabsContent value="reglas" className="space-y-6">
+          <Card>
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>Reglas de Precio Especiales</CardTitle>
           <Button className="w-full sm:w-auto">
@@ -368,6 +422,120 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        {/* Pestaña Categorías */}
+        <TabsContent value="categorias" className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <CardTitle>Categorías de Tareas</CardTitle>
+              <Button 
+                className="w-full sm:w-auto"
+                onClick={() => handleOpenCategoryDialog("create")}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nueva Categoría
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {categories.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No hay categorías configuradas
+                </p>
+              ) : (
+                <>
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nombre</TableHead>
+                          <TableHead>Color</TableHead>
+                          <TableHead>Acciones</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {categories.map((category: any) => (
+                          <TableRow key={category.id}>
+                            <TableCell className="font-medium">{category.name}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className="h-4 w-4 rounded-full border border-gray-300"
+                                  style={{ backgroundColor: category.color || "#808080" }}
+                                />
+                                <span className="text-sm font-mono">{category.color}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleEditCategory(category)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleDeleteCategory(category)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-3">
+                    {categories.map((category: any) => (
+                      <div key={category.id} className="border rounded-lg p-4 space-y-2">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="h-5 w-5 rounded-full border border-gray-300 flex-shrink-0"
+                              style={{ backgroundColor: category.color || "#808080" }}
+                            />
+                            <h4 className="font-medium text-sm">{category.name}</h4>
+                          </div>
+                        </div>
+                        <div className="text-sm text-muted-foreground font-mono">
+                          {category.color}
+                        </div>
+                        <div className="pt-2 flex gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => handleEditCategory(category)}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => handleDeleteCategory(category)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2 text-red-600" />
+                            Eliminar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Diálogos */}
       <EventDialog
@@ -381,6 +549,19 @@ export function ConfigClient({ settings, events, priceRules }: ConfigClientProps
         open={deleteDialogOpen}
         onClose={handleCloseDeleteDialog}
         event={eventToDelete || {}}
+      />
+
+      <CategoryDialog
+        open={categoryDialogOpen}
+        onClose={handleCloseCategoryDialog}
+        category={selectedCategory}
+        mode={categoryDialogMode}
+      />
+
+      <DeleteCategoryDialog
+        open={deleteCategoryDialogOpen}
+        onClose={handleCloseDeleteCategoryDialog}
+        category={categoryToDelete || {}}
       />
     </div>
   )
