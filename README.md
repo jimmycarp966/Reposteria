@@ -1,6 +1,6 @@
-# 🧁 Sistema de Gestión para Repostería
+# 🧁 Sistema de Gestión para Cam Bake
 
-Sistema web completo para gestionar un emprendimiento de repostería, con cálculo automático de costos, gestión de pedidos, planificación de producción y reportes.
+Sistema web completo para gestionar Cam Bake, con cálculo automático de costos, gestión de pedidos, planificación de producción y reportes.
 
 ## 🎨 **Nuevo Diseño Moderno y Colorido**
 
@@ -37,7 +37,7 @@ Sistema web completo para gestionar un emprendimiento de repostería, con cálcu
 - ✅ **Configuración**: Settings globales, efemérides y reglas de precio especiales
 
 ### Características Técnicas
-- ✅ **Diseño Moderno**: Interfaz colorida y expresiva con gradientes temáticos para repostería
+- ✅ **Diseño Moderno**: Interfaz colorida y expresiva con gradientes temáticos para Cam Bake
 - ✅ **100% Responsive**: Optimizado para móviles, tablets y desktop con touch targets de 44x44px
 - ✅ **Sistema de Caché**: Caché inteligente con TTL para mejorar rendimiento
 - ✅ **Validaciones**: Todas las operaciones validadas con Zod + React Hook Form
@@ -451,5 +451,6 @@ Uso privado. Ver `architecture.md` para documentación técnica completa.
 
 #   R e p o s t e r i a 
  
- #   r i n c o n  
+ #   r i n c o n 
+ 
  

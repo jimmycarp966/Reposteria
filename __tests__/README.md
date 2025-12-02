@@ -1,4 +1,4 @@
-# 🧪 Tests del Sistema de Repostería
+# 🧪 Tests del Sistema Cam Bake
 
 Este directorio contiene todos los tests automatizados del sistema.
 

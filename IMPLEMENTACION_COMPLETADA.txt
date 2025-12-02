@@ -240,7 +240,7 @@ Medio Plazo:
 ✅ Documentación completa en español
 ✅ Sistema listo para producción
 
-El sistema de repostería ahora cuenta con:
+El sistema Cam Bake ahora cuenta con:
   • Testing automatizado profesional
   • Tipos TypeScript completos
   • Logging estructurado

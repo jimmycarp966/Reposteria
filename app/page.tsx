@@ -42,10 +42,10 @@ export default async function DashboardPage() {
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">
-              Dashboard Dulce
+              Dashboard Cam Bake
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base lg:text-lg">
-              Tu negocio de repostería al alcance de tus manos 🍰
+              Tu negocio Cam Bake al alcance de tus manos 🍰
             </p>
           </div>
         </div>

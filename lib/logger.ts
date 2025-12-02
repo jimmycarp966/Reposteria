@@ -1,5 +1,5 @@
 /**
- * Sistema de logging estructurado para el sistema de repostería
+ * Sistema de logging estructurado para el sistema Cam Bake
  * Proporciona logging con niveles, contexto y preparado para integración con servicios externos
  */
 

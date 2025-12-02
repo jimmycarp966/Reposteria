@@ -1,7 +1,7 @@
 {
-  "name": "Dulce Repostería - Sistema de Gestión",
-  "short_name": "Dulce Repostería",
-  "description": "Sistema completo de gestión para emprendimientos de repostería. Controla tus recetas, pedidos, inventario y producción con facilidad.",
+  "name": "Cam Bake - Sistema de Gestión",
+  "short_name": "Cam Bake",
+  "description": "Sistema completo de gestión para Cam Bake. Controla tus recetas, pedidos, inventario y producción con facilidad.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#fef3f2",

@@ -26,10 +26,10 @@ export function MobileSidebar() {
                 <div className="text-3xl">🧁</div>
                 <div>
                   <h1 className="text-2xl font-bold text-white leading-tight">
-                    Dulce
+                    Cam
                   </h1>
                   <p className="text-sm text-orange-100 leading-tight">
-                    Repostería
+                    Bake
                   </p>
                 </div>
               </div>

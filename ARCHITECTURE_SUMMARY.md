@@ -1,7 +1,7 @@
-# Arquitectura del Sistema de Gestión para Repostería
+# Arquitectura del Sistema de Gestión para Cam Bake
 
 ## TL;DR
-Sistema web completo para gestión de repostería con cálculo automático de costos, gestión de pedidos, planificación de producción y reportes. Utiliza Next.js 15, Supabase y un diseño moderno responsive con colores temáticos para repostería.
+Sistema web completo para gestión de Cam Bake con cálculo automático de costos, gestión de pedidos, planificación de producción y reportes. Utiliza Next.js 15, Supabase y un diseño moderno responsive con colores temáticos para Cam Bake.
 
 ## Tecnologías Principales
 - **Frontend**: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, shadcn/ui

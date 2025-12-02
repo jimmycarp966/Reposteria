@@ -137,7 +137,7 @@ export function ConfigClient({ settings, events, priceRules, categories }: Confi
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold">Configuración</h1>
         <p className="text-muted-foreground text-sm sm:text-base">
-          Configura tu sistema de repostería
+          Configura tu sistema Cam Bake
         </p>
       </div>
 

@@ -17,10 +17,10 @@ export function Navbar() {
             <div className="text-3xl animate-bounce-gentle">🧁</div>
             <div>
               <h1 className="text-2xl font-bold text-white leading-tight">
-                Dulce
+                Cam
               </h1>
               <p className="text-sm text-orange-100 leading-tight">
-                Repostería
+                Bake
               </p>
             </div>
           </div>

@@ -10,24 +10,24 @@ import { InstallPrompt } from "@/components/shared/InstallPrompt"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "🍰 Dulce Repostería - Sistema de Gestión",
-  description: "Sistema completo de gestión para emprendimientos de repostería. Controla tus recetas, pedidos, inventario y producción con facilidad.",
+  title: "🍰 Cam Bake - Sistema de Gestión",
+  description: "Sistema completo de gestión para Cam Bake. Controla tus recetas, pedidos, inventario y producción con facilidad.",
   manifest: "/manifest.json",
   themeColor: "#f97316",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Dulce Repostería",
+    title: "Cam Bake",
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
     type: "website",
-    siteName: "Dulce Repostería",
-    title: "🍰 Dulce Repostería - Sistema de Gestión",
-    description: "Sistema completo de gestión para emprendimientos de repostería. Controla tus recetas, pedidos, inventario y producción con facilidad.",
+    siteName: "Cam Bake",
+    title: "🍰 Cam Bake - Sistema de Gestión",
+    description: "Sistema completo de gestión para Cam Bake. Controla tus recetas, pedidos, inventario y producción con facilidad.",
   },
   icons: {
     icon: "/icons/icon-192x192.svg",
@@ -45,10 +45,10 @@ export default function RootLayout({
     <html lang="es">
       <head>
         {/* Meta tags adicionales para PWA */}
-        <meta name="application-name" content="Dulce Repostería" />
+        <meta name="application-name" content="Cam Bake" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Dulce Repostería" />
+        <meta name="apple-mobile-web-app-title" content="Cam Bake" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-config" content="/icons/browserconfig.xml" />
@@ -82,7 +82,7 @@ export default function RootLayout({
             <footer className="mt-auto py-6 px-4 border-t border-gray-200/50 bg-white/30 backdrop-blur-sm">
               <div className="max-w-7xl mx-auto">
                 <p className="text-center text-xs sm:text-sm text-gray-600">
-                  © {new Date().getFullYear()} Repostería. Todos los derechos reservados • Diseñado por{' '}
+                  © {new Date().getFullYear()} Cam Bake. Todos los derechos reservados • Diseñado por{' '}
                   <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 cursor-default">
                     SiriuS
                   </span>

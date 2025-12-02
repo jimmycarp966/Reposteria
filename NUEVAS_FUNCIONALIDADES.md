@@ -1,4 +1,4 @@
-# 🆕 Nuevas Funcionalidades - Sistema de Repostería
+# 🆕 Nuevas Funcionalidades - Sistema Cam Bake
 
 ## 📅 Última Actualización: Diciembre 2024
 

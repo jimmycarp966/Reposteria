@@ -2,7 +2,7 @@
 
 ## ✅ Resumen de Optimizaciones
 
-Este documento detalla todas las mejoras de responsive implementadas en la aplicación de repostería "Dulce Repostería" para asegurar una experiencia óptima en dispositivos móviles, tablets y computadoras de escritorio.
+Este documento detalla todas las mejoras de responsive implementadas en la aplicación de Cam Bake para asegurar una experiencia óptima en dispositivos móviles, tablets y computadoras de escritorio.
 
 ---
 

@@ -1,7 +1,7 @@
 -- Seeds para datos de ejemplo
 -- Este archivo contiene datos iniciales para probar el sistema
 
--- Insertar ingredientes comunes de repostería
+-- Insertar ingredientes comunes para Cam Bake
 INSERT INTO ingredients (id, name, unit, cost_per_unit, supplier) VALUES
   ('11111111-1111-1111-1111-111111111111', 'Harina 000', 'kg', 350.00, 'Molinos Ala'),
   ('22222222-2222-2222-2222-222222222222', 'Azúcar', 'kg', 280.00, 'Ledesma'),

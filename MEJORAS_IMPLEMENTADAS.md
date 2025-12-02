@@ -1,4 +1,4 @@
-# 🚀 Mejoras Implementadas - Sistema de Repostería
+# 🚀 Mejoras Implementadas - Sistema Cam Bake
 
 Este documento detalla todas las mejoras implementadas en el sistema según el plan de priorización.
 

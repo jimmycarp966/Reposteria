@@ -2,7 +2,7 @@
 
 ## ✅ Implementación Completada
 
-Tu sistema de repostería ahora es una **Progressive Web App (PWA)** completamente funcional con notificaciones push usando **Web Push API nativo** (sin Firebase).
+Tu sistema Cam Bake ahora es una **Progressive Web App (PWA)** completamente funcional con notificaciones push usando **Web Push API nativo** (sin Firebase).
 
 ### 🎯 Características Implementadas
 
@@ -214,4 +214,4 @@ Si tienes problemas con la configuración:
 4. Verifica que la base de datos tenga la tabla `notification_tokens`
 5. Ejecuta `npm run build` para verificar que no hay errores de compilación
 
-¡Tu sistema de repostería ahora es una PWA completa con notificaciones push compatible con Next.js 15! 🎉
+¡Tu sistema Cam Bake ahora es una PWA completa con notificaciones push compatible con Next.js 15! 🎉

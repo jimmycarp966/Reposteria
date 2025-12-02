@@ -1,4 +1,4 @@
-# 📋 Resumen de Actualizaciones - Sistema de Repostería
+# 📋 Resumen de Actualizaciones - Sistema Cam Bake
 
 ## 📅 Fecha: Diciembre 2024
 
