@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase"
 import { orderSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
-import { get_current_date, createDateGMT3 } from "@/lib/utils"
+import { getCurrentDateGMT3, createDateGMT3, getDateStringGMT3 } from "@/lib/utils"
 import { addMinutes, parseISO } from "date-fns"
 import { clearRelevantCache } from "@/lib/cache-utils"
 import { checkSupabaseConnection, getMockUpcomingOrders, getFallbackData } from "@/lib/supabase-fallback"
@@ -354,7 +354,7 @@ export async function getUpcomingOrders(days: number = 7) {
       }
     }
 
-    const today = get_current_date()
+    const today = getCurrentDateGMT3()
     const futureDate = new Date(today)
     futureDate.setDate(futureDate.getDate() + days)
 
@@ -382,8 +382,8 @@ export async function getUpcomingOrders(days: number = 7) {
           )
         )
       `)
-      .gte("delivery_date", today.toISOString().split("T")[0])
-      .lte("delivery_date", futureDate.toISOString().split("T")[0])
+      .gte("delivery_date", getDateStringGMT3(today))
+      .lte("delivery_date", getDateStringGMT3(futureDate))
       .in("status", ["PENDING", "CONFIRMED", "IN_PRODUCTION"])
       .order("delivery_date")
       .limit(20) // Limitar a 20 pedidos para mejorar rendimiento

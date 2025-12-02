@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseClient } from '@/lib/supabase'
+import { getISODateStringGMT3 } from '@/lib/utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
       .from('notification_tokens')
       .insert({
         token,
-        created_at: new Date().toISOString(),
+        created_at: getISODateStringGMT3(),
         is_active: true
       })
 

@@ -1,7 +1,7 @@
 "use server"
 
 import { supabase } from "@/lib/supabase"
-import { get_current_date } from "@/lib/utils"
+import { getFirstDayOfMonthGMT3, getLastDayOfMonthGMT3 } from "@/lib/utils"
 import { checkSupabaseConnection, getMockMonthlyStats } from "@/lib/supabase-fallback"
 import { logger } from "@/lib/logger"
 
@@ -93,16 +93,15 @@ export async function getMonthlyStats() {
       }
     }
 
-    const now = get_current_date()
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    const firstDayOfMonth = getFirstDayOfMonthGMT3()
+    const lastDayOfMonth = getLastDayOfMonthGMT3()
 
     // Usar una consulta más eficiente con agregación en la base de datos
     const { data, error } = await supabase
       .from("orders")
       .select("total_cost, total_price")
-      .gte("delivery_date", firstDayOfMonth.toISOString().split("T")[0])
-      .lte("delivery_date", lastDayOfMonth.toISOString().split("T")[0])
+      .gte("delivery_date", firstDayOfMonth)
+      .lte("delivery_date", lastDayOfMonth)
       .in("status", ["CONFIRMED", "IN_PRODUCTION", "COMPLETED"])
 
     if (error) throw error

@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { checkSupabaseConnection, getMockLowStockIngredients } from "@/lib/supabase-fallback"
 import { logger } from "@/lib/logger"
+import { getISODateStringGMT3 } from "@/lib/utils"
 
 export async function getInventory() {
   try {
@@ -105,7 +106,7 @@ export async function updateStock(formData: z.infer<typeof inventoryUpdateSchema
       .from("inventory")
       .update({ 
         quantity: newQuantity,
-        last_updated: new Date().toISOString()
+        last_updated: getISODateStringGMT3()
       })
       .eq("ingredient_id", validated.ingredient_id)
 

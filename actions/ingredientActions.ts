@@ -9,6 +9,7 @@ import { logger } from "@/lib/logger"
 import type { IngredientsQueryParams, PaginatedResponse, IngredientWithInventory, IngredientPurchase } from "@/lib/types"
 import { areUnitsCompatibleServer, convertUnitsServer } from "@/lib/unit-conversions"
 import { checkSupabaseConnection, getFallbackData } from "@/lib/supabase-fallback"
+import { getISODateStringGMT3 } from "@/lib/utils"
 
 export async function getIngredients(params: IngredientsQueryParams = {}): Promise<PaginatedResponse<IngredientWithInventory>> {
   const {
@@ -494,7 +495,7 @@ export async function registerPurchase(formData: z.infer<typeof ingredientPurcha
           .from("inventory")
           .update({
             quantity: existingInventory.quantity + convertedQuantity,
-            last_updated: new Date().toISOString()
+            last_updated: getISODateStringGMT3()
           })
           .eq("ingredient_id", validated.ingredient_id)
         console.log('📋 DEBUG registerPurchase: Resultado actualización inventario:', updateResult)

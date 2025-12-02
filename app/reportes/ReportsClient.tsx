@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import { formatCurrency, formatDate, getFirstDayOfMonthGMT3, getLastDayOfMonthGMT3 } from "@/lib/utils"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import { Button } from "@/components/ui/button"
@@ -65,9 +65,8 @@ export function ReportsClient({ monthlyStats, salesReport }: ReportsClientProps)
   }
 
   const handleExportCSV = async () => {
-    const now = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0]
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0]
+    const firstDay = getFirstDayOfMonthGMT3()
+    const lastDay = getLastDayOfMonthGMT3()
 
     setExporting(true)
     const result = await exportSalesReportCSV(firstDay, lastDay)

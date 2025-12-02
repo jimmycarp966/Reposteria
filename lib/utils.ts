@@ -81,6 +81,85 @@ export function getTodayGMT3(): string {
 }
 
 /**
+ * Convierte un objeto Date a string "YYYY-MM-DD" interpretándolo en GMT-3
+ * Calcula qué fecha es en GMT-3 basándose en el timestamp del Date
+ * @param date Objeto Date a convertir
+ * @returns String con formato "YYYY-MM-DD" en GMT-3
+ */
+export function getDateStringGMT3(date: Date): string {
+  // Obtener el timestamp UTC del Date (siempre en UTC)
+  const utcTimestamp = date.getTime()
+  
+  // GMT-3 está 3 horas (180 minutos) detrás de UTC
+  // Para obtener la fecha en GMT-3, restamos 3 horas del timestamp UTC
+  const gmt3Timestamp = utcTimestamp - (3 * 60 * 60 * 1000)
+  
+  // Crear un Date con el timestamp ajustado y usar métodos UTC para extraer componentes
+  const gmt3Date = new Date(gmt3Timestamp)
+  
+  const year = gmt3Date.getUTCFullYear()
+  const month = (gmt3Date.getUTCMonth() + 1).toString().padStart(2, '0')
+  const day = gmt3Date.getUTCDate().toString().padStart(2, '0')
+  
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * Obtiene un timestamp ISO para campos created_at/last_updated en GMT-3
+ * Retorna el timestamp actual pero ajustado para representar la hora en GMT-3
+ * @returns String con formato ISO 8601 que representa la hora actual en GMT-3
+ */
+export function getISODateStringGMT3(): string {
+  const now = new Date()
+  
+  // Obtener la fecha/hora actual en GMT-3
+  // Para esto, obtenemos los componentes de la fecha actual y los interpretamos como GMT-3
+  // Luego los convertimos a UTC (sumando 3 horas) para el ISO string
+  const gmt3Date = getCurrentDateGMT3()
+  
+  // Extraer componentes de la fecha GMT-3 (usando métodos locales porque getCurrentDateGMT3 ya ajustó)
+  const year = gmt3Date.getFullYear()
+  const month = gmt3Date.getMonth()
+  const day = gmt3Date.getDate()
+  const hours = gmt3Date.getHours()
+  const minutes = gmt3Date.getMinutes()
+  const seconds = gmt3Date.getSeconds()
+  const milliseconds = gmt3Date.getMilliseconds()
+  
+  // Crear un Date UTC que represente ese momento
+  // Si son las 14:00 en GMT-3, eso es 17:00 UTC, así que sumamos 3 horas
+  const utcDate = new Date(Date.UTC(year, month, day, hours + 3, minutes, seconds, milliseconds))
+  
+  return utcDate.toISOString()
+}
+
+/**
+ * Obtiene el primer día del mes actual en GMT-3 como string "YYYY-MM-DD"
+ * @returns String con formato "YYYY-MM-DD" del primer día del mes en GMT-3
+ */
+export function getFirstDayOfMonthGMT3(): string {
+  const gmt3Date = getCurrentDateGMT3()
+  const year = gmt3Date.getFullYear()
+  const month = (gmt3Date.getMonth() + 1).toString().padStart(2, '0')
+  return `${year}-${month}-01`
+}
+
+/**
+ * Obtiene el último día del mes actual en GMT-3 como string "YYYY-MM-DD"
+ * @returns String con formato "YYYY-MM-DD" del último día del mes en GMT-3
+ */
+export function getLastDayOfMonthGMT3(): string {
+  const gmt3Date = getCurrentDateGMT3()
+  const year = gmt3Date.getFullYear()
+  const month = gmt3Date.getMonth()
+  // Obtener el último día del mes (día 0 del siguiente mes)
+  const lastDay = new Date(year, month + 1, 0).getDate()
+  const monthStr = (month + 1).toString().padStart(2, '0')
+  const dayStr = lastDay.toString().padStart(2, '0')
+  return `${year}-${monthStr}-${dayStr}`
+}
+
+/**
  * Parsea un string de fecha "YYYY-MM-DD" interpretándolo en GMT-3 (no UTC)
  * Esto evita que JavaScript interprete la fecha como UTC medianoche,
  * lo cual causaría que aparezca como el día anterior en GMT-3

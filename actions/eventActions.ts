@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase"
 import { eventProductSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { logger } from "@/lib/logger"
-import { getTodayGMT3 } from "@/lib/utils"
+import { getTodayGMT3, getCurrentDateGMT3, getDateStringGMT3 } from "@/lib/utils"
 import { sendUpcomingEventNotification } from "@/lib/notification-service"
 import type { EventProductWithDetails, EventWithProducts, EventSalesStats } from "@/lib/types"
 
@@ -207,7 +207,7 @@ export async function getAvailableProductsForEvent(eventId: string) {
 // Check for upcoming events and send notifications
 export async function checkAndNotifyUpcomingEvents() {
   try {
-    const today = new Date()
+    const today = getCurrentDateGMT3()
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
     
@@ -215,7 +215,7 @@ export async function checkAndNotifyUpcomingEvents() {
     const { data: upcomingEvents, error } = await supabase
       .from("events_calendar")
       .select("*")
-      .eq("date", tomorrow.toISOString().split('T')[0])
+      .eq("date", getDateStringGMT3(tomorrow))
       .order("name")
 
     if (error) throw error

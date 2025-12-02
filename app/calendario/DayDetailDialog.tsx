@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, Calendar, BarChart3, Plus } from "lucide-react"
 import { formatDate, getTodayGMT3, parseDateGMT3 } from "@/lib/utils"
 import { EventProductsDialog } from "./EventProductsDialog"
-import { getEventSalesStats } from "@/actions/eventActions"
+import { getEventSalesStats, getEventsWithProducts } from "@/actions/eventActions"
 import { getSalesByDateRange } from "@/actions/saleActions"
 import type { EventWithProducts, OrderWithItems, EventSalesStats, SaleWithItems } from "@/lib/types"
 import { useEffect, useState } from "react"
@@ -23,19 +23,34 @@ export function DayDetailDialog({ date, events, orders, children }: DayDetailDia
   const [eventStats, setEventStats] = useState<EventSalesStats[]>([])
   const [daySales, setDaySales] = useState<SaleWithItems[]>([])
   const [loading, setLoading] = useState(false)
+  const [currentEvents, setCurrentEvents] = useState<EventWithProducts[]>(events)
 
   const isToday = date === getTodayGMT3()
   const isPastDate = parseDateGMT3(date) < parseDateGMT3(getTodayGMT3())
 
+  // Update events when prop changes
   useEffect(() => {
-    const fetchData = async () => {
-      if (events.length === 0 && !isPastDate) return
+    setCurrentEvents(events)
+  }, [events])
+
+  const handleEventUpdate = async () => {
+    // Reload events for this date
+    const result = await getEventsWithProducts()
+    if (result.success && result.data) {
+      const dateEvents = result.data.filter(e => e.date === date)
+      setCurrentEvents(dateEvents)
+    }
+  }
+
+  useEffect(() => {
+      const fetchData = async () => {
+      if (currentEvents.length === 0 && !isPastDate) return
 
       setLoading(true)
       try {
         // Get sales stats for events
-        if (events.length > 0) {
-          const statsPromises = events.map(event => getEventSalesStats(event.id))
+        if (currentEvents.length > 0) {
+          const statsPromises = currentEvents.map(event => getEventSalesStats(event.id))
           const statsResults = await Promise.all(statsPromises)
           const validStats = statsResults
             .filter(result => result.success && result.data)
@@ -58,7 +73,7 @@ export function DayDetailDialog({ date, events, orders, children }: DayDetailDia
     }
 
     fetchData()
-  }, [date, events, isPastDate])
+  }, [date, currentEvents, isPastDate])
 
   const totalDaySales = daySales.reduce((sum, sale) => sum + sale.total_amount, 0)
   const totalDayItems = daySales.reduce((sum, sale) => 
@@ -71,18 +86,18 @@ export function DayDetailDialog({ date, events, orders, children }: DayDetailDia
         {children}
       </DialogTrigger>
       
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto sm:w-full">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            {formatDate(date)}
-            {isToday && <Badge variant="default">Hoy</Badge>}
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl flex-wrap">
+            <Calendar className="h-5 w-5 shrink-0" />
+            <span className="truncate">{formatDate(date)}</span>
+            {isToday && <Badge variant="default" className="shrink-0">Hoy</Badge>}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Events */}
-          {events.length > 0 && (
+          {currentEvents.length > 0 && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -90,23 +105,24 @@ export function DayDetailDialog({ date, events, orders, children }: DayDetailDia
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {events.map(event => (
+                {currentEvents.map(event => (
                   <div key={event.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">{event.name}</h4>
-                        <p className="text-sm text-muted-foreground">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-base sm:text-lg">{event.name}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
                           {event.description || "Sin descripción"}
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground mt-1">
                           {event.event_products?.length || 0} productos especiales
                         </p>
                       </div>
-                      <div className="flex gap-2">
-                        <EventProductsDialog event={event}>
-                          <Button variant="outline" size="sm">
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        <EventProductsDialog event={event} onUpdate={handleEventUpdate}>
+                          <Button variant="outline" size="sm" className="h-10 sm:h-9 text-xs sm:text-sm flex-1 sm:flex-none">
                             <Package className="h-4 w-4 mr-2" />
-                            Gestionar Productos
+                            <span className="hidden sm:inline">Gestionar Productos</span>
+                            <span className="sm:hidden">Productos</span>
                           </Button>
                         </EventProductsDialog>
                       </div>
@@ -266,7 +282,7 @@ export function DayDetailDialog({ date, events, orders, children }: DayDetailDia
           )}
 
           {/* Empty state */}
-          {events.length === 0 && orders.length === 0 && (
+          {currentEvents.length === 0 && orders.length === 0 && (
             <Card>
               <CardContent className="text-center py-8">
                 <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
