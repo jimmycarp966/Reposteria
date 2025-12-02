@@ -53,7 +53,8 @@ export function CreateIngredientDialog({
   }
   const [submitting, setSubmitting] = useState(false)
   const [imageUrl, setImageUrl] = useState("")
-  const [registerPurchase, setRegisterPurchase] = useState(true)
+  const [registerPurchase, setRegisterPurchase] = useState(false)
+  const [affectsStock, setAffectsStock] = useState(false)
   const addNotification = useNotificationStore((state) => state.addNotification)
 
   const {
@@ -96,7 +97,7 @@ export function CreateIngredientDialog({
 
       console.log('🚀 DEBUG: Iniciando creación de ingrediente')
       console.log('📋 Form data:', data)
-      console.log('📦 Purchase state:', { purchaseQuantity, purchasePrice, unitValue })
+      console.log('📦 Purchase state:', { purchaseQuantity, purchasePrice, unitValue, registerPurchase, affectsStock })
 
       // Create ingredient first
       const ingredientData = {
@@ -104,32 +105,29 @@ export function CreateIngredientDialog({
         image_url: imageUrl || undefined,
         cost_per_unit: 0, // Valor por defecto, se actualizará después si se registra la compra
       }
-      
+
       console.log('📤 Datos a enviar a createIngredient:', ingredientData)
-      
+
       const result = await createIngredient(ingredientData)
 
       console.log('📝 Resultado creación ingrediente:', result)
-      
+
       if (!result.success) {
         console.error('❌ ERROR DETALLADO:', {
           message: result.message,
           fullResult: result
         })
+        addNotification({ type: "error", message: result.message! })
+        return
       }
 
       if (result.success) {
         console.log('✅ Ingrediente creado exitosamente, ID:', result.data?.id)
 
-        // Register purchase (now required) - use data.unit instead of unitValue from watch
-        console.log('🛒 Verificando condiciones para registro de compra:')
-        console.log('   - purchaseQuantity > 0:', purchaseQuantity > 0, 'valor:', purchaseQuantity)
-        console.log('   - purchasePrice > 0:', purchasePrice > 0, 'valor:', purchasePrice)
-        console.log('   - data.unit existe:', !!data.unit, 'valor:', data.unit)
-
         let purchaseSuccess = false
 
-        if (purchaseQuantity > 0 && purchasePrice > 0 && data.unit) {
+        // Solo registrar compra si el usuario lo indicó
+        if (registerPurchase && purchaseQuantity > 0 && purchasePrice > 0 && data.unit) {
           console.log('🔄 Registrando compra...')
 
           const purchaseData = {
@@ -140,7 +138,7 @@ export function CreateIngredientDialog({
             total_price: purchasePrice,
             supplier: data.supplier || undefined,
             notes: `Costo calculado al crear el ingrediente`,
-            affects_stock: true,
+            affects_stock: affectsStock,
           }
 
           console.log('📊 Datos de compra a enviar:', purchaseData)
@@ -152,20 +150,29 @@ export function CreateIngredientDialog({
           if (purchaseResult.success) {
             console.log('🎉 Compra registrada exitosamente')
             purchaseSuccess = true
-            addNotification({ type: "success", message: "Ingrediente creado exitosamente con costo calculado" })
+            const stockMessage = affectsStock ? " y agregado al stock" : " (sin afectar stock)"
+            addNotification({
+              type: "success",
+              message: `Ingrediente creado exitosamente con costo calculado${stockMessage}`
+            })
           } else {
             console.log('❌ Error en registro de compra:', purchaseResult.message)
-            // Si la compra falla, el ingrediente se creó pero sin precio calculado
             addNotification({
               type: "warning",
               message: `El ingrediente "${data.name}" fue creado, pero no se pudo calcular el costo. Error: ${purchaseResult.message}. Puede actualizar el costo manualmente después.`
             })
           }
+        } else if (registerPurchase && (purchaseQuantity <= 0 || purchasePrice <= 0)) {
+          console.log('⚠️  Se indicó registrar compra pero faltan datos')
+          addNotification({
+            type: "warning",
+            message: `Ingrediente "${data.name}" creado. Para calcular el costo debe ingresar cantidad y precio válidos.`
+          })
         } else {
-          console.log('⚠️  No se cumplen las condiciones para registro de compra')
-          addNotification({ 
-            type: "warning", 
-            message: `Ingrediente "${data.name}" creado exitosamente. Debe ingresar cantidad y precio para calcular el costo del ingrediente.` 
+          console.log('ℹ️  Ingrediente creado sin registro de compra')
+          addNotification({
+            type: "success",
+            message: `Ingrediente "${data.name}" creado exitosamente. Puede registrar compras después para calcular el costo.`
           })
         }
 
@@ -173,16 +180,14 @@ export function CreateIngredientDialog({
         console.log('🔄 Actualizando lista de ingredientes')
         reset()
         setImageUrl("")
-        setRegisterPurchase(true)
+        setRegisterPurchase(false)
+        setAffectsStock(false)
         setPurchaseQuantity(0)
         setPurchasePrice(0)
         handleOpenChange(false)
 
         // Llamar callback para actualizar la lista
         onIngredientCreated?.()
-      } else {
-        console.log('❌ Error al crear ingrediente:', result.message)
-        addNotification({ type: "error", message: result.message! })
       }
     } finally {
       setSubmitting(false)
@@ -227,47 +232,76 @@ export function CreateIngredientDialog({
             </p>
           </div>
 
-          {/* Calculate Cost */}
+          {/* Calculate Cost - Optional */}
           <div className="border-t pt-4">
-            <h3 className="text-base font-semibold mb-3">Calcular Costo</h3>
-            <div className="space-y-3">
-                             <div>
-                 <Label htmlFor="purchase_quantity">Cantidad Comprada *</Label>
-                 <Input
-                   id="purchase_quantity"
-                   type="number"
-                   step="0.001"
-                   placeholder={`Ej: 200 (en ${unitValue || "la unidad base"})`}
-                   value={purchaseQuantity || ""}
-                   onChange={(e) => setPurchaseQuantity(parseFloat(e.target.value) || 0)}
-                 />
-                 <p className="text-xs text-muted-foreground mt-1">
-                   Cantidad en {unitValue || "la unidad base seleccionada"}
-                 </p>
-               </div>
-              <div>
-                <Label htmlFor="purchase_price">Precio Total *</Label>
-                <Input
-                  id="purchase_price"
-                  type="number"
-                  step="0.01"
-                  placeholder="Ej: 2000"
-                  value={purchasePrice || ""}
-                  onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)}
-                />
-                <p className="text-xs text-muted-foreground mt-1">¿Cuánto pagaste en total?</p>
-              </div>
-              {preview && (
-                <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
-                  <p className="text-sm font-semibold text-primary">
-                    Costo por {unitValue}: {preview}
-                  </p>
+            <div className="flex items-center space-x-2 mb-3">
+              <input
+                type="checkbox"
+                id="register_purchase"
+                checked={registerPurchase}
+                onChange={(e) => setRegisterPurchase(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <Label htmlFor="register_purchase" className="text-base font-semibold cursor-pointer">
+                Calcular costo desde una compra
+              </Label>
+            </div>
+
+            {registerPurchase && (
+              <div className="space-y-3 ml-6">
+                <div>
+                  <Label htmlFor="purchase_quantity">Cantidad Comprada *</Label>
+                  <Input
+                    id="purchase_quantity"
+                    type="number"
+                    step="0.001"
+                    placeholder={`Ej: 200 (en ${unitValue || "la unidad base"})`}
+                    value={purchaseQuantity || ""}
+                    onChange={(e) => setPurchaseQuantity(parseFloat(e.target.value) || 0)}
+                  />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Este será el costo base del ingrediente para recetas y productos
+                    Cantidad en {unitValue || "la unidad base seleccionada"}
                   </p>
                 </div>
-              )}
-            </div>
+                <div>
+                  <Label htmlFor="purchase_price">Precio Total *</Label>
+                  <Input
+                    id="purchase_price"
+                    type="number"
+                    step="0.01"
+                    placeholder="Ej: 2000"
+                    value={purchasePrice || ""}
+                    onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">¿Cuánto pagaste en total?</p>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="affects_stock"
+                    checked={affectsStock}
+                    onChange={(e) => setAffectsStock(e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="affects_stock" className="text-sm cursor-pointer">
+                    Agregar cantidad al stock actual
+                  </Label>
+                </div>
+
+                {preview && (
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
+                    <p className="text-sm font-semibold text-primary">
+                      Costo por {unitValue}: {preview}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Este será el costo base del ingrediente para recetas y productos
+                      {affectsStock && " y se agregará al stock"}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <ImageUpload
