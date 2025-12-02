@@ -184,20 +184,31 @@ export async function getEventsByDate(date: string) {
 // Get products available for events (not already in this event)
 export async function getAvailableProductsForEvent(eventId: string) {
   try {
-    // Get products that are NOT already in this event
-    const { data, error } = await supabase
+    // First, get all products already associated with this event
+    const { data: eventProducts, error: eventProductsError } = await supabase
+      .from("event_products")
+      .select("product_id")
+      .eq("event_id", eventId)
+
+    if (eventProductsError) throw eventProductsError
+
+    // Extract product IDs that are already in the event
+    const excludedProductIds = eventProducts?.map(ep => ep.product_id) || []
+
+    // Get all products
+    const { data: allProducts, error } = await supabase
       .from("products")
       .select("*")
-      .not("id", "in", `(
-        SELECT product_id 
-        FROM event_products 
-        WHERE event_id = '${eventId}'
-      )`)
       .order("name")
 
     if (error) throw error
 
-    return { success: true, data }
+    // Filter out products that are already in the event
+    const availableProducts = (allProducts || []).filter(
+      product => !excludedProductIds.includes(product.id)
+    )
+
+    return { success: true, data: availableProducts }
   } catch (error: any) {
     logger.error("Error fetching available products", error, 'eventActions.getAvailableProductsForEvent')
     return { success: false, message: error.message || "Error al obtener productos disponibles" }

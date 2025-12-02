@@ -379,9 +379,9 @@ export function EventProductsDialog({ event, children, onUpdate }: EventProducts
           </div>
 
           {/* Add new product */}
-          {availableProducts.length > 0 && (
-            <div>
-              <h3 className="text-base sm:text-lg font-medium mb-3">Agregar Producto</h3>
+          <div>
+            <h3 className="text-base sm:text-lg font-medium mb-3">Agregar Producto</h3>
+            {availableProducts.length > 0 ? (
               <div className="border rounded-lg p-3 sm:p-4 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -449,17 +449,25 @@ export function EventProductsDialog({ event, children, onUpdate }: EventProducts
                   {loading ? "Agregando..." : "Agregar Producto"}
                 </Button>
               </div>
-            </div>
-          )}
-
-          {availableProducts.length === 0 && eventProducts.length > 0 && (
-            <div className="text-center py-6 sm:py-8 border-2 border-dashed border-gray-200 rounded-lg">
-              <Package className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-3 sm:mb-4" />
-              <p className="text-sm sm:text-base text-muted-foreground">
-                Todos los productos ya están asociados a esta efeméride
-              </p>
-            </div>
-          )}
+            ) : eventProducts.length > 0 ? (
+              <div className="text-center py-6 sm:py-8 border-2 border-dashed border-gray-200 rounded-lg">
+                <Package className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Todos los productos ya están asociados a esta efeméride
+                </p>
+              </div>
+            ) : (
+              <div className="text-center py-6 sm:py-8 border-2 border-dashed border-gray-200 rounded-lg">
+                <Package className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+                <p className="text-sm sm:text-base text-muted-foreground mb-2">
+                  No hay productos disponibles en el sistema
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Crea productos desde la sección de Productos para poder asociarlos a esta efeméride
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
