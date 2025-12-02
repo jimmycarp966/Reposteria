@@ -70,6 +70,7 @@ export function RegisterPurchaseDialog({
       unit_purchased: ingredient.unit,
       total_price: 0,
       supplier: ingredient.supplier || "",
+      affects_stock: true,
     },
   })
 
@@ -139,7 +140,7 @@ export function RegisterPurchaseDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="quantity_purchased">Cantidad Comprada *</Label>
+              <Label htmlFor="quantity_purchased">Cantidad para cálculo de costo *</Label>
               <Input
                 id="quantity_purchased"
                 type="number"
@@ -149,6 +150,9 @@ export function RegisterPurchaseDialog({
               {errors.quantity_purchased && (
                 <p className="text-sm text-red-600">{errors.quantity_purchased.message}</p>
               )}
+              <p className="mt-1 text-xs text-muted-foreground">
+                Esta cantidad se usa para calcular el costo unitario. Solo sumará stock si activás la opción de abajo.
+              </p>
             </div>
 
             <div>
@@ -168,6 +172,22 @@ export function RegisterPurchaseDialog({
                   Advertencia: Esta unidad no es compatible con {ingredient.unit}
                 </p>
               )}
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 border rounded-md p-3 bg-muted/40">
+            <input
+              id="affects_stock"
+              type="checkbox"
+              className="mt-1 h-4 w-4"
+              {...register("affects_stock")}
+            />
+            <div>
+              <Label htmlFor="affects_stock">Esta operación debe sumar stock</Label>
+              <p className="text-xs text-muted-foreground">
+                Dejá esta opción activada cuando realmente entró mercadería al inventario.
+                Desactivala si solo querés registrar un precio de referencia sin modificar el stock disponible.
+              </p>
             </div>
           </div>
 

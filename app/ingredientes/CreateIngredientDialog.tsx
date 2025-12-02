@@ -140,6 +140,7 @@ export function CreateIngredientDialog({
             total_price: purchasePrice,
             supplier: data.supplier || undefined,
             notes: `Costo calculado al crear el ingrediente`,
+            affects_stock: true,
           }
 
           console.log('📊 Datos de compra a enviar:', purchaseData)

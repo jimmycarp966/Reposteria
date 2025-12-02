@@ -456,54 +456,61 @@ export async function registerPurchase(formData: z.infer<typeof ingredientPurcha
 
     console.log('✅ DEBUG registerPurchase: Costo del ingrediente actualizado correctamente')
 
-    console.log('📦 DEBUG registerPurchase: Gestionando inventario')
-    // Add inventory movement (IN)
-    const { error: movementError } = await supabase
-      .from("inventory_movements")
-      .insert([{
-        ingredient_id: validated.ingredient_id,
-        quantity: convertedQuantity,
-        type: "IN",
-        notes: `Compra registrada: ${convertedQuantity.toFixed(3)} ${ingredient.unit}`,
-      }])
+    // Gestionar inventario solo si la operación debe afectar al stock
+    const affectsStock = validated.affects_stock ?? true
 
-    console.log('📋 DEBUG registerPurchase: Resultado movimiento inventario:', { movementError })
-
-    if (movementError) {
-      console.log('⚠️ DEBUG registerPurchase: Error en movimiento de inventario (no crítico):', movementError)
-      logger.error("Error creating inventory movement", movementError)
-    }
-
-    // Update inventory quantity
-    console.log('🔍 DEBUG registerPurchase: Verificando inventario existente')
-    const { data: existingInventory } = await supabase
-      .from("inventory")
-      .select("quantity")
-      .eq("ingredient_id", validated.ingredient_id)
-      .single()
-
-    console.log('📋 DEBUG registerPurchase: Inventario existente:', existingInventory)
-
-    if (existingInventory) {
-      console.log('🔄 DEBUG registerPurchase: Actualizando inventario existente')
-      const updateResult = await supabase
-        .from("inventory")
-        .update({
-          quantity: existingInventory.quantity + convertedQuantity,
-          last_updated: new Date().toISOString()
-        })
-        .eq("ingredient_id", validated.ingredient_id)
-      console.log('📋 DEBUG registerPurchase: Resultado actualización inventario:', updateResult)
-    } else {
-      console.log('🆕 DEBUG registerPurchase: Creando nuevo registro de inventario')
-      const insertResult = await supabase
-        .from("inventory")
+    if (affectsStock) {
+      console.log('📦 DEBUG registerPurchase: Gestionando inventario (afecta_stock = true)')
+      // Add inventory movement (IN)
+      const { error: movementError } = await supabase
+        .from("inventory_movements")
         .insert([{
           ingredient_id: validated.ingredient_id,
           quantity: convertedQuantity,
-          unit: ingredient.unit,
+          type: "IN",
+          notes: `Compra registrada: ${convertedQuantity.toFixed(3)} ${ingredient.unit}`,
         }])
-      console.log('📋 DEBUG registerPurchase: Resultado creación inventario:', insertResult)
+
+      console.log('📋 DEBUG registerPurchase: Resultado movimiento inventario:', { movementError })
+
+      if (movementError) {
+        console.log('⚠️ DEBUG registerPurchase: Error en movimiento de inventario (no crítico):', movementError)
+        logger.error("Error creating inventory movement", movementError)
+      }
+
+      // Update inventory quantity
+      console.log('🔍 DEBUG registerPurchase: Verificando inventario existente')
+      const { data: existingInventory } = await supabase
+        .from("inventory")
+        .select("quantity")
+        .eq("ingredient_id", validated.ingredient_id)
+        .single()
+
+      console.log('📋 DEBUG registerPurchase: Inventario existente:', existingInventory)
+
+      if (existingInventory) {
+        console.log('🔄 DEBUG registerPurchase: Actualizando inventario existente')
+        const updateResult = await supabase
+          .from("inventory")
+          .update({
+            quantity: existingInventory.quantity + convertedQuantity,
+            last_updated: new Date().toISOString()
+          })
+          .eq("ingredient_id", validated.ingredient_id)
+        console.log('📋 DEBUG registerPurchase: Resultado actualización inventario:', updateResult)
+      } else {
+        console.log('🆕 DEBUG registerPurchase: Creando nuevo registro de inventario')
+        const insertResult = await supabase
+          .from("inventory")
+          .insert([{
+            ingredient_id: validated.ingredient_id,
+            quantity: convertedQuantity,
+            unit: ingredient.unit,
+          }])
+        console.log('📋 DEBUG registerPurchase: Resultado creación inventario:', insertResult)
+      }
+    } else {
+      console.log('📦 DEBUG registerPurchase: Operación marcada como no afectando stock, se omite actualización de inventario')
     }
     
     // Clear caches

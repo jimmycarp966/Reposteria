@@ -204,6 +204,8 @@ export const ingredientPurchaseSchema = z.object({
   total_price: z.number().min(0, "El precio total debe ser mayor o igual a 0"),
   supplier: z.string().optional(),
   notes: z.string().optional(),
+  // Nuevo flag para indicar si esta operación debe impactar el stock
+  affects_stock: z.boolean().optional().default(true),
 })
 
 
