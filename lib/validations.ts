@@ -154,6 +154,11 @@ export const saleSchema = z.object({
   items: z.array(saleItemSchema).min(1, "Debe tener al menos un producto"),
 })
 
+// Update sale customer validation
+export const updateSaleCustomerSchema = z.object({
+  customer_id: z.string().uuid().nullable().optional(),
+})
+
 // Event Product validations
 export const eventProductSchema = z.object({
   event_id: z.string().uuid("ID de evento inválido"),
@@ -167,7 +172,7 @@ export const paymentStatusSchema = z.enum(['pendiente', 'parcial', 'pagado'], {
 })
 
 export const paymentRegistrationSchema = z.object({
-  amount: z.number().min(0.01, "El monto debe ser mayor a 0"),
+  amount: z.number().refine((val) => !isNaN(val), "El monto debe ser un número válido"),
   notes: z.string().optional(),
 })
 

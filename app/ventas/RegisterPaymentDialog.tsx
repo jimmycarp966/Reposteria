@@ -36,16 +36,8 @@ export function RegisterPaymentDialog({
     e.preventDefault()
     
     const paymentAmount = parseFloat(amount)
-    if (!paymentAmount || paymentAmount <= 0) {
-      addNotification({ type: "error", message: "El monto debe ser mayor a 0" })
-      return
-    }
-
-    if (paymentAmount > currentPending) {
-      addNotification({ 
-        type: "error", 
-        message: `El monto no puede exceder lo pendiente (${formatCurrency(currentPending)})` 
-      })
+    if (isNaN(paymentAmount)) {
+      addNotification({ type: "error", message: "El monto debe ser un número válido" })
       return
     }
 
@@ -159,16 +151,11 @@ export function RegisterPaymentDialog({
                 id="amount"
                 type="number"
                 step="0.01"
-                min="0.01"
-                max={currentPending}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
                 required
               />
-              <p className="text-xs text-gray-500">
-                Máximo: {formatCurrency(currentPending)}
-              </p>
             </div>
 
             {/* Action Buttons */}

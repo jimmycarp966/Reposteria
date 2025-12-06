@@ -1,7 +1,7 @@
 "use server"
 
 import { supabase } from "@/lib/supabase"
-import { saleSchema } from "@/lib/validations"
+import { saleSchema, updateSaleCustomerSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { logger } from "@/lib/logger"
 import { getTodayGMT3 } from "@/lib/utils"
@@ -262,5 +262,38 @@ export async function getSalesWithPendingPayment() {
   } catch (error: any) {
     logger.error("Error fetching sales with pending payment", error, 'saleActions.getSalesWithPendingPayment')
     return { success: false, message: error.message || "Error al obtener ventas pendientes" }
+  }
+}
+
+// Update sale customer
+export async function updateSaleCustomer(saleId: string, customerId: string | null) {
+  try {
+    const validated = updateSaleCustomerSchema.parse({ customer_id: customerId })
+
+    const { data, error } = await supabase
+      .from("sales")
+      .update({ customer_id: validated.customer_id })
+      .eq("id", saleId)
+      .select(`
+        *,
+        customer:customers(id, name, email, phone)
+      `)
+      .single()
+
+    if (error) throw error
+
+    revalidatePath("/ventas")
+    revalidatePath("/reportes")
+
+    logger.info('Sale customer updated successfully', { saleId, customerId }, 'saleActions.updateSaleCustomer')
+
+    return {
+      success: true,
+      message: "Cliente de la venta actualizado exitosamente",
+      data: data
+    }
+  } catch (error: any) {
+    logger.error("Error updating sale customer", error, 'saleActions.updateSaleCustomer')
+    return { success: false, message: error.message || "Error al actualizar cliente de la venta" }
   }
 }
